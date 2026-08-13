@@ -38,7 +38,7 @@ const domains = [
 
 export function LegalDomainsGrid() {
   return (
-    <section className="bg-ink py-24 text-paper md:py-32">
+    <section id="metiers" className="bg-ink py-24 text-paper md:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <AnimatedSection>
           <p className="mb-3 text-sm font-medium uppercase tracking-widest text-signal">

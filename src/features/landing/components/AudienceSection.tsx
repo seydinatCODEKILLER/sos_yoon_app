@@ -160,7 +160,7 @@ function AudienceCard({ audience }: { audience: (typeof audiences)[number] }) {
 
 export function AudienceSection() {
   return (
-    <section className="bg-paper py-24 md:py-32">
+    <section id="professionnels" className="bg-paper py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <div className="relative grid grid-cols-1 gap-px overflow-hidden rounded-3xl bg-ink/10 md:grid-cols-2">
           {audiences.map((audience) => (

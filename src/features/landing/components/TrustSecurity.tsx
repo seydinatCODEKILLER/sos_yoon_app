@@ -26,7 +26,7 @@ const points = [
 
 export function TrustSecurity() {
   return (
-    <section className="relative overflow-hidden bg-paper py-24 md:py-32">
+    <section id="confiance" className="relative overflow-hidden bg-paper py-24 md:py-32">
       {/* filigrane façon papier sécurisé */}
       <svg
         aria-hidden
