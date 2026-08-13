@@ -2,7 +2,9 @@
 
 Plateforme d'urgence juridique connectant, en quelques minutes, une personne confrontée à une situation urgente relevant du droit avec le professionnel disponible et géographiquement proche.
 
-> **Statut actuel** : phase MVP — landing page de présentation en cours de finalisation pour recueillir les retours des clients-testeurs avant de connecter le back-end et développer les fonctionnalités applicatives (dépôt de demande, triage, espace professionnel, etc.).
+> **Statut actuel** : phase MVP — landing page de présentation terminée, en attente de retours des clients-testeurs avant de connecter le back-end et développer les fonctionnalités applicatives (authentification en premier, puis dépôt de demande, triage, espace professionnel, admin).
+>
+> Le projet est organisé en **un seul dépôt** : la landing et l'application partagent la même base de code, le même design system (shadcn) et la même configuration PWA, pour éviter la duplication d'outillage entre deux projets séparés.
 
 ## À propos
 
@@ -38,14 +40,16 @@ L'utilisateur n'a pas à chercher lui-même un professionnel : il dépose sa dem
 | Composants UI | shadcn/ui (Base UI, preset Nova) |
 | Animations | Motion (ex-Framer Motion) |
 | Routing | React Router *(à venir)* |
-| État serveur | TanStack React Query *(à venir)* |
+| État serveur | TanStack React Query *(à venir — cache applicatif)* |
 | État global | Zustand *(à venir)* |
 | Formulaires | React Hook Form + Zod *(à venir)* |
 | Temps réel | Socket.io-client *(à venir)* |
 | Cartes | Leaflet / React-Leaflet *(à venir)* |
 | i18n | i18next *(à venir)* |
 | Monitoring | Sentry *(à venir)* |
-| PWA | vite-plugin-pwa ✅ configuré |
+| PWA | vite-plugin-pwa ✅ configuré (cache assets/réseau via Workbox) |
+
+**Note sur le cache** : Workbox gère le cache réseau (assets statiques, réponses API en `NetworkFirst` sur courte durée) pour la performance et la résilience sur connexion faible. TanStack Query gérera le cache applicatif (données serveur : demandes, profils, statuts) une fois le back-end connecté. Pas de stratégie offline-first complète prévue pour le MVP — seule la saisie du formulaire de demande urgente aura un filet de sécurité local (sauvegarde ponctuelle si la connexion coupe en cours de saisie).
 
 ### Backend
 
@@ -92,16 +96,18 @@ src/
 ├── app/                    # Configuration globale (router, providers)
 ├── config/                 # Config transverse (rôles, routes, env)
 ├── features/               # Un dossier par fonctionnalité métier
-│   ├── landing/             # ✅ Landing page MVP (en cours)
-│   ├── demande-urgente/     # À venir
-│   ├── professionnel/       # À venir
-│   ├── suivi-demande/       # À venir
-│   ├── messagerie/          # À venir
-│   ├── auth/                 # À venir
+│   ├── landing/             # ✅ Landing page (terminée)
+│   ├── auth/                 # 🔜 Prochaine étape
+│   ├── demande-urgente/      # À venir
+│   ├── professionnel/        # À venir
+│   ├── suivi-demande/        # À venir
+│   ├── messagerie/           # À venir
 │   └── admin-dashboard/      # À venir
 ├── shared/
 │   ├── components/
 │   │   ├── ui/               # Généré par shadcn — ne pas éditer à la main
+│   │   ├── layout/
+│   │   │   └── Navbar.tsx    # Navigation globale, réutilisée hors landing
 │   │   ├── AnimatedSection.tsx
 │   │   └── StaggerGroup.tsx
 │   ├── hooks/
@@ -114,7 +120,7 @@ src/
 
 Chaque feature suit une organisation interne cohérente : `components/`, `hooks/`, `api/`, `types.ts`.
 
-La feature `landing/` est organisée en sections assemblées dans `LandingPage.tsx` : `Hero`, `TrustBanner`, `ProblemSection`, `HowItWorks`, `LegalDomainsGrid`, `AppShowcase`, `AudienceSection`, `TrustSecurity`, `FinalCta`, `Footer`.
+La feature `landing/` est organisée en sections assemblées dans `LandingPage.tsx` : `Navbar` (partagé), `Hero`, `TrustBanner`, `ProblemSection`, `HowItWorks`, `LegalDomainsGrid`, `AppShowcase`, `AudienceSection`, `TrustSecurity`, `FinalCta`, `Footer`.
 
 ## Convention de gestion d'état
 
@@ -140,6 +146,8 @@ Signature visuelle : un radar de dispatch animé (`RadarPulse`), représentant l
 ## PWA
 
 L'application est configurée en Progressive Web App : installation sur mobile et desktop, notifications push, et mise en cache pour un fonctionnement correct sur connexion faible.
+
+**Point d'attention pour la suite** : une fois le routing en place, envisager d'ajuster `start_url` selon le statut de connexion de l'utilisateur (écran d'accueil applicatif plutôt que la landing marketing complète pour un utilisateur qui a déjà installé l'app). Le champ `id: "/"` du manifest est déjà fixé pour garantir que ce changement futur ne casse pas l'installation existante des utilisateurs.
 
 ## Public cible
 

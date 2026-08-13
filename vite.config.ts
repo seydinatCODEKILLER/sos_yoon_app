@@ -13,6 +13,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
       manifest: {
+        id: "/",
         name: "SOS Yoon",
         short_name: "SOS Yoon",
         description:
