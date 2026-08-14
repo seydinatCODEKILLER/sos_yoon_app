@@ -94,16 +94,14 @@ export function Hero() {
 
           <motion.h1
             variants={item}
-            className="font-display text-4xl leading-tight md:text-6xl"
+            className="font-display text-4xl leading-tight text-balance md:text-6xl"
           >
-            Le bon professionnel du droit,
-            <br />
-            en quelques minutes.
+            Le bon professionnel du droit, en quelques minutes.
           </motion.h1>
 
           <motion.p
             variants={item}
-            className="mt-6 max-w-md text-lg text-paper/80"
+            className="mt-6 max-w-md text-lg text-paper/80 text-balance"
           >
             Avocat, huissier, notaire ou juriste-conseil : décrivez votre
             situation, nous trouvons le professionnel disponible le plus proche
