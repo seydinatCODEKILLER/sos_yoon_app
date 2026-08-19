@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { Mic, Filter, Handshake, Radar } from "lucide-react";
 import { AnimatedSection } from "@/shared/components/AnimatedSection";
 import { StaggerGroup, StaggerItem } from "@/shared/components/StaggerGroup";
+import { Highlighter } from "@/shared/components/ui/highlighter";
 
 const steps = [
   {
@@ -40,52 +41,47 @@ const steps = [
 
 export function HowItWorks() {
   return (
-    <section id="comment-ca-marche" className="bg-paper py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
+    <section
+      id="comment-ca-marche"
+      className="relative overflow-hidden bg-paper py-24 md:py-32"
+    >
+      {/* pattern de fond — grille fine, écho discret du Hero */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-[0.35]"
+        style={{
+          backgroundImage:
+            "linear-gradient(var(--color-ink) 1px, transparent 1px), linear-gradient(90deg, var(--color-ink) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+          maskImage:
+            "radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 75%)",
+          WebkitMaskImage:
+            "radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 75%)",
+          opacity: 0.035,
+        }}
+      />
+
+      <div className="relative mx-auto max-w-6xl px-6">
         <AnimatedSection>
-          <p className="mb-3 text-sm font-medium uppercase tracking-widest text-brass">
-            Le parcours
-          </p>
+          <Highlighter
+            action="underline"
+            color="var(--color-signal)"
+            strokeWidth={3}
+          >
+            <p className="mb-3 text-sm font-medium uppercase tracking-widest text-brass">
+              Le parcours
+            </p>{" "}
+          </Highlighter>
+
           <h2 className="max-w-xl font-display text-3xl leading-tight text-ink md:text-5xl">
             De l'urgence à la solution, en quatre étapes.
           </h2>
         </AnimatedSection>
 
         <div className="relative mt-20">
-          {/* ligne de transmission — se dessine au scroll, desktop uniquement */}
-          <div
-            aria-hidden
-            className="absolute left-[12.5%] right-[12.5%] top-6 hidden h-px md:block"
-          >
-            <div className="absolute inset-0 bg-ink/10" />
-            <motion.div
-              className="absolute inset-y-0 left-0 bg-linear-to-r from-brass via-signal to-brass"
-              style={{ transformOrigin: "left" }}
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{
-                duration: 1.4,
-                delay: 0.3,
-                ease: [0.21, 0.47, 0.32, 0.98],
-              }}
-            />
-            <motion.div
-              className="absolute top-1/2 h-2 w-2 rounded-full bg-signal shadow-[0_0_12px_2px_var(--color-signal)]"
-              style={{ translateY: "-50%" }}
-              animate={{ left: ["0%", "100%"] }}
-              transition={{
-                duration: 3.5,
-                repeat: Infinity,
-                ease: "linear",
-                delay: 1.7,
-              }}
-            />
-          </div>
-
           <StaggerGroup className="grid grid-cols-1 gap-6 md:grid-cols-4">
-            {steps.map((step) => (
-              <StaggerItem key={step.number}>
+            {steps.map((step, i) => (
+              <StaggerItem key={step.number} className="relative">
                 <div
                   className={`group relative flex h-full flex-col overflow-hidden rounded-3xl border p-6 transition-all duration-300 hover:-translate-y-1 md:p-7 ${
                     step.highlight
@@ -134,6 +130,33 @@ export function HowItWorks() {
                     </p>
                   </div>
                 </div>
+
+                {/* connecteur — uniquement dans l'espace entre deux cartes, jamais par-dessus */}
+                {i < steps.length - 1 && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute top-1/2 -right-6 z-10 hidden h-px w-6 -translate-y-1/2 md:block"
+                  >
+                    <motion.div
+                      className="absolute inset-0 origin-left bg-linear-to-r from-signal/40 to-signal/40"
+                      initial={{ scaleX: 0 }}
+                      whileInView={{ scaleX: 1 }}
+                      viewport={{ once: true, margin: "-80px" }}
+                      transition={{
+                        duration: 0.5,
+                        delay: 0.4 + i * 0.15,
+                        ease: [0.21, 0.47, 0.32, 0.98],
+                      }}
+                    />
+                    <motion.span
+                      className="absolute left-1/2 top-1/2 h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal shadow-[0_0_8px_2px_var(--color-signal)]"
+                      initial={{ opacity: 0, scale: 0 }}
+                      whileInView={{ opacity: 1, scale: 1 }}
+                      viewport={{ once: true, margin: "-80px" }}
+                      transition={{ duration: 0.3, delay: 0.75 + i * 0.15 }}
+                    />
+                  </div>
+                )}
               </StaggerItem>
             ))}
           </StaggerGroup>

@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { ShieldCheck, Lock, BadgeCheck } from "lucide-react";
 import { AnimatedSection } from "@/shared/components/AnimatedSection";
 import { StaggerGroup, StaggerItem } from "@/shared/components/StaggerGroup";
+import { Highlighter } from "@/shared/components/ui/highlighter";
 
 const points = [
   {
@@ -26,7 +27,10 @@ const points = [
 
 export function TrustSecurity() {
   return (
-    <section id="confiance" className="relative overflow-hidden bg-paper py-24 md:py-32">
+    <section
+      id="confiance"
+      className="relative overflow-hidden bg-paper py-24 md:py-32"
+    >
       {/* filigrane façon papier sécurisé */}
       <svg
         aria-hidden
@@ -62,14 +66,21 @@ export function TrustSecurity() {
             Confiance
           </p>
           <h2 className="font-display text-3xl leading-tight text-ink md:text-5xl">
-            Une urgence juridique reste une affaire privée.
+            Une urgence juridique reste une affaire
+            <Highlighter
+              action="highlight"
+              color="var(--color-signal)"
+              strokeWidth={3}
+            >
+              privée.
+            </Highlighter>
           </h2>
         </AnimatedSection>
 
-        <StaggerGroup className="mt-16 grid grid-cols-1 gap-8 sm:grid-cols-3">
+        <StaggerGroup className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-3">
           {points.map((point, i) => (
             <StaggerItem key={point.title}>
-              <div className="relative rounded-3xl border border-ink/10 bg-paper/60 p-8 backdrop-blur-sm">
+              <div className="group relative rounded-3xl border border-ink/10 bg-paper/60 p-8 backdrop-blur-sm transition-all duration-300 hover:-translate-y-1 hover:border-brass/30 hover:bg-paper/80 hover:shadow-[0_24px_48px_-28px_var(--color-brass)]">
                 {/* cachet de cire */}
                 <motion.div
                   className="relative inline-flex"
@@ -82,7 +93,7 @@ export function TrustSecurity() {
                     ease: [0.34, 1.56, 0.64, 1],
                   }}
                 >
-                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-brass/70 bg-brass/10">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-brass/70 bg-brass/10 transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-105">
                     <div className="flex h-12 w-12 items-center justify-center rounded-full border border-dashed border-brass/50">
                       <point.icon
                         size={20}
@@ -103,7 +114,7 @@ export function TrustSecurity() {
                 {/* coin plié, façon document authentifié */}
                 <div
                   aria-hidden
-                  className="absolute right-0 top-0 h-6 w-6 rounded-tr-3xl"
+                  className="absolute right-0 top-0 h-6 w-6 rounded-tr-3xl transition-opacity duration-300 group-hover:opacity-30"
                   style={{
                     background:
                       "linear-gradient(135deg, transparent 50%, var(--color-brass) 50%)",

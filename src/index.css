@@ -126,7 +126,13 @@
   }
   html {
     @apply font-sans;
-    scroll-padding-top: 5rem; /* ≈ hauteur de la navbar au repos */
+    scroll-padding-top: 6rem; /* hauteur du navbar flottant (~3.5rem) + offset top-4 (1rem) + marge de respiration */
+  }
+
+  @media (min-width: 768px) {
+    html {
+      scroll-padding-top: 7rem; /* + offset top-6 (1.5rem) sur desktop */
+    }
   }
 }
 
