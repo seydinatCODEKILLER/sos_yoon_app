@@ -6,7 +6,10 @@ import {
   useMotionValueEvent,
 } from "motion/react";
 import { Menu, X } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/shared/components/ui/button";
+import { getSpaceRoute } from "@/shared/lib/getSpaceRoute";
+import { useAuthStore } from "@/features/auth/store/auth.store";
 
 const navLinks = [
   { label: "Comment ça marche", href: "#comment-ca-marche" },
@@ -19,6 +22,23 @@ export function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { scrollY } = useScroll();
+  const navigate = useNavigate();
+
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+
+  const ctaLabel = isAuthenticated
+    ? "Accéder à mon espace"
+    : "Décrire mon urgence";
+
+  const handleCtaClick = () => {
+    setMobileOpen(false);
+    if (isAuthenticated && user) {
+      navigate(getSpaceRoute(user.role));
+    } else {
+      navigate("/login");
+    }
+  };
 
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40);
@@ -77,9 +97,10 @@ export function Navbar() {
           <div className="hidden lg:block">
             <Button
               size="sm"
+              onClick={handleCtaClick}
               className="bg-signal text-ink hover:bg-signal/90 whitespace-nowrap"
             >
-              Décrire mon urgence
+              {ctaLabel}
             </Button>
           </div>
 
@@ -119,9 +140,9 @@ export function Navbar() {
                 <Button
                   size="sm"
                   className="mt-2 bg-signal text-ink hover:bg-signal/90"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={handleCtaClick}
                 >
-                  Décrire mon urgence
+                  {ctaLabel}
                 </Button>
               </div>
             </motion.div>
