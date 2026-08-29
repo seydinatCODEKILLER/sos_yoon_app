@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, type Variants } from "motion/react";
 import { Button } from "@/shared/components/ui/button";
 
@@ -15,20 +16,63 @@ const item: Variants = {
   },
 };
 
+interface NetworkInformation {
+  saveData?: boolean;
+  effectiveType?: "slow-2g" | "2g" | "3g" | "4g";
+}
+
+interface NavigatorWithConnection extends Navigator {
+  connection?: NetworkInformation;
+}
+
+// Ne pas charger la vidéo si : mouvement réduit demandé,
+// data saver activé, ou connexion lente (2G/3G)
+function computeShouldLoadVideo(): boolean {
+  if (typeof window === "undefined") return true;
+
+  const prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)",
+  ).matches;
+
+  const connection = (navigator as NavigatorWithConnection).connection;
+  const isSlowConnection =
+    connection?.saveData === true ||
+    ["slow-2g", "2g", "3g"].includes(connection?.effectiveType ?? "");
+
+  return !prefersReducedMotion && !isSlowConnection;
+}
+
+function useShouldLoadVideo() {
+  const [shouldLoad] = useState(computeShouldLoadVideo);
+  return shouldLoad;
+}
+
 export function Hero() {
+  const shouldLoadVideo = useShouldLoadVideo();
+
   return (
     <section className="relative isolate overflow-hidden bg-ink text-paper min-h-[92vh] md:min-h-screen flex items-center">
-      {/* vidéo de fond */}
-      <video
-        className="absolute inset-0 h-full w-full object-cover"
-        src="/videos/justice-hero.mp4"
-        poster="/videos/justice-hero-poster.jpg"
-        autoPlay
-        muted
-        loop
-        playsInline
-        preload="auto"
-      />
+      {/* vidéo de fond (ou poster seul si data limitée / reduced-motion) */}
+      {shouldLoadVideo ? (
+        <video
+          className="absolute inset-0 h-full w-full object-cover"
+          poster="/videos/justice-hero-poster.jpg"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+        >
+          <source src="/videos/justice-hero.webm" type="video/webm" />
+          <source src="/videos/justice-hero-optimized.mp4" type="video/mp4" />
+        </video>
+      ) : (
+        <img
+          src="/videos/justice-hero-poster.jpg"
+          alt=""
+          className="absolute inset-0 h-full w-full object-cover"
+        />
+      )}
 
       {/* overlays pour la lisibilité du texte */}
       <div className="absolute inset-0 bg-ink/35" />
