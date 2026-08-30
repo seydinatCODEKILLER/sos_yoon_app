@@ -3,11 +3,11 @@ import type { UserRole } from "@/types/user.types";
 export function getSpaceRoute(role: UserRole): string {
   switch (role) {
     case "ADMIN":
-      return "/dashboard";
+      return "/admin";
     case "PROFESSIONNEL":
-      return "/dashboard";
+      return "/pro";
     case "USER":
     default:
-      return "/dashboard";
+      return "/app";
   }
 }
