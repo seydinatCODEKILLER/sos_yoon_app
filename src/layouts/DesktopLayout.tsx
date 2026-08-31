@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/shared/components/ui/sidebar";
 import type { NavItem } from "@/config/navigation";
-import { Sidebar } from "./Sidebar";
+import { AppSidebar } from "./AppSidebar";
 
 interface DesktopLayoutProps {
   navItems: NavItem[];
@@ -9,9 +14,14 @@ interface DesktopLayoutProps {
 
 export function DesktopLayout({ navItems, children }: DesktopLayoutProps) {
   return (
-    <div className="flex min-h-screen bg-paper">
-      <Sidebar navItems={navItems} />
-      <main className="flex-1 overflow-y-auto">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar navItems={navItems} />
+      <SidebarInset>
+        <header className="flex h-14 items-center gap-2 border-b border-border px-4">
+          <SidebarTrigger />
+        </header>
+        <main className="flex-1 overflow-y-auto bg-paper">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
