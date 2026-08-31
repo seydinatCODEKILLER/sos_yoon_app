@@ -10,6 +10,7 @@ import { NewRequestPage } from "@/features/demandes/pages/NewRequestPage";
 import { RequestsListPage } from "@/features/demandes/pages/RequestsListPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { UserProfilePage } from "@/features/profil/pages/UserProfilePage";
+import { NotFoundPage } from "@/shared/components/NotFoundPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -31,4 +32,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  { path: "*", element: <NotFoundPage /> },
 ]);
