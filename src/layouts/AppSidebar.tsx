@@ -41,7 +41,7 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        <div className="flex h-12 items-center justify-center px-2 group-data-[collapsible=icon]:px-0">
+        <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
           {/* Logo complet — masqué en mode réduit */}
           <span className="font-display text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
             SOS Yoon
