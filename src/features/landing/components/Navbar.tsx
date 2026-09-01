@@ -52,11 +52,15 @@ export function Navbar() {
   }, [mobileOpen]);
 
   return (
-    <header className="fixed inset-x-0 top-4 z-50 px-4 md:top-6">
+    <header
+      className={`fixed inset-x-0 top-0 z-50 transition-[padding] duration-300 ${
+        scrolled ? "px-0" : "px-4 md:top-6"
+      }`}
+    >
       <motion.div
         animate={{
           backgroundColor: scrolled
-            ? "rgba(11,18,32,0.32)"
+            ? "rgba(11,18,32,0.55)"
             : "rgba(11,18,32,0.16)",
           borderColor: scrolled
             ? "rgba(250,247,242,0.16)"
@@ -64,9 +68,11 @@ export function Navbar() {
           boxShadow: scrolled
             ? "0 12px 40px -12px rgba(0,0,0,0.5)"
             : "0 8px 24px -12px rgba(0,0,0,0.3)",
+          borderRadius: scrolled ? 0 : 8,
+          maxWidth: scrolled ? "100%" : "64rem", // 64rem ≈ max-w-5xl
         }}
         transition={{ duration: 0.4, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="mx-auto max-w-5xl rounded border backdrop-blur-xl"
+        className="mx-auto border backdrop-blur-xl"
         style={{
           WebkitBackdropFilter: "blur(20px)",
         }}
