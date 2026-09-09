@@ -1,13 +1,14 @@
 import { api } from "@/shared/lib/apiClient";
 import type { User } from "@/types/user.types";
 import type {
-  ApiSuccessResponse,
   AuthResponse,
   LoginPayload,
   RefreshResponse,
   RegisterPayload,
   UpdateProfilePayload,
 } from "../types/types";
+import type { ApiSuccessResponse } from "@/types/api.types";
+
 
 export const authApi = {
   register: async (payload: RegisterPayload): Promise<AuthResponse> => {

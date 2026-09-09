@@ -22,6 +22,7 @@ import { AdminProfessionnelsPage } from "@/features/admin/pages/AdminProfessionn
 import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage";
 import { AdminRequestsPage } from "@/features/admin/pages/AdminRequestsPage";
 import { AdminStatsPage } from "@/features/admin/pages/AdminStatsPage";
+import { RequestDetailPage } from "@/features/demandes/pages/RequestDetailPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
         children: [
           { path: "/app", element: <UserHomePage /> },
           { path: "/app/demandes/nouvelle", element: <NewRequestPage /> },
+          { path: "/app/demandes/:id", element: <RequestDetailPage /> },
           { path: "/app/demandes", element: <RequestsListPage /> },
           { path: "/app/notifications", element: <NotificationsPage /> },
           { path: "/app/profil", element: <UserProfilePage /> },
