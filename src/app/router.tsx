@@ -1,5 +1,4 @@
 import { createBrowserRouter } from "react-router-dom";
-import { LandingPage } from "@/features/landing";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
@@ -23,9 +22,10 @@ import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage";
 import { AdminRequestsPage } from "@/features/admin/pages/AdminRequestsPage";
 import { AdminStatsPage } from "@/features/admin/pages/AdminStatsPage";
 import { RequestDetailPage } from "@/features/demandes/pages/RequestDetailPage";
+import { RootRedirect } from "@/shared/components/RootRedirect";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <LandingPage /> },
+  { path: "/", element: <RootRedirect /> },
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterPage /> },
 

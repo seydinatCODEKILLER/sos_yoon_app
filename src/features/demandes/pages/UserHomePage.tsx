@@ -25,6 +25,7 @@ const container: Variants = {
   hidden: {},
   visible: { transition: { staggerChildren: 0.08 } },
 };
+
 const item: Variants = {
   hidden: { opacity: 0, y: 12 },
   visible: {

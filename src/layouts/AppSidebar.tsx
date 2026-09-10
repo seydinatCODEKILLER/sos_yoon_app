@@ -55,22 +55,34 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground/40">
+            Espace
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map(({ label, path, icon: Icon }) => (
-                <SidebarMenuItem key={path}>
-                  <SidebarMenuButton
-                    render={<NavLink to={path} end />}
-                    isActive={location.pathname === path}
-                    tooltip={label}
-                    className="text-sidebar-foreground/70 hover:bg-signal/15 hover:text-signal data-[active=true]:bg-signal data-[active=true]:font-medium data-[active=true]:text-ink"
-                  >
-                    <Icon />
-                    <span>{label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navItems.map(({ label, path, icon: Icon }) => {
+                const isActive = location.pathname === path;
+                return (
+                  <SidebarMenuItem key={path} className="relative">
+                    {/* Barre d'accent — visible uniquement sur l'item actif */}
+                    <span
+                      aria-hidden
+                      className={`absolute -left-2 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-signal transition-opacity group-data-[collapsible=icon]:hidden ${
+                        isActive ? "opacity-100" : "opacity-0"
+                      }`}
+                    />
+                    <SidebarMenuButton
+                      render={<NavLink to={path} end />}
+                      isActive={isActive}
+                      tooltip={label}
+                      className="text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:font-semibold data-[active=true]:text-sidebar-foreground"
+                    >
+                      <Icon />
+                      <span>{label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -88,11 +100,15 @@ export function AppSidebar({ navItems }: AppSidebarProps) {
                   />
                 }
               >
-                <Avatar className="h-8 w-8 rounded-md">
-                  <AvatarFallback className="rounded-md bg-signal font-medium text-ink">
-                    {user ? getInitials(user.prenom, user.nom) : "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <div className="relative">
+                  <Avatar className="h-8 w-8 rounded-md">
+                    <AvatarFallback className="rounded-md bg-signal font-medium text-ink">
+                      {user ? getInitials(user.prenom, user.nom) : "?"}
+                    </AvatarFallback>
+                  </Avatar>
+                  {/* Pastille de statut en ligne */}
+                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
+                </div>
                 <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
                   <span className="truncate font-medium">
                     {user ? `${user.prenom} ${user.nom}` : "Utilisateur"}
