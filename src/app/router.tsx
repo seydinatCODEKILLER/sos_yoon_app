@@ -22,13 +22,26 @@ import { AdminUsersPage } from "@/features/admin/pages/AdminUsersPage";
 import { AdminRequestsPage } from "@/features/admin/pages/AdminRequestsPage";
 import { AdminStatsPage } from "@/features/admin/pages/AdminStatsPage";
 import { RequestDetailPage } from "@/features/demandes/pages/RequestDetailPage";
-import { RootRedirect } from "@/shared/components/RootRedirect";
+import { RootGate } from "@/shared/components/RootGate";
+import { RequestChoicePage } from "@/features/onboarding/pages/RequestChoicePage";
+import { PagePlaceholder } from "@/shared/components/PagePlaceholder";
+import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePage";
 
 export const router = createBrowserRouter([
-  { path: "/", element: <RootRedirect /> },
+  { path: "/", element: <RootGate /> },
+  { path: "/demande", element: <RequestChoicePage /> },
+  {
+    path: "/demande/vocal",
+    element: <PagePlaceholder title="Demande vocale" />,
+  },
+  {
+    path: "/chatbot",
+    element: <PagePlaceholder title="Chatbot d'orientation" />,
+  },
   { path: "/login", element: <LoginPage /> },
-  { path: "/register", element: <RegisterPage /> },
-
+  { path: "/register", element: <RegisterChoicePage /> },
+  { path: "/register/particulier", element: <PagePlaceholder title="Inscription particulier" /> },
+  { path: "/register/professionnel", element: <PagePlaceholder title="Inscription professionnel" /> },
   {
     element: <ProtectedRoute allowedRoles={["USER"]} />,
     children: [

@@ -1,7 +1,9 @@
+"use client"
+
 import * as React from "react"
 import { Dialog as SheetPrimitive } from "@base-ui/react/dialog"
+import { cn } from "cn"
 
-import { cn } from "@/shared/lib/utils"
 import { Button } from "@/shared/components/ui/button"
 import { XIcon } from "lucide-react"
 
