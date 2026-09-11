@@ -8,7 +8,7 @@ export function useRegisterParticulier() {
   async function submit(values: RegisterParticulierValues) {
     setIsSubmitting(true);
     try {
-      // TODO: brancher sur l'API réelle une fois le back-end connecté
+      // TODO: brancher sur l'API réelle une fois le back-end connectés
       await new Promise((resolve) => setTimeout(resolve, 600));
       toast.success(
         "Code de validation envoyé",
