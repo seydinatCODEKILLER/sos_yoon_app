@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, MessageCircleQuestion } from "lucide-react";
+import { ArrowRight, LogIn, MessageCircleQuestion } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { AmbientBackground } from "@/shared/components/AmbientBackground";
 
 function Beacon({ onClick }: { onClick: () => void }) {
   const reduceMotion = useReducedMotion();
@@ -74,19 +75,54 @@ function MobileChatButton({ onClick }: { onClick: () => void }) {
   );
 }
 
+function RegisterButton({ onClick }: { onClick: () => void }) {
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onClick}
+      className="group h-auto w-full items-center justify-between gap-0.5 rounded-2xl border-brass/40 bg-white px-5 py-4 text-left hover:border-brass hover:bg-white"
+    >
+      <span className="flex flex-col gap-0.5">
+        <span className="font-display font-semibold text-ink">
+          Pas encore de compte ? Inscrivez-vous !
+        </span>
+        <span className="text-sm font-normal text-ink/50">
+          Particulier ou professionnel du droit
+        </span>
+      </span>
+      <ArrowRight className="h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1" />
+    </Button>
+  );
+}
+
 export function WelcomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden bg-paper">
-      <header className="flex items-center justify-between px-6 pt-6 md:px-12 md:pt-8">
+    <div className="relative flex h-dvh flex-col overflow-hidden bg-paper">
+      <AmbientBackground />
+
+      <header className="relative z-10 flex items-center justify-between px-6 pt-6 md:px-12 md:pt-8">
         <span className="font-display text-2xl font-bold text-ink">
           <span className="text-signal">SOS</span> Yoon
         </span>
-        <HeaderChatButton onClick={() => navigate("/chatbot")} />
+
+        <div className="flex items-center gap-4">
+          <HeaderChatButton onClick={() => navigate("/chatbot")} />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/login")}
+            className="h-9 gap-2 rounded-full border-ink/15 px-4 text-sm font-medium text-ink hover:bg-ink/5"
+          >
+            <LogIn className="h-4 w-4" />
+            Se connecter
+          </Button>
+        </div>
       </header>
 
-      <main className="flex flex-1 flex-col items-center justify-center px-6 pb-6 text-center md:px-12">
+      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-6 text-center md:px-12">
         <div className="flex w-full max-w-md flex-col items-center md:max-w-xl">
           <p className="text-ink/60">Bonjour 👋</p>
           <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-ink md:text-5xl">
@@ -103,46 +139,14 @@ export function WelcomePage() {
           </div>
         </div>
 
-        {/* Actions secondaires — mobile uniquement */}
-        <div className="mt-8 w-full max-w-md space-y-3 md:hidden">
-          <MobileChatButton onClick={() => navigate("/chatbot")} />
+        {/* Actions secondaires */}
+        <div className="mt-8 w-full max-w-md space-y-3">
+          {/* Chatbot — mobile uniquement (le lien est déjà dans le header en desktop) */}
+          <div className="md:hidden">
+            <MobileChatButton onClick={() => navigate("/chatbot")} />
+          </div>
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/register")}
-            className="group h-auto w-full items-center justify-between gap-0.5 rounded-2xl border-brass/40 bg-white px-5 py-4 text-left hover:border-brass hover:bg-white"
-          >
-            <span className="flex flex-col gap-0.5">
-              <span className="font-display font-semibold text-ink">
-                Pas encore de compte ? Inscrivez-vous !
-              </span>
-              <span className="text-sm font-normal text-ink/50">
-                Particulier ou professionnel du droit
-              </span>
-            </span>
-            <ArrowRight className="h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1" />
-          </Button>
-        </div>
-
-        {/* Inscription — desktop, sous le radar */}
-        <div className="mt-8 hidden w-full max-w-md md:block">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate("/register")}
-            className="group h-auto w-full items-center justify-between gap-0.5 rounded-2xl border-brass/40 bg-white px-5 py-4 text-left hover:border-brass hover:bg-white"
-          >
-            <span className="flex flex-col gap-0.5">
-              <span className="font-display font-semibold text-ink">
-                Pas encore de compte ? Inscrivez-vous !
-              </span>
-              <span className="text-sm font-normal text-ink/50">
-                Particulier ou professionnel du droit
-              </span>
-            </span>
-            <ArrowRight className="h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1" />
-          </Button>
+          <RegisterButton onClick={() => navigate("/register")} />
         </div>
       </main>
     </div>

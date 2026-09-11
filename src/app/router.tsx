@@ -1,6 +1,5 @@
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
-import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { AppLayout } from "@/layouts/AppLayout";
 
 import { UserHomePage } from "@/features/demandes/pages/UserHomePage";
@@ -27,6 +26,7 @@ import { PagePlaceholder } from "@/shared/components/PagePlaceholder";
 import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePage";
 import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticulierPage";
 import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
+import { LoginPage } from "@/features/auth/pages/LoginPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },

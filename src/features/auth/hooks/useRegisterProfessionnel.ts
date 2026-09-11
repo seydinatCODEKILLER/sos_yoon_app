@@ -5,10 +5,11 @@ import type { RegisterProfessionnelValues } from "../schema/registerProfessionne
 export function useRegisterProfessionnel() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function submit(values: RegisterProfessionnelValues) {
+  async function submit(_values: RegisterProfessionnelValues) {
     setIsSubmitting(true);
     try {
       // TODO: brancher sur l'API réelle (multipart/form-data pour le diplôme)
+      // -> ce sera `values` qui sera envoyé, d'où le typage conservé
       await new Promise((resolve) => setTimeout(resolve, 800));
       toast.success(
         "Demande d'inscription envoyée",
