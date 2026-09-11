@@ -30,6 +30,9 @@ export function RegisterProfessionnelForm() {
       nom: "",
       prenom: "",
       telephone: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       zoneIntervention: "",
       numeroOrdre: "",
     },
@@ -169,6 +172,67 @@ export function RegisterProfessionnelForm() {
         {step === 1 && (
           <>
             <div className="space-y-1.5">
+              <Label htmlFor="email" className="text-sm text-ink/70">
+                Adresse email
+              </Label>
+              <Input
+                id="email"
+                type="email"
+                autoComplete="email"
+                placeholder="fatou.ndiaye@exemple.com"
+                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
+                {...form.register("email")}
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-600">
+                  {form.formState.errors.email.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="password" className="text-sm text-ink/70">
+                Mot de passe
+              </Label>
+              <Input
+                id="password"
+                type="password"
+                autoComplete="new-password"
+                placeholder="8 caractères min., 1 majuscule, 1 chiffre"
+                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
+                {...form.register("password")}
+              />
+              {form.formState.errors.password && (
+                <p className="text-sm text-red-600">
+                  {form.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirmPassword" className="text-sm text-ink/70">
+                Confirmer le mot de passe
+              </Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                autoComplete="new-password"
+                placeholder="Ressaisissez votre mot de passe"
+                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
+                {...form.register("confirmPassword")}
+              />
+              {form.formState.errors.confirmPassword && (
+                <p className="text-sm text-red-600">
+                  {form.formState.errors.confirmPassword.message}
+                </p>
+              )}
+            </div>
+          </>
+        )}
+
+        {step === 2 && (
+          <>
+            <div className="space-y-1.5">
               <Label htmlFor="zoneIntervention" className="text-sm text-ink/70">
                 Zone d'intervention
               </Label>
@@ -220,7 +284,7 @@ export function RegisterProfessionnelForm() {
           </>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <div className="space-y-1.5">
             <Label htmlFor="diplome" className="text-sm text-ink/70">
               Diplôme (PDF, JPG ou PNG)
