@@ -1,7 +1,6 @@
 import { createBrowserRouter } from "react-router-dom";
 import { ProtectedRoute } from "@/shared/components/ProtectedRoute";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
-import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { AppLayout } from "@/layouts/AppLayout";
 
 import { UserHomePage } from "@/features/demandes/pages/UserHomePage";
@@ -27,6 +26,7 @@ import { RequestChoicePage } from "@/features/onboarding/pages/RequestChoicePage
 import { PagePlaceholder } from "@/shared/components/PagePlaceholder";
 import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePage";
 import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticulierPage";
+import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -42,7 +42,7 @@ export const router = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterChoicePage /> },
   { path: "/register/particulier", element: <RegisterParticulierPage /> },
-  { path: "/register/professionnel", element: <PagePlaceholder title="Inscription professionnel" /> },
+  { path: "/register/professionnel", element: <RegisterProfessionnelPage /> },
   {
     element: <ProtectedRoute allowedRoles={["USER"]} />,
     children: [

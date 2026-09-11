@@ -3,6 +3,7 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowLeft, ShieldCheck, Sparkles } from "lucide-react";
 import { AuthVisualPanel } from "@/shared/components/AuthVisualPanel";
 import { RegisterParticulierForm } from "../components/RegisterParticulierForm";
+import { CurvedDivider } from "@/shared/components/CurvedDivider";
 
 function FloatingBadge({
   icon: Icon,
@@ -62,6 +63,8 @@ export function RegisterParticulierPage() {
         <div className="pointer-events-none absolute top-0 right-0 h-full w-px bg-linear-to-b from-transparent via-ink/10 to-transparent" />
         <div className="pointer-events-none absolute top-1/2 right-0 h-40 w-px -translate-y-1/2 bg-signal/40 blur-sm" />
       </div>
+
+      <CurvedDivider />
 
       <div className="relative flex flex-col overflow-x-hidden overflow-y-auto px-6 py-10 md:py-16">
         <div

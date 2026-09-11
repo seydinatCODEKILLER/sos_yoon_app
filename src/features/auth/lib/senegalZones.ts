@@ -1,0 +1,16 @@
+export const SENEGAL_ZONES = [
+  "Dakar",
+  "Thiès",
+  "Diourbel",
+  "Fatick",
+  "Kaffrine",
+  "Kaolack",
+  "Kédougou",
+  "Kolda",
+  "Louga",
+  "Matam",
+  "Saint-Louis",
+  "Sédhiou",
+  "Tambacounda",
+  "Ziguinchor",
+] as const;
