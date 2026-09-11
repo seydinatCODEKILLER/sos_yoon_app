@@ -26,6 +26,7 @@ import { RootGate } from "@/shared/components/RootGate";
 import { RequestChoicePage } from "@/features/onboarding/pages/RequestChoicePage";
 import { PagePlaceholder } from "@/shared/components/PagePlaceholder";
 import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePage";
+import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticulierPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -40,7 +41,7 @@ export const router = createBrowserRouter([
   },
   { path: "/login", element: <LoginPage /> },
   { path: "/register", element: <RegisterChoicePage /> },
-  { path: "/register/particulier", element: <PagePlaceholder title="Inscription particulier" /> },
+  { path: "/register/particulier", element: <RegisterParticulierPage /> },
   { path: "/register/professionnel", element: <PagePlaceholder title="Inscription professionnel" /> },
   {
     element: <ProtectedRoute allowedRoles={["USER"]} />,

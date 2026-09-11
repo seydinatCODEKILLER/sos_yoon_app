@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "motion/react";
 import { Mic, PenLine, MessageCircle, ArrowLeft, ArrowRight } from "lucide-react";
 
 const options = [
@@ -51,6 +52,7 @@ const accentStyles = {
 
 export function RequestChoicePage() {
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
 
   return (
     <div className="min-h-dvh bg-paper px-6 py-8 md:px-12 md:py-12">
@@ -72,13 +74,16 @@ export function RequestChoicePage() {
         </p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {options.map(({ icon: Icon, title, description, to, accent }) => {
+          {options.map(({ icon: Icon, title, description, to, accent }, index) => {
             const styles = accentStyles[accent];
             return (
-              <button
+              <motion.button
                 key={to}
                 type="button"
                 onClick={() => navigate(to)}
+                initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, ease: "easeOut", delay: index * 0.08 }}
                 className={`group relative flex flex-col items-start gap-3 overflow-hidden rounded-2xl border border-ink/10 bg-white p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-1 md:gap-4 md:p-6 ${styles.border} ${styles.glow}`}
               >
                 <span
@@ -102,7 +107,7 @@ export function RequestChoicePage() {
                   Continuer
                   <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
                 </span>
-              </button>
+              </motion.button>
             );
           })}
         </div>
