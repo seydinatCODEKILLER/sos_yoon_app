@@ -100,7 +100,7 @@ export function WelcomePage() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative flex h-dvh flex-col overflow-hidden bg-paper">
+    <div className="relative flex min-h-dvh flex-col bg-paper">
       <AmbientBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 pt-6 md:px-12 md:pt-8">
@@ -122,8 +122,8 @@ export function WelcomePage() {
         </div>
       </header>
 
-      <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 pb-6 text-center md:px-12">
-        <div className="flex w-full max-w-md flex-col items-center md:max-w-xl">
+      <main className="relative z-10 flex flex-1 flex-col items-start justify-center px-6 pb-6 text-left md:items-center md:px-12 md:text-center">
+        <div className="flex w-full max-w-md flex-col items-start md:max-w-xl md:items-center">
           <p className="text-ink/60">Bonjour 👋</p>
           <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-ink md:text-5xl">
             Quelle est votre urgence aujourd'hui ?
@@ -134,7 +134,7 @@ export function WelcomePage() {
             juriste-conseil.
           </p>
 
-          <div className="mt-8 md:mt-10">
+          <div className="mt-8 self-center md:mt-10">
             <Beacon onClick={() => navigate("/demande")} />
           </div>
         </div>

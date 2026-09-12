@@ -24,23 +24,6 @@ export function LoginPage() {
       </div>
 
       <div className="relative flex flex-col overflow-x-hidden overflow-y-auto px-6 py-10 md:py-16">
-        {/* fonds — quadrillage + points + blob */}
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.06]"
-          style={{
-            backgroundImage:
-              "linear-gradient(var(--color-ink) 1px, transparent 1px), linear-gradient(90deg, var(--color-ink) 1px, transparent 1px)",
-            backgroundSize: "48px 48px",
-          }}
-        />
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.12]"
-          style={{
-            backgroundImage:
-              "radial-gradient(var(--color-ink) 1px, transparent 1px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
         <motion.div
           className="pointer-events-none absolute top-1/3 right-0 h-72 w-72 rounded-full bg-signal/10 blur-[100px]"
           animate={{ x: [0, -15, 0], y: [0, 20, 0] }}
@@ -84,16 +67,16 @@ export function LoginPage() {
             </div>
 
             <Tabs defaultValue="particulier" className="mt-8">
-              <TabsList className="grid w-full grid-cols-2 rounded-full bg-ink/5 p-1">
+              <TabsList className="grid h-12 w-full grid-cols-2 rounded-full bg-ink/5 p-1.5">
                 <TabsTrigger
                   value="particulier"
-                  className="rounded-full text-sm data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
+                  className="rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
                 >
                   Particulier
                 </TabsTrigger>
                 <TabsTrigger
                   value="professionnel"
-                  className="rounded-full text-sm data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
+                  className="rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
                 >
                   Professionnel
                 </TabsTrigger>
