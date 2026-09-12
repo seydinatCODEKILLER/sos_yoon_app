@@ -91,7 +91,7 @@ function RegisterButton({ onClick }: { onClick: () => void }) {
           Particulier ou professionnel du droit
         </span>
       </span>
-      <ArrowRight className="h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1" />
+      <ArrowRight className="hidden h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1 md:block" />
     </Button>
   );
 }

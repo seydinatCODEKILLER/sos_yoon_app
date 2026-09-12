@@ -67,16 +67,16 @@ export function LoginPage() {
             </div>
 
             <Tabs defaultValue="particulier" className="mt-8">
-              <TabsList className="grid h-12 w-full grid-cols-2 rounded-full bg-ink/5 p-1.5">
+              <TabsList className="grid h-12 w-full grid-cols-2 items-stretch rounded-full bg-ink/5 p-1.5">
                 <TabsTrigger
                   value="particulier"
-                  className="rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
+                  className="h-full rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
                 >
                   Particulier
                 </TabsTrigger>
                 <TabsTrigger
                   value="professionnel"
-                  className="rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
+                  className="h-full rounded-full text-base data-[state=active]:bg-white data-[state=active]:text-ink data-[state=active]:shadow-sm"
                 >
                   Professionnel
                 </TabsTrigger>
