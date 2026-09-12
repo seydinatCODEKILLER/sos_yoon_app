@@ -114,15 +114,18 @@ export function WelcomePage() {
             type="button"
             variant="outline"
             onClick={() => navigate("/login")}
-            className="h-9 gap-2 rounded-full border-ink/15 px-4 text-sm font-medium text-ink hover:bg-ink/5"
+            aria-label="Se connecter"
+            className="h-9 w-9 rounded-full border-ink/15 p-0 text-ink hover:bg-ink/5 md:w-auto md:gap-2 md:px-4"
           >
             <LogIn className="h-4 w-4" />
-            Se connecter
+            <span className="hidden text-sm font-medium md:inline">
+              Se connecter
+            </span>
           </Button>
         </div>
       </header>
 
-      <main className="relative z-10 flex flex-1 flex-col items-start justify-center px-6 pb-6 text-left md:items-center md:px-12 md:text-center">
+      <main className="relative z-10 flex flex-1 flex-col items-start justify-center px-6 pt-8 pb-6 text-left md:items-center md:px-12 md:pt-0 md:text-center">
         <div className="flex w-full max-w-md flex-col items-start md:max-w-xl md:items-center">
           <p className="text-ink/60">Bonjour 👋</p>
           <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-ink md:text-5xl">
@@ -141,7 +144,6 @@ export function WelcomePage() {
 
         {/* Actions secondaires */}
         <div className="mt-8 w-full max-w-md space-y-3">
-          {/* Chatbot — mobile uniquement (le lien est déjà dans le header en desktop) */}
           <div className="md:hidden">
             <MobileChatButton onClick={() => navigate("/chatbot")} />
           </div>
