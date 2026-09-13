@@ -27,6 +27,7 @@ import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePa
 import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticulierPage";
 import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
+import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -43,6 +44,7 @@ export const router = createBrowserRouter([
   { path: "/register", element: <RegisterChoicePage /> },
   { path: "/register/particulier", element: <RegisterParticulierPage /> },
   { path: "/register/professionnel", element: <RegisterProfessionnelPage /> },
+  { path: "/verification-otp", element: <VerifyOtpPage /> },
   {
     element: <ProtectedRoute allowedRoles={["USER"]} />,
     children: [

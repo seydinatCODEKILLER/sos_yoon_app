@@ -9,8 +9,10 @@ import {
   type RegisterParticulierValues,
 } from "../schema/registerParticulier.schema";
 import { useRegisterParticulier } from "../hooks/useRegisterParticulier";
+import { useNavigate } from "react-router-dom";
 
 export function RegisterParticulierForm() {
+  const navigate = useNavigate();
   const { submit, isSubmitting } = useRegisterParticulier();
 
   const form = useForm<RegisterParticulierValues>({
@@ -18,7 +20,12 @@ export function RegisterParticulierForm() {
     defaultValues: { telephone: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => submit(values));
+    const onSubmit = form.handleSubmit(async (values) => {
+    const ok = await submit(values);
+    if (ok) {
+      navigate("/verification-otp", { state: { telephone: values.telephone } });
+    }
+  });
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-6">
