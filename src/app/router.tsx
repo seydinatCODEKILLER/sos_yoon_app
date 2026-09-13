@@ -28,14 +28,17 @@ import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticuli
 import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
+import { VoiceRequestPage } from "@/features/demandes/pages/VoiceRequestPage";
+import { RequestPhonePage } from "@/features/demandes/pages/RequestPhonePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
   { path: "/demande", element: <RequestChoicePage /> },
   {
     path: "/demande/vocal",
-    element: <PagePlaceholder title="Demande vocale" />,
+    element: <VoiceRequestPage />,
   },
+  { path: "/demande/telephone", element: <RequestPhonePage /> },
   {
     path: "/chatbot",
     element: <PagePlaceholder title="Chatbot d'orientation" />,

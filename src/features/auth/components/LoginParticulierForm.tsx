@@ -9,8 +9,10 @@ import {
   type LoginParticulierValues,
 } from "../schema/loginParticulier.schema";
 import { useLoginParticulier } from "../hooks/useLoginParticulier";
+import { useNavigate } from "react-router-dom";
 
 export function LoginParticulierForm() {
+  const navigate = useNavigate();
   const { submit, isSubmitting } = useLoginParticulier();
 
   const form = useForm<LoginParticulierValues>({
@@ -18,7 +20,12 @@ export function LoginParticulierForm() {
     defaultValues: { telephone: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => submit(values));
+    const onSubmit = form.handleSubmit(async (values) => {
+    const ok = await submit(values);
+    if (ok) {
+      navigate("/verification-otp", { state: { telephone: values.telephone } });
+    }
+  });
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-5">

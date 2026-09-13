@@ -1,31 +1,61 @@
 import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import { motion } from "motion/react";
 import { ArrowLeft } from "lucide-react";
-import { AuthVisualPanel } from "@/shared/components/AuthVisualPanel";
-import { CurvedDivider } from "@/shared/components/CurvedDivider";
 import { OtpForm } from "../components/OtpForm";
+import { useAuthStore } from "../store/auth.store";
+import { createMockParticulierUser, issueMockTokens } from "../lib/mockAuth";
+import { tokenManager } from "@/shared/lib/tokenManager";
+import { useVoiceDraftStore } from "@/features/demandes/store/voiceDraft.store";
+import { useSubmitVoiceRequest } from "@/features/demandes/hooks/useSubmitVoiceRequest";
+import { OtpVisualPanel } from "@/shared/components/OtpVisualPanel";
 
-type LocationState = { telephone?: string };
+type LocationState = {
+  telephone?: string;
+  pendingAction?: "voiceRequest";
+};
 
 export function VerifyOtpPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { telephone } = (location.state as LocationState) ?? {};
+  const { telephone, pendingAction } = (location.state as LocationState) ?? {};
+
+  const setUser = useAuthStore((s) => s.setUser);
+  const { mediaBlobUrl, clearDraft } = useVoiceDraftStore();
+  const { submit: submitVoiceRequest } = useSubmitVoiceRequest();
 
   if (!telephone) {
     return <Navigate to="/register/particulier" replace />;
   }
 
+  const verifiedTelephone: string = telephone;
+
+  async function handleVerified() {
+    // TODO: remplacer entièrement ce bloc par la réponse réelle de l'API
+    // de vérification OTP (token + user) une fois le back-end connecté.
+    const { accessToken, refreshToken } = issueMockTokens();
+    tokenManager.saveTokens(accessToken, refreshToken);
+    setUser(createMockParticulierUser(verifiedTelephone));
+
+    if (pendingAction === "voiceRequest" && mediaBlobUrl) {
+      const ok = await submitVoiceRequest(mediaBlobUrl);
+      clearDraft();
+      if (ok) {
+        navigate("/app/demandes/suivi");
+        return;
+      }
+    }
+
+    navigate("/app");
+  }
+
   return (
     <div className="grid min-h-screen bg-paper md:grid-cols-2">
       <div className="relative hidden md:block">
-        <AuthVisualPanel
+        <OtpVisualPanel
           title="Plus qu'une étape avant de commencer."
           subtitle="Entrez le code reçu par SMS pour activer votre compte et déposer votre première demande."
         />
       </div>
-
-      <CurvedDivider />
 
       <div className="relative flex flex-col overflow-x-hidden overflow-y-auto px-6 py-10 md:py-16">
         <motion.div
@@ -56,12 +86,17 @@ export function VerifyOtpPage() {
               </h1>
               <p className="mt-2 text-ink/60">
                 Entrez le code à 6 chiffres envoyé au{" "}
-                <span className="font-medium text-ink">{telephone}</span>
+                <span className="font-medium text-ink">
+                  {verifiedTelephone}
+                </span>
               </p>
             </div>
 
             <div className="mt-8 flex justify-center">
-              <OtpForm telephone={telephone} onVerified={() => navigate("/app")} />
+              <OtpForm
+                telephone={verifiedTelephone}
+                onVerified={handleVerified}
+              />
             </div>
           </motion.div>
         </div>
