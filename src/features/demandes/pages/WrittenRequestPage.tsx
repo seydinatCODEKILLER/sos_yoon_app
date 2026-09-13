@@ -1,14 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { ArrowLeft } from "lucide-react";
-import { VoiceRecorderPanel } from "../components/VoiceRecorderPanel";
+import { ArrowLeft, PenLine } from "lucide-react";
+import { WrittenRequestForm } from "../components/WrittenRequestForm";
 
-export function VoiceRequestPage() {
+export function WrittenRequestPage() {
   const navigate = useNavigate();
 
   return (
     <div className="relative min-h-dvh overflow-hidden bg-paper px-6 py-8 md:px-12 md:py-12">
-      {/* fonds — quadrillage + points + blob, cohérent avec le flux de demande */}
+      {/* fonds — quadrillage + points + blob, cohérent avec le flux d'inscription */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.06]"
         style={{
@@ -42,16 +42,20 @@ export function VoiceRequestPage() {
         </button>
 
         <div className="mt-10 text-center md:mt-14">
-          <h1 className="font-display text-2xl font-semibold leading-tight text-ink md:text-3xl">
-            Décrivez votre urgence à l'oral
+          <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-signal/10 text-signal">
+            <PenLine className="h-6 w-6" strokeWidth={1.75} />
+          </span>
+
+          <h1 className="mt-4 font-display text-2xl font-semibold leading-tight text-ink md:text-3xl">
+            Décrivez votre urgence
           </h1>
           <p className="mt-2 text-ink/60">
-            Parlez librement, en français ou dans votre langue locale.
+            Quelques mots suffisent pour orienter votre demande.
           </p>
         </div>
 
-        <div className="mt-10 flex flex-1 items-center justify-center pb-8">
-          <VoiceRecorderPanel />
+        <div className="mt-8 pb-8">
+          <WrittenRequestForm />
         </div>
       </div>
     </div>

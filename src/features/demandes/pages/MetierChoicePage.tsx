@@ -1,30 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { Mic, PenLine, MessageCircle, ArrowLeft, ArrowRight } from "lucide-react";
-
-const options = [
-  {
-    icon: Mic,
-    title: "Message vocal",
-    description: "Décrivez votre urgence à l'oral, en français ou en langue locale.",
-    to: "/demande/vocal",
-    accent: "signal",
-  },
-  {
-    icon: PenLine,
-    title: "Message écrit",
-    description: "Expliquez votre situation par écrit, on s'occupe du reste.",
-    to: "/demande/ecrit/metier",
-    accent: "brass",
-  },
-  {
-    icon: MessageCircle,
-    title: "Discuter avec le chatbot",
-    description: "Laissez-vous guider question par question si vous hésitez encore.",
-    to: "/chatbot",
-    accent: "ink",
-  },
-] as const;
+import { ArrowLeft, ArrowRight } from "lucide-react";
+import { METIERS } from "../lib/metiers";
 
 const accentStyles = {
   signal: {
@@ -50,9 +27,13 @@ const accentStyles = {
   },
 } as const;
 
-export function RequestChoicePage() {
+export function MetierChoicePage() {
   const navigate = useNavigate();
   const reduceMotion = useReducedMotion();
+
+function handleSelect(metier: string) {
+  navigate("/demande/ecrit", { state: { metier } });
+}
 
   return (
     <div className="min-h-dvh bg-paper px-6 py-8 md:px-12 md:py-12">
@@ -67,20 +48,20 @@ export function RequestChoicePage() {
 
       <div className="mx-auto max-w-md md:max-w-3xl">
         <h1 className="font-display text-2xl font-semibold leading-tight text-ink md:text-4xl">
-          Comment souhaitez-vous décrire votre urgence ?
+          De quel professionnel avez-vous besoin ?
         </h1>
         <p className="mt-2 text-ink/60 md:text-lg">
-          Choisissez la méthode qui vous convient le mieux.
+          Choisissez le métier qui correspond le mieux à votre situation.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
-          {options.map(({ icon: Icon, title, description, to, accent }, index) => {
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {METIERS.map(({ value, label, description, icon: Icon, accent }, index) => {
             const styles = accentStyles[accent];
             return (
               <motion.button
-                key={to}
+                key={value}
                 type="button"
-                onClick={() => navigate(to)}
+                onClick={() => handleSelect(value)}
                 initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35, ease: "easeOut", delay: index * 0.08 }}
@@ -94,7 +75,7 @@ export function RequestChoicePage() {
 
                 <span className="flex-1">
                   <span className="block font-display text-lg font-semibold text-ink">
-                    {title}
+                    {label}
                   </span>
                   <span className="mt-1 block text-sm leading-relaxed text-ink/60">
                     {description}

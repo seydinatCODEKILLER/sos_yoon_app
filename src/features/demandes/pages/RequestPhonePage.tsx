@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, MessageSquare, Smartphone } from "lucide-react";
@@ -13,6 +13,7 @@ import { useRequestOtp } from "@/features/auth/hooks/useRequestOtp";
 
 export function RequestPhonePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { submit, isSubmitting } = useRequestOtp();
 
   const form = useForm<RequestOtpValues>({
@@ -23,8 +24,10 @@ export function RequestPhonePage() {
   const onSubmit = form.handleSubmit(async (values) => {
     const ok = await submit(values.telephone);
     if (ok) {
+      const pendingAction = (location.state as { pendingAction?: string })
+        ?.pendingAction;
       navigate("/verification-otp", {
-        state: { telephone: values.telephone, pendingAction: "voiceRequest" },
+        state: { telephone: values.telephone, pendingAction },
       });
     }
   });
@@ -50,8 +53,8 @@ export function RequestPhonePage() {
             Un dernier pas
           </h1>
           <p className="mt-2 text-ink/60">
-            Entrez votre numéro pour recevoir un code et suivre le traitement
-            de votre demande.
+            Entrez votre numéro pour recevoir un code et suivre le traitement de
+            votre demande.
           </p>
         </div>
 
@@ -94,8 +97,8 @@ export function RequestPhonePage() {
           </Button>
 
           <p className="text-center text-xs text-ink/40">
-            Vos données restent confidentielles et servent uniquement au
-            suivi de votre demande.
+            Vos données restent confidentielles et servent uniquement au suivi
+            de votre demande.
           </p>
         </form>
       </div>

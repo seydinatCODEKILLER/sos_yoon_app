@@ -30,6 +30,8 @@ import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
 import { VoiceRequestPage } from "@/features/demandes/pages/VoiceRequestPage";
 import { RequestPhonePage } from "@/features/demandes/pages/RequestPhonePage";
+import { MetierChoicePage } from "@/features/demandes/pages/MetierChoicePage";
+import { WrittenRequestPage } from "@/features/demandes/pages/WrittenRequestPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -38,6 +40,8 @@ export const router = createBrowserRouter([
     path: "/demande/vocal",
     element: <VoiceRequestPage />,
   },
+  { path: "/demande/ecrit", element: <WrittenRequestPage /> },
+  { path: "/demande/ecrit/metier", element: <MetierChoicePage /> },
   { path: "/demande/telephone", element: <RequestPhonePage /> },
   {
     path: "/chatbot",

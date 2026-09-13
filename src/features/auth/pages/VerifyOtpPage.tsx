@@ -6,12 +6,14 @@ import { useAuthStore } from "../store/auth.store";
 import { createMockParticulierUser, issueMockTokens } from "../lib/mockAuth";
 import { tokenManager } from "@/shared/lib/tokenManager";
 import { useVoiceDraftStore } from "@/features/demandes/store/voiceDraft.store";
+import { useWrittenDraftStore } from "@/features/demandes/store/writtenDraft.store";
 import { useSubmitVoiceRequest } from "@/features/demandes/hooks/useSubmitVoiceRequest";
+import { useSubmitWrittenRequest } from "@/features/demandes/hooks/useSubmitWrittenRequest";
 import { OtpVisualPanel } from "@/shared/components/OtpVisualPanel";
 
 type LocationState = {
   telephone?: string;
-  pendingAction?: "voiceRequest";
+  pendingAction?: "voiceRequest" | "writtenRequest";
 };
 
 export function VerifyOtpPage() {
@@ -20,8 +22,10 @@ export function VerifyOtpPage() {
   const { telephone, pendingAction } = (location.state as LocationState) ?? {};
 
   const setUser = useAuthStore((s) => s.setUser);
-  const { mediaBlobUrl, clearDraft } = useVoiceDraftStore();
+  const { mediaBlobUrl, clearDraft: clearVoiceDraft } = useVoiceDraftStore();
+  const { message, metier, position, clearDraft: clearWrittenDraft } = useWrittenDraftStore();
   const { submit: submitVoiceRequest } = useSubmitVoiceRequest();
+  const { submit: submitWrittenRequest } = useSubmitWrittenRequest();
 
   if (!telephone) {
     return <Navigate to="/register/particulier" replace />;
@@ -38,7 +42,16 @@ export function VerifyOtpPage() {
 
     if (pendingAction === "voiceRequest" && mediaBlobUrl) {
       const ok = await submitVoiceRequest(mediaBlobUrl);
-      clearDraft();
+      clearVoiceDraft();
+      if (ok) {
+        navigate("/app/demandes/suivi");
+        return;
+      }
+    }
+
+    if (pendingAction === "writtenRequest" && message && metier && position) {
+      const ok = await submitWrittenRequest({ message, metier, position });
+      clearWrittenDraft();
       if (ok) {
         navigate("/app/demandes/suivi");
         return;
@@ -86,17 +99,12 @@ export function VerifyOtpPage() {
               </h1>
               <p className="mt-2 text-ink/60">
                 Entrez le code à 6 chiffres envoyé au{" "}
-                <span className="font-medium text-ink">
-                  {verifiedTelephone}
-                </span>
+                <span className="font-medium text-ink">{verifiedTelephone}</span>
               </p>
             </div>
 
             <div className="mt-8 flex justify-center">
-              <OtpForm
-                telephone={verifiedTelephone}
-                onVerified={handleVerified}
-              />
+              <OtpForm telephone={verifiedTelephone} onVerified={handleVerified} />
             </div>
           </motion.div>
         </div>
