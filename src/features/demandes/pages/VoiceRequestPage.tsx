@@ -7,7 +7,7 @@ export function VoiceRequestPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="relative min-h-dvh overflow-hidden bg-paper px-6 py-8 md:px-12 md:py-12">
+    <div className="relative flex min-h-dvh flex-col overflow-hidden bg-paper px-6 py-8 md:px-12 md:py-12">
       {/* fonds — quadrillage + points + blob, cohérent avec le flux de demande */}
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.06]"
@@ -31,17 +31,17 @@ export function VoiceRequestPage() {
         transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-lg flex-col md:min-h-[calc(100dvh-6rem)]">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="group flex items-center gap-2 self-start text-sm font-medium text-ink/60 transition hover:text-ink"
-        >
-          <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          Retour
-        </button>
+      <button
+        type="button"
+        onClick={() => navigate(-1)}
+        className="group relative z-10 flex items-center gap-2 text-sm font-medium text-ink/60 transition hover:text-ink"
+      >
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        Retour
+      </button>
 
-        <div className="mt-10 text-center md:mt-14">
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
+        <div className="text-center">
           <h1 className="font-display text-2xl font-semibold leading-tight text-ink md:text-3xl">
             Décrivez votre urgence à l'oral
           </h1>
@@ -50,7 +50,7 @@ export function VoiceRequestPage() {
           </p>
         </div>
 
-        <div className="mt-10 flex flex-1 items-center justify-center pb-8">
+        <div className="mt-10">
           <VoiceRecorderPanel />
         </div>
       </div>
