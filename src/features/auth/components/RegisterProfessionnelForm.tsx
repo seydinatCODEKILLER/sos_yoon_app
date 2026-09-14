@@ -19,6 +19,7 @@ import {
 } from "../schema/registerProfessionnel.schema";
 import { useRegisterProfessionnel } from "../hooks/useRegisterProfessionnel";
 import { SENEGAL_ZONES } from "../lib/senegalZones";
+import { METIERS } from "@/features/demandes/lib/metiers";
 
 export function RegisterProfessionnelForm() {
   const [step, setStep] = useState(0);
@@ -232,6 +233,38 @@ export function RegisterProfessionnelForm() {
 
         {step === 2 && (
           <>
+            <div className="space-y-1.5">
+              <Label htmlFor="metier" className="text-sm text-ink/70">
+                Profession
+              </Label>
+              <Controller
+                name="metier"
+                control={form.control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger
+                      id="metier"
+                      className="h-10 w-full border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
+                    >
+                      <SelectValue placeholder="Sélectionnez votre profession" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {METIERS.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {form.formState.errors.metier && (
+                <p className="text-sm text-red-600">
+                  {form.formState.errors.metier.message}
+                </p>
+              )}
+            </div>
+
             <div className="space-y-1.5">
               <Label htmlFor="zoneIntervention" className="text-sm text-ink/70">
                 Zone d'intervention

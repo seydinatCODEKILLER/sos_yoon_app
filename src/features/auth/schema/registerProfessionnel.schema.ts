@@ -1,7 +1,15 @@
 import { z } from "zod";
+import type { Metier } from "@/types/user.types";
 
 const MAX_FILE_SIZE_MB = 5;
 const ACCEPTED_FILE_TYPES = ["application/pdf", "image/png", "image/jpeg"];
+
+const METIER_VALUES: [Metier, ...Metier[]] = [
+  "AVOCAT",
+  "HUISSIER",
+  "NOTAIRE",
+  "JURISTE_CONSEIL",
+];
 
 export const registerProfessionnelSchema = z
   .object({
@@ -27,7 +35,12 @@ export const registerProfessionnelSchema = z
       .regex(/[A-Z]/, "Le mot de passe doit contenir au moins une majuscule")
       .regex(/[0-9]/, "Le mot de passe doit contenir au moins un chiffre"),
     confirmPassword: z.string().min(1, "Veuillez confirmer votre mot de passe"),
-    zoneIntervention: z.string().min(1, "Sélectionnez votre zone d'intervention"),
+    metier: z.enum(METIER_VALUES, {
+      error: () => "Sélectionnez votre profession",
+    }),
+    zoneIntervention: z
+      .string()
+      .min(1, "Sélectionnez votre zone d'intervention"),
     numeroOrdre: z
       .string()
       .min(3, "Numéro d'inscription à l'ordre invalide")
@@ -36,15 +49,15 @@ export const registerProfessionnelSchema = z
       .any()
       .refine(
         (files) => files instanceof FileList && files.length === 1,
-        "Le diplôme est requis"
+        "Le diplôme est requis",
       )
       .refine(
         (files) => files?.[0]?.size <= MAX_FILE_SIZE_MB * 1024 * 1024,
-        `Le fichier ne doit pas dépasser ${MAX_FILE_SIZE_MB} Mo`
+        `Le fichier ne doit pas dépasser ${MAX_FILE_SIZE_MB} Mo`,
       )
       .refine(
         (files) => ACCEPTED_FILE_TYPES.includes(files?.[0]?.type),
-        "Formats acceptés : PDF, JPG, PNG"
+        "Formats acceptés : PDF, JPG, PNG",
       ),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -70,7 +83,7 @@ export const REGISTER_PROFESSIONNEL_STEPS = [
   {
     id: "professionnel",
     title: "Informations professionnelles",
-    fields: ["zoneIntervention", "numeroOrdre"] as const,
+    fields: ["metier", "zoneIntervention", "numeroOrdre"] as const,
   },
   {
     id: "documents",
