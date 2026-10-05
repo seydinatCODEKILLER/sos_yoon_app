@@ -2,6 +2,7 @@ import { Navigate, Outlet } from "react-router-dom";
 import type { UserRole } from "@/types/user.types";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { AUTH_GUARD_ENABLED } from "@/shared/lib/featureFlags";
+import { FullScreenLoader } from "./FullScreenLoader";
 
 interface ProtectedRouteProps {
   allowedRoles?: UserRole[];
@@ -16,19 +17,12 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
     return <Outlet />;
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center bg-paper text-ink">
-        Chargement...
-      </div>
-    );
-  }
+if (isLoading) return <FullScreenLoader />;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-
-  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+  if (allowedRoles && (!user || !allowedRoles.includes(user.role))) {
     return <Navigate to="/" replace />;
   }
 

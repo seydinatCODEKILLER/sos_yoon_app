@@ -1,219 +1,238 @@
-import { Link } from "react-router-dom";
-import { motion, type Variants } from "motion/react";
-import {
-  Sun,
-  Moon,
-  Sunset,
-  Inbox,
-  BellOff,
-  Scale,
-  Gavel,
-  Stamp,
-  BookOpen,
-} from "lucide-react";
-
+import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { fr } from "date-fns/locale";
+import { ArrowRight, FileText, Bell, Mic } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { useMyDemandes } from "../hooks/useMyDemandes";
-import { useNotifications } from "@/features/notifications/hooks/useNotifications";
-import { DemandeListItem } from "../components/DemandeListItem";
-import { NotificationItem } from "@/features/notifications/components/NotificationItem";
-import { ActiveDemandeBanner } from "../components/ActiveDemandeBanner";
-import { HomeCtaCard } from "../components/HomeCtaCard";
-import { Skeleton } from "@/shared/components/ui/skeleton";
+import { getDemandeStatusInfo } from "../lib/demandeStatus";
+import { METIERS } from "../lib/metiers";
+import { NOTIFICATION_ICONS } from "@/features/notifications/lib/notificationIcons";
+import { useRecentNotifications } from "@/features/notifications/hooks/useRecentNotifications";
+import { useRecentDemandes } from "../hooks/useRecentDemandes";
 
-const container: Variants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
+const accentDot = {
+  ink: "bg-ink/40",
+  brass: "bg-brass",
+  signal: "bg-signal",
+  red: "bg-red-500",
 };
 
-const item: Variants = {
-  hidden: { opacity: 0, y: 12 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] },
-  },
-};
-
-const STATUTS_EN_COURS = [
-  "ENVOYEE",
-  "ANALYSE_EN_COURS",
-  "RECHERCHE_PROFESSIONNEL",
-  "EN_ATTENTE_ACCEPTATION",
-];
-
-const metiers = [
-  { label: "Avocat", icon: Scale },
-  { label: "Huissier", icon: Gavel },
-  { label: "Notaire", icon: Stamp },
-  { label: "Juriste-conseil", icon: BookOpen },
-];
-
-function getGreeting(): { text: string; Icon: typeof Sun } {
-  const hour = new Date().getHours();
-  if (hour < 12) return { text: "Bonjour", Icon: Sun };
-  if (hour < 18) return { text: "Bon après-midi", Icon: Sunset };
-  return { text: "Bonsoir", Icon: Moon };
+function getMetierLabel(metier: string | null) {
+  if (!metier) return "Analyse en cours";
+  return METIERS.find((m) => m.value === metier)?.label ?? metier;
 }
 
 export function UserHomePage() {
+  const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
-  const { text: greeting, Icon: GreetingIcon } = getGreeting();
+  const { data: demandes, isLoading: loadingDemandes } = useRecentDemandes();
+  const { data: notifData, isLoading: loadingNotifs } = useRecentNotifications();
 
-  const { data: demandesData, isLoading: demandesLoading } = useMyDemandes({
-    limit: 4,
-  });
-  const { data: notifData, isLoading: notifLoading } = useNotifications({
-    lu: false,
-    limit: 4,
-  });
-
-  const activeDemande = demandesData?.data.find((d) =>
-    STATUTS_EN_COURS.includes(d.statut),
-  );
+const demandesEnCours =
+  demandes?.filter((d) => getDemandeStatusInfo(d.statut).accent !== "signal")
+    .length ?? 0;
+  const notifsNonLues = notifData?.items.filter((n) => !n.lu).length ?? 0;
 
   return (
-    <motion.div
-      initial="hidden"
-      animate="visible"
-      variants={container}
-      className="mx-auto max-w-5xl px-4 py-10 sm:py-16"
-    >
-      {/* ── Bloc accueil : resserré et centré ─────────────── */}
-      <div className="mx-auto max-w-2xl">
-        <motion.div variants={item} className="text-center sm:text-left">
-          <span className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-signal/15 text-signal">
-            <GreetingIcon size={16} />
-          </span>
-          <h1 className="font-display text-3xl text-ink sm:text-4xl">
-            {greeting}
-            {user ? `, ${user.prenom}` : ""}
-          </h1>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Une situation urgente ? Décrivez-la, on s'occupe du reste.
-          </p>
-        </motion.div>
-
-        {!demandesLoading && activeDemande && (
-          <motion.div variants={item} className="mt-6">
-            <ActiveDemandeBanner demande={activeDemande} />
-          </motion.div>
-        )}
-
-        <motion.div variants={item} className="mt-6">
-          <HomeCtaCard />
-        </motion.div>
+    <div className="mx-auto max-w-5xl">
+      {/* Salutation */}
+      <div className="px-1">
+        <p className="text-[15px] text-ink/50">
+          Bonjour{user?.prenom ? `, ${user.prenom}` : ""} 👋
+        </p>
+        <h1 className="mt-1 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[32px]">
+          Comment pouvons-nous vous aider ?
+        </h1>
       </div>
 
-      {/* ── Listes : côte à côte sur grand écran ──────────── */}
-      <div className="mt-10 grid gap-6 lg:grid-cols-2">
+      {/* Grille bento */}
+      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-6">
+        {/* CTA principale */}
+        <button
+          type="button"
+          onClick={() => navigate("/app/demandes/nouvelle")}
+          className="group relative col-span-1 overflow-hidden rounded-[28px] bg-ink p-7 text-left transition-transform duration-300 hover:-translate-y-0.5 sm:col-span-4"
+        >
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-30 blur-[80px]"
+            style={{ background: "var(--color-signal)" }}
+          />
+          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-signal/15 text-signal">
+            <Mic className="h-5 w-5" />
+          </span>
+          <h2 className="mt-8 font-display text-[26px] font-semibold leading-tight text-paper">
+            Nouvelle demande
+          </h2>
+          <p className="mt-2 max-w-[30ch] text-[14px] text-paper/50">
+            Vocal, écrit ou chatbot — décrivez votre situation, on s'occupe
+            du reste.
+          </p>
+          <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-signal">
+            Commencer
+            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          </span>
+        </button>
+
+        {/* Deux stats empilées */}
+        <div className="flex flex-col gap-4 sm:col-span-2">
+          <button
+            type="button"
+            onClick={() => navigate("/app/demandes")}
+            className="flex flex-1 flex-col justify-center rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 transition-transform duration-300 hover:-translate-y-0.5"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-signal/10 text-signal">
+              <FileText className="h-4 w-4" />
+            </span>
+            <p className="mt-4 font-display text-[28px] font-semibold leading-none text-ink">
+              {loadingDemandes ? "—" : demandesEnCours}
+            </p>
+            <p className="mt-1.5 text-[13px] text-ink/45">
+              Demande{demandesEnCours > 1 ? "s" : ""} en cours
+            </p>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate("/app/notifications")}
+            className="flex flex-1 flex-col justify-center rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 transition-transform duration-300 hover:-translate-y-0.5"
+          >
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brass/15 text-brass">
+              <Bell className="h-4 w-4" />
+            </span>
+            <p className="mt-4 font-display text-[28px] font-semibold leading-none text-ink">
+              {loadingNotifs ? "—" : notifsNonLues}
+            </p>
+            <p className="mt-1.5 text-[13px] text-ink/45">
+              Non lue{notifsNonLues > 1 ? "s" : ""}
+            </p>
+          </button>
+        </div>
+
         {/* Demandes récentes */}
-        <motion.div variants={item}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-ink">
+        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 sm:col-span-3">
+          <div className="flex items-center justify-between px-6 pt-5">
+            <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink/40">
               Demandes récentes
             </h2>
-            <Link
-              to="/app/demandes"
-              className="text-xs font-medium text-signal hover:underline"
+            <button
+              type="button"
+              onClick={() => navigate("/app/demandes")}
+              className="text-[13px] font-medium text-signal hover:underline"
             >
-              Tout voir
-            </Link>
+              Voir tout
+            </button>
           </div>
 
-          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-white">
-            {demandesLoading ? (
-              <div className="divide-y divide-border">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4 px-5 py-4">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <Skeleton className="h-4 w-24 rounded-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : demandesData && demandesData.data.length > 0 ? (
-              <div className="divide-y divide-border">
-                {demandesData.data.map((demande) => (
-                  <DemandeListItem key={demande.id} demande={demande} />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-10 text-center">
-                <Inbox className="h-6 w-6 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  Aucune demande pour le moment
+          <div className="mt-3">
+            {loadingDemandes && (
+              <div className="mx-6 mb-5 h-14 animate-pulse rounded-xl bg-ink/4" />
+            )}
+
+            {!loadingDemandes && demandes?.length === 0 && (
+              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+                <FileText className="h-5 w-5 text-ink/25" />
+                <p className="text-[13px] text-ink/45">
+                  Vous n'avez pas encore de demande en cours.
                 </p>
               </div>
             )}
-          </div>
-        </motion.div>
 
-        {/* Notifications non lues */}
-        <motion.div variants={item}>
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-ink">
-              Notifications non lues
-            </h2>
-            <Link
-              to="/app/notifications"
-              className="text-xs font-medium text-signal hover:underline"
-            >
-              Tout voir
-            </Link>
-          </div>
-
-          <div className="mt-3 overflow-hidden rounded-2xl border border-border bg-white">
-            {notifLoading ? (
-              <div className="divide-y divide-border">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="flex items-start gap-3 px-5 py-4">
-                    <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-3 w-3/4" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : notifData && notifData.data.length > 0 ? (
-              <div className="divide-y divide-border">
-                {notifData.data.map((notification) => (
-                  <NotificationItem
-                    key={notification.id}
-                    notification={notification}
+            {demandes?.slice(0, 3).map((demande, i, arr) => {
+              const status = getDemandeStatusInfo(demande.statut);
+              return (
+                <button
+                  key={demande.id}
+                  type="button"
+                  onClick={() => navigate(`/app/demandes/${demande.id}`)}
+                  className={`flex w-full items-center gap-3 px-6 py-3.5 text-left transition-colors hover:bg-ink/4 ${
+                    i > 0 ? "border-t border-ink/6" : ""
+                  } ${i === arr.length - 1 ? "pb-5" : ""}`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${accentDot[status.accent]}`}
                   />
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-2 py-10 text-center">
-                <BellOff className="h-6 w-6 text-muted-foreground/50" />
-                <p className="text-sm text-muted-foreground">
-                  Rien de nouveau à signaler
+                  <span className="flex-1">
+                    <span className="block text-[14px] font-medium text-ink">
+                      {getMetierLabel(demande.metierIdentifie)}
+                    </span>
+                    <span className="block text-[13px] text-ink/45">
+                      {status.label}
+                    </span>
+                  </span>
+                  <span className="text-[12px] text-ink/35">
+                    {formatDistanceToNow(new Date(demande.createdAt), {
+                      addSuffix: true,
+                      locale: fr,
+                    })}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Notifications récentes */}
+        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 sm:col-span-3">
+          <div className="flex items-center justify-between px-6 pt-5">
+            <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink/40">
+              Notifications
+            </h2>
+            <button
+              type="button"
+              onClick={() => navigate("/app/notifications")}
+              className="text-[13px] font-medium text-signal hover:underline"
+            >
+              Voir tout
+            </button>
+          </div>
+
+          <div className="mt-3">
+            {loadingNotifs && (
+              <div className="mx-6 mb-5 h-14 animate-pulse rounded-xl bg-ink/4" />
+            )}
+
+            {!loadingNotifs && notifData?.items.length === 0 && (
+              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
+                <Bell className="h-5 w-5 text-ink/25" />
+                <p className="text-[13px] text-ink/45">
+                  Aucune notification pour le moment.
                 </p>
               </div>
             )}
-          </div>
-        </motion.div>
-      </div>
 
-      {/* Bande de confiance */}
-      <motion.div
-        variants={item}
-        className="mt-10 flex flex-wrap items-center justify-center gap-2"
-      >
-        {metiers.map(({ label, icon: Icon }) => (
-          <div
-            key={label}
-            className="flex items-center gap-1.5 rounded-full border border-border bg-white px-3 py-1.5"
-          >
-            <Icon size={12} className="text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">{label}</span>
+            {notifData?.items.slice(0, 3).map((notif, i, arr) => {
+              const { icon: Icon, accent } = NOTIFICATION_ICONS[notif.type];
+              return (
+                <div
+                  key={notif.id}
+                  className={`flex items-start gap-3 px-6 py-3.5 ${
+                    i > 0 ? "border-t border-ink/6" : ""
+                  } ${i === arr.length - 1 ? "pb-5" : ""}`}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/4 ${
+                      accent === "red" ? "text-red-500" : ""
+                    } ${accent === "signal" ? "text-signal" : ""} ${
+                      accent === "brass" ? "text-brass" : ""
+                    } ${accent === "ink" ? "text-ink/50" : ""}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                  </span>
+                  <div className="flex-1">
+                    <p className="text-[14px] font-medium text-ink">
+                      {notif.titre}
+                    </p>
+                    <p className="text-[13px] text-ink/45">{notif.message}</p>
+                  </div>
+                  {!notif.lu && (
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-signal" />
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </motion.div>
-    </motion.div>
+        </div>
+      </div>
+    </div>
   );
 }

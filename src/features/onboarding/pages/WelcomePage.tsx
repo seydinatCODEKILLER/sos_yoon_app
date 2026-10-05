@@ -32,7 +32,7 @@ function Beacon({ onClick }: { onClick: () => void }) {
       <Button
         type="button"
         onClick={onClick}
-        className="relative h-40 w-40 flex-col gap-1 whitespace-normal rounded-full bg-signal px-4 text-paper shadow-[0_12px_32px_-8px_rgba(240,162,2,0.55)] hover:bg-signal hover:brightness-105 active:scale-[0.97] md:h-44 md:w-44"
+        className="relative h-40 w-40 flex-col gap-1 whitespace-normal rounded-full bg-signal px-4 text-paper shadow-[0_12px_32px_-8px_rgba(249,97,13,0.55)] hover:bg-signal hover:brightness-105 active:scale-[0.97] md:h-44 md:w-44"
       >
         <span className="font-display text-3xl font-semibold tracking-wide md:text-4xl">
           SOS
@@ -52,8 +52,8 @@ function HeaderChatButton({ onClick }: { onClick: () => void }) {
       onClick={onClick}
       className="group hidden items-center gap-2 rounded-full px-1 py-1 pr-4 text-sm font-medium text-ink/70 transition-colors hover:text-ink md:inline-flex"
     >
-      <MessageCircleQuestion className="h-4 w-4 text-brass transition-transform group-hover:-rotate-6" />
-      <span className="underline decoration-ink/20 decoration-dashed underline-offset-4 group-hover:decoration-brass/60">
+      <MessageCircleQuestion className="h-4 w-4 text-navy transition-transform group-hover:-rotate-6" />
+      <span className="underline decoration-ink/20 decoration-dashed underline-offset-4 group-hover:decoration-navy/60">
         Je ne sais pas de qui j'ai besoin
       </span>
     </button>
@@ -65,9 +65,9 @@ function MobileChatButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="group flex w-full items-center gap-3 rounded-2xl border border-dashed border-brass/40 bg-brass/5 px-5 py-4 text-left transition-colors hover:border-brass/60 hover:bg-brass/10 active:scale-[0.98]"
+      className="group flex w-full items-center gap-3 rounded-2xl border border-dashed border-navy/30 bg-navy/5 px-5 py-4 text-left transition-colors hover:border-navy/50 hover:bg-navy/10 active:scale-[0.98]"
     >
-      <MessageCircleQuestion className="h-5 w-5 shrink-0 text-brass" />
+      <MessageCircleQuestion className="h-5 w-5 shrink-0 text-navy" />
       <span className="font-medium text-ink/80">
         Je ne sais pas de qui j'ai besoin
       </span>
@@ -81,7 +81,7 @@ function RegisterButton({ onClick }: { onClick: () => void }) {
       type="button"
       variant="outline"
       onClick={onClick}
-      className="group h-auto w-full items-center justify-between gap-0.5 rounded-2xl border-brass/40 bg-white px-5 py-4 text-left hover:border-brass hover:bg-white"
+      className="group h-auto w-full items-center justify-between gap-0.5 rounded-2xl border-navy/30 bg-white px-5 py-4 text-left hover:border-navy hover:bg-white"
     >
       <span className="flex flex-col gap-0.5">
         <span className="font-display font-semibold text-ink">
@@ -91,7 +91,7 @@ function RegisterButton({ onClick }: { onClick: () => void }) {
           Particulier ou professionnel du droit
         </span>
       </span>
-      <ArrowRight className="hidden h-5 w-5 shrink-0 text-brass transition-transform group-hover:translate-x-1 md:block" />
+      <ArrowRight className="hidden h-5 w-5 shrink-0 text-navy transition-transform group-hover:translate-x-1 md:block" />
     </Button>
   );
 }
@@ -104,7 +104,7 @@ export function WelcomePage() {
       <AmbientBackground />
 
       <header className="relative z-10 flex items-center justify-between px-6 pt-6 md:px-12 md:pt-8">
-        <span className="font-display text-2xl font-bold text-ink">
+        <span className="font-display text-2xl font-bold text-navy">
           <span className="text-signal">SOS</span> Yoon
         </span>
 
@@ -128,7 +128,7 @@ export function WelcomePage() {
       <main className="relative z-10 flex flex-1 flex-col items-start justify-center px-6 pt-8 pb-6 text-left md:items-center md:px-12 md:pt-0 md:text-center">
         <div className="flex w-full max-w-md flex-col items-start md:max-w-xl md:items-center">
           <p className="text-ink/60">Bonjour 👋</p>
-          <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-ink md:text-5xl">
+          <h1 className="mt-1 font-display text-3xl font-semibold leading-tight text-navy md:text-5xl">
             Quelle est votre urgence aujourd'hui ?
           </h1>
           <p className="mt-4 text-sm text-ink/60 md:text-base">

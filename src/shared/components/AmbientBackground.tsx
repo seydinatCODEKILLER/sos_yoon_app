@@ -39,7 +39,7 @@ export function AmbientBackground({
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-brass/10 blur-[70px] md:-bottom-10 md:-right-10 md:h-80 md:w-80 md:blur-[100px]"
+        className="absolute -bottom-16 -right-16 h-56 w-56 rounded-full bg-navy/10 blur-[70px] md:-bottom-10 md:-right-10 md:h-80 md:w-80 md:blur-[100px]"
         animate={reduceMotion ? undefined : { x: [0, -20, 0], y: [0, -12, 0] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />

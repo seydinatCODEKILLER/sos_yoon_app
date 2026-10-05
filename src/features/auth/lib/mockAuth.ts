@@ -10,11 +10,11 @@ export function createMockParticulierUser(telephone: string): User {
 
   return {
     id: `mock-${Date.now()}`,
-    nom: "",
-    prenom: "",
-    email: "",
+    nom: "Thiault",
+    prenom: "Jean",
+    email: "jean.thiault@example.com",
     telephone,
-    role: "USER",
+    role: "ADMIN",
     isActive: true,
     createdAt: now,
     lastLoginAt: now,

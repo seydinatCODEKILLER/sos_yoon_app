@@ -1,19 +1,18 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { getSpaceRoute } from "@/shared/lib/getSpaceRoute";
-import { WelcomePage } from "@/features/onboarding/pages/WelcomePage";
-import { AUTH_GUARD_ENABLED } from "@/shared/lib/featureFlags";
+import { FullScreenLoader } from "./FullScreenLoader";
 
 export function RootGate() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, user, isLoading } = useAuthStore();
 
-  if (!AUTH_GUARD_ENABLED) {
-    return <WelcomePage />;
+  if (isLoading) {
+    return <FullScreenLoader />;
   }
 
   if (isAuthenticated && user) {
     return <Navigate to={getSpaceRoute(user.role)} replace />;
   }
 
-  return <WelcomePage />;
+  return <Navigate to="/login" replace />;
 }

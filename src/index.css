@@ -127,20 +127,20 @@
   }
   html {
     @apply font-sans;
-    scroll-padding-top: 6rem; /* hauteur du navbar flottant (~3.5rem) + offset top-4 (1rem) + marge de respiration */
+    scroll-padding-top: 6rem;
   }
 
   @media (min-width: 768px) {
     html {
-      scroll-padding-top: 7rem; /* + offset top-6 (1.5rem) sur desktop */
+      scroll-padding-top: 7rem;
     }
   }
 }
 
 @theme {
   --font-display: "Fraunces", serif;
-  --color-ink: #0b1220;
-  --color-paper: #faf7f2;
-  --color-signal: #f0a202;
-  --color-brass: #b8860b;
+  --color-ink: #000000;
+  --color-paper: #ffffff;
+  --color-signal: #f9610d;
+  --color-navy: #171630;
 }
