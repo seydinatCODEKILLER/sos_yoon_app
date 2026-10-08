@@ -1,5 +1,4 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { ChevronsUpDown, LogOut, Settings, User } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -12,154 +11,80 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/shared/components/ui/sidebar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/shared/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback } from "@/shared/components/ui/avatar";
-import type { NavItem } from "@/config/navigation";
-import { useAuthStore } from "@/features/auth/store/auth.store";
+import { getNavItems, navigationByRole } from "@/config/navigation";
+import { useNavBadges } from "@/shared/hooks/useNavBadges";
+import { getActiveNavPath } from "@/shared/lib/getActiveNavPath";
+import type { UserRole } from "@/types/user.types";
+import { NavBadgeView } from "./NavBadgeView";
+import { SidebarUserCard } from "./SidebarUserCard";
 
-interface AppSidebarProps {
-  navItems: NavItem[];
-}
-
-function getInitials(prenom: string, nom: string) {
-  return `${prenom[0] ?? ""}${nom[0] ?? ""}`.toUpperCase();
-}
-
-export function AppSidebar({ navItems }: AppSidebarProps) {
-  const location = useLocation();
-  const user = useAuthStore((s) => s.user);
-  const logout = useAuthStore((s) => s.logout);
+export function AppSidebar({ role }: { role: UserRole }) {
+  const { pathname } = useLocation();
+  const badges = useNavBadges(role);
+  const sections = navigationByRole[role];
+  const activePath = getActiveNavPath(getNavItems(role), pathname);
 
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          {/* Logo complet — masqué en mode réduit */}
-          <span className="font-display text-lg text-sidebar-foreground group-data-[collapsible=icon]:hidden">
-            SOS Yoon
+          {/* TODO : remplacer par <BrandLogo /> quand le SVG sera prêt */}
+          <span className="font-display text-xl font-extrabold tracking-wide text-(--nav-brand) group-data-[collapsible=icon]:hidden">
+            SOSYOON
           </span>
-          {/* Version compacte — visible uniquement en mode réduit */}
-          <span className="hidden size-8 shrink-0 items-center justify-center rounded-md bg-signal font-display text-sm font-semibold text-ink group-data-[collapsible=icon]:flex">
+          <span className="hidden size-8 shrink-0 items-center justify-center rounded-md bg-signal font-display text-sm font-semibold text-paper group-data-[collapsible=icon]:flex">
             SY
           </span>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/40">
-            Espace
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map(({ label, path, icon: Icon }) => {
-                const isActive = location.pathname === path;
-                return (
-                  <SidebarMenuItem key={path} className="relative">
-                    {/* Barre d'accent — visible uniquement sur l'item actif */}
-                    <span
-                      aria-hidden
-                      className={`absolute -left-2 top-1/2 h-5 w-1 -translate-y-1/2 rounded-r-full bg-signal transition-opacity group-data-[collapsible=icon]:hidden ${
-                        isActive ? "opacity-100" : "opacity-0"
-                      }`}
-                    />
-                    <SidebarMenuButton
-                      render={<NavLink to={path} end />}
-                      isActive={isActive}
-                      tooltip={label}
-                      className="text-sidebar-foreground/60 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground data-[active=true]:bg-sidebar-accent/80 data-[active=true]:font-semibold data-[active=true]:text-sidebar-foreground"
-                    >
-                      <Icon />
-                      <span>{label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {sections.map((section, i) => (
+          <SidebarGroup key={section.title ?? i}>
+            {section.title && (
+              <SidebarGroupLabel className="text-[11px] font-medium uppercase tracking-wider text-(--nav-title)">
+                {section.title}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {section.items.map(({ label, path, icon: Icon, badge }) => {
+                  const isActive = path === activePath;
+                  return (
+                    <SidebarMenuItem key={path}>
+                      <SidebarMenuButton
+                        render={<Link to={path} />}
+                        isActive={isActive}
+                        tooltip={label}
+                        className="text-(--nav-muted) hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-(--nav-active-bg) data-[active=true]:font-medium data-[active=true]:text-(--nav-active-fg) data-[active=true]:hover:bg-(--nav-active-bg) data-[active=true]:hover:text-(--nav-active-fg)"
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                        {badge && (
+                          <span className="ml-auto flex items-center group-data-[collapsible=icon]:hidden">
+                            <NavBadgeView
+                              badge={badge}
+                              value={
+                                "key" in badge && badge.key
+                                  ? badges[badge.key]
+                                  : undefined
+                              }
+                              active={isActive}
+                            />
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                render={
-                  <SidebarMenuButton
-                    size="lg"
-                    className="text-sidebar-foreground hover:bg-sidebar-accent data-popup-open:bg-sidebar-accent"
-                  />
-                }
-              >
-                <div className="relative">
-                  <Avatar className="h-8 w-8 rounded-md">
-                    <AvatarFallback className="rounded-md bg-signal font-medium text-ink">
-                      {user ? getInitials(user.prenom, user.nom) : "?"}
-                    </AvatarFallback>
-                  </Avatar>
-                  {/* Pastille de statut en ligne */}
-                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full border-2 border-sidebar bg-emerald-500" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden">
-                  <span className="truncate font-medium">
-                    {user ? `${user.prenom} ${user.nom}` : "Utilisateur"}
-                  </span>
-                  <span className="truncate text-xs text-sidebar-foreground/60">
-                    {user?.email}
-                  </span>
-                </div>
-                <ChevronsUpDown className="ml-auto size-4 text-sidebar-foreground/50 group-data-[collapsible=icon]:hidden" />
-              </DropdownMenuTrigger>
-
-              <DropdownMenuContent side="top" align="start" className="w-56">
-                <DropdownMenuGroup>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-0.5">
-                      <span className="text-sm font-medium">
-                        {user ? `${user.prenom} ${user.nom}` : "Utilisateur"}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {user?.email}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuGroup>
-                  <DropdownMenuItem render={<NavLink to="/app/profil" />}>
-                    <User />
-                    Mon profil
-                  </DropdownMenuItem>
-                  <DropdownMenuItem disabled>
-                    <Settings />
-                    Paramètres
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-
-                <DropdownMenuSeparator />
-
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => logout()}
-                >
-                  <LogOut />
-                  Déconnexion
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <SidebarUserCard role={role} />
       </SidebarFooter>
     </Sidebar>
   );

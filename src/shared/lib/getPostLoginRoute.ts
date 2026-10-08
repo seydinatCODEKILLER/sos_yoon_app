@@ -10,7 +10,7 @@ export function getRouteForSession(role: UserRole, portee: Portee): string {
     case "INSCRIPTION":
       return "/register/professionnel";
     case "DOSSIER":
-      return "/pro/dossier";
+      return "/pro/validation";
     case "PAIEMENT":
       return "/pro/abonnement";
     case "AUCUNE":

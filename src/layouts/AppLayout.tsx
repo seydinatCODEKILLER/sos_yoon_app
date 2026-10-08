@@ -1,38 +1,30 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { navigationByRole } from "@/config/navigation";
+import { AUTH_GUARD_ENABLED } from "@/shared/lib/featureFlags";
+import type { UserRole } from "@/types/user.types";
 import { DesktopLayout } from "./DesktopLayout";
 import { MobileLayout } from "./MobileLayout";
-import { UserTopbarLayout } from "./UserTopbarLayout";
+
+/** TEMPORAIRE (garde désactivé) : déduit le rôle depuis l'URL */
+function roleFromPath(pathname: string): UserRole {
+  if (pathname.startsWith("/admin")) return "ADMIN";
+  if (pathname.startsWith("/pro")) return "PRO";
+  return "PARTICULIER";
+}
 
 export function AppLayout() {
   const isMobile = useIsMobile();
-  const role = useAuthStore((s) => s.user?.role);
+  const { pathname } = useLocation();
+  const userRole = useAuthStore((s) => s.user?.role);
 
-  const navItems = role ? (navigationByRole[role] ?? []) : [];
+  const role = userRole ?? (AUTH_GUARD_ENABLED ? null : roleFromPath(pathname));
+  if (!role) return null;
 
-  if (isMobile) {
-    return (
-      <MobileLayout navItems={navItems}>
-        <Outlet />
-      </MobileLayout>
-    );
-  }
-
-  // Desktop : sidebar complète réservée aux rôles avec beaucoup d'items
-  // (professionnel, admin) ; topbar légère pour le particulier.
-  if (role === "USER") {
-    return (
-      <UserTopbarLayout navItems={navItems}>
-        <Outlet />
-      </UserTopbarLayout>
-    );
-  }
-
+  const Layout = isMobile ? MobileLayout : DesktopLayout;
   return (
-    <DesktopLayout navItems={navItems}>
+    <Layout role={role}>
       <Outlet />
-    </DesktopLayout>
+    </Layout>
   );
 }
