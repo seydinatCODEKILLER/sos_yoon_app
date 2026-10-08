@@ -1,12 +1,18 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { getSpaceRoute } from "@/shared/lib/getSpaceRoute";
+import { getRouteForSession } from "@/shared/lib/getPostLoginRoute";
+import { FullScreenLoader } from "./FullScreenLoader";
 
-export function RootRedirect() {
-  const { isAuthenticated, user } = useAuthStore();
+export function RootGate() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const user = useAuthStore((s) => s.user);
+  const portee = useAuthStore((s) => s.portee);
 
-  if (isAuthenticated && user) {
-    return <Navigate to={getSpaceRoute(user.role)} replace />;
+  if (isLoading) return <FullScreenLoader />;
+
+  if (isAuthenticated && user && portee) {
+    return <Navigate to={getRouteForSession(user.role, portee)} replace />;
   }
 
   return <Navigate to="/login" replace />;

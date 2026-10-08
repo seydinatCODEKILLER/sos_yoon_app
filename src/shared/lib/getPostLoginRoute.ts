@@ -1,18 +1,25 @@
-import type { TokenResponse } from "@/features/auth/types/types";
+import type { Portee, UserRole } from "@/types/user.types";
 import { getSpaceRoute } from "./getSpaceRoute";
+import type { TokenResponse } from "@/features/auth/types/types";
 
-/** La portée décide de l'écran ; le rôle seulement de l'espace. */
-export function getPostLoginRoute({ portee, utilisateur }: TokenResponse): string {
+/** Destination d'une session selon le rôle et la portée du token. */
+export function getRouteForSession(role: UserRole, portee: Portee): string {
   switch (portee) {
     case "COMPLET":
-      return getSpaceRoute(utilisateur.role);
+      return getSpaceRoute(role);
     case "INSCRIPTION":
-      return "/register/professionnel"; // reprise de l'inscription (à construire)
+      return "/register/professionnel";
     case "DOSSIER":
-      return "/pro/dossier"; // à créer : « Demande envoyée / non approuvée »
+      return "/pro/dossier";
     case "PAIEMENT":
-      return "/pro/abonnement"; // à créer
+      return "/pro/abonnement";
     case "AUCUNE":
+    default:
       return "/login";
   }
+}
+
+/** Utilisé juste après une connexion / vérification OTP. */
+export function getPostLoginRoute(response: TokenResponse): string {
+  return getRouteForSession(response.utilisateur.role, response.portee);
 }

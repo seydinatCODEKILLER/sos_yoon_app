@@ -4,9 +4,9 @@ export function getSpaceRoute(role: UserRole): string {
   switch (role) {
     case "ADMIN":
       return "/admin";
-    case "PROFESSIONNEL":
+    case "PRO":
       return "/pro";
-    case "USER":
+    case "PARTICULIER":
     default:
       return "/app";
   }
