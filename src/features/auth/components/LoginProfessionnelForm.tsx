@@ -1,9 +1,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Link, useNavigate } from "react-router-dom";
 import { LogIn } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { getPostLoginRoute } from "@/shared/lib/getPostLoginRoute";
 import {
   loginProfessionnelSchema,
   type LoginProfessionnelValues,
@@ -11,6 +13,7 @@ import {
 import { useLoginProfessionnel } from "../hooks/useLoginProfessionnel";
 
 export function LoginProfessionnelForm() {
+  const navigate = useNavigate();
   const { submit, isSubmitting } = useLoginProfessionnel();
 
   const form = useForm<LoginProfessionnelValues>({
@@ -18,10 +21,16 @@ export function LoginProfessionnelForm() {
     defaultValues: { email: "", password: "" },
   });
 
-  const onSubmit = form.handleSubmit((values) => submit(values));
+  const onSubmit = form.handleSubmit(async (values) => {
+    const response = await submit(values);
+    // null = erreur déjà affichée en toast par le hook
+    if (response) {
+      navigate(getPostLoginRoute(response), { replace: true });
+    }
+  });
 
   return (
-    <form onSubmit={onSubmit} className="w-full space-y-5">
+    <form onSubmit={onSubmit} className="w-full space-y-5" noValidate>
       <div className="space-y-1.5">
         <Label htmlFor="email" className="text-sm text-ink/70">
           Email
@@ -46,12 +55,12 @@ export function LoginProfessionnelForm() {
           <Label htmlFor="password" className="text-sm text-ink/70">
             Mot de passe
           </Label>
-          <button
-            type="button"
-            className="text-xs font-medium text-brass hover:underline"
+          <Link
+            to="/mot-de-passe-oublie"
+            className="text-xs font-medium text-signal hover:underline"
           >
             Mot de passe oublié ?
-          </button>
+          </Link>
         </div>
         <Input
           id="password"

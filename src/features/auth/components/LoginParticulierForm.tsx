@@ -1,15 +1,16 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigate } from "react-router-dom";
 import { MessageSquare } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { toInternationalPhone } from "../lib/phone";
 import {
   loginParticulierSchema,
   type LoginParticulierValues,
 } from "../schema/loginParticulier.schema";
 import { useLoginParticulier } from "../hooks/useLoginParticulier";
-import { useNavigate } from "react-router-dom";
 
 export function LoginParticulierForm() {
   const navigate = useNavigate();
@@ -20,15 +21,20 @@ export function LoginParticulierForm() {
     defaultValues: { telephone: "" },
   });
 
-    const onSubmit = form.handleSubmit(async (values) => {
+  const onSubmit = form.handleSubmit(async (values) => {
     const ok = await submit(values);
     if (ok) {
-      navigate("/verification-otp", { state: { telephone: values.telephone } });
+      navigate("/verification-otp", {
+        state: {
+          telephone: toInternationalPhone(values.telephone),
+          type: "CONNEXION",
+        },
+      });
     }
   });
 
   return (
-    <form onSubmit={onSubmit} className="w-full space-y-5">
+    <form onSubmit={onSubmit} className="w-full space-y-5" noValidate>
       <div className="space-y-1.5">
         <Label htmlFor="telephone" className="text-sm text-ink/70">
           Numéro de téléphone

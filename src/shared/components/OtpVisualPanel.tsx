@@ -1,7 +1,7 @@
-// @/shared/components/OtpVisualPanel.tsx
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import { MessageSquareText, ShieldCheck } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 const DIGITS = ["7", "4", "2", "9", "1", "5"];
 
@@ -23,18 +23,20 @@ export function OtpVisualPanel({
   subtitle = "Entrez le code reçu par SMS pour activer votre compte et déposer votre première demande.",
 }: OtpVisualPanelProps) {
   const reduceMotion = useReducedMotion();
-  const [revealed, setRevealed] = useState(0);
+  const [revealed, setRevealed] = useState(reduceMotion ? DIGITS.length : 0);
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setRevealed((r) => (r + 1) % (DIGITS.length + 2));
-    }, 500);
+    if (reduceMotion) return;
+    const id = setInterval(
+      () => setRevealed((r) => (r + 1) % (DIGITS.length + 2)),
+      500,
+    );
     return () => clearInterval(id);
-  }, []);
+  }, [reduceMotion]);
 
   return (
-    <div className="relative hidden h-full w-full flex-col justify-between overflow-hidden bg-ink md:flex">
-      {/* grain */}
+    <div className="relative flex h-full w-full flex-col justify-between overflow-hidden bg-navy">
+      {/* grille */}
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-[0.05] mix-blend-overlay"
         style={{
@@ -44,48 +46,39 @@ export function OtpVisualPanel({
         }}
       />
 
-      {/* blobs ambiants */}
+      {/* lueurs */}
       <motion.div
-        className="pointer-events-none absolute -top-24 -left-16 h-80 w-80 rounded-full bg-brass/10 blur-[100px]"
+        className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-signal/20 blur-[110px]"
         animate={reduceMotion ? undefined : { x: [0, 25, 0], y: [0, 15, 0] }}
         transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div
-        className="pointer-events-none absolute -bottom-24 -right-24 h-72 w-72 rounded-full bg-signal/10 blur-[100px]"
-        animate={reduceMotion ? undefined : { x: [0, -20, 0], y: [0, -18, 0] }}
-        transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
-      />
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal/10 blur-[110px]" />
 
-      {/* badge sécurité */}
+      {/* logo */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="absolute top-8 right-8 z-10 flex items-center gap-1.5 rounded-full border border-paper/15 bg-paper/5 px-3 py-1.5 backdrop-blur-sm"
+        transition={{ duration: 0.5 }}
+        className="relative z-10 px-12 pt-12"
       >
-        <ShieldCheck className="h-3.5 w-3.5 text-brass" strokeWidth={1.75} />
-        <span className="text-[11px] font-medium text-paper/70">Vérification sécurisée</span>
+        <BrandLogo />
       </motion.div>
 
-      {/* en-tête */}
+      {/* titre */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="relative z-10 px-10 pt-12"
+        className="relative z-10 px-12 pt-16"
       >
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-signal">
-          SOS Yoon
-        </p>
-        <h2 className="font-display mt-3 max-w-xs text-2xl leading-snug text-paper text-balance">
+        <h2 className="font-display max-w-sm text-4xl leading-[1.1] text-paper text-balance">
           {title}
         </h2>
       </motion.div>
 
       {/* scène : SMS avec code qui se matérialise */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-10">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-12">
         <div className="relative flex flex-col items-center">
-          {/* particules flottantes */}
           {particles.map((p, i) => (
             <motion.span
               key={i}
@@ -105,40 +98,37 @@ export function OtpVisualPanel({
             />
           ))}
 
-          {/* onde d'émission derrière l'icône message */}
-          {!reduceMotion && (
-            <>
+          {/* ondes d'émission */}
+          {!reduceMotion &&
+            [0, 1.3].map((delay) => (
               <motion.span
-                className="absolute top-6 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full border border-signal/40"
-                animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeOut" }}
-              />
-              <motion.span
-                className="absolute top-6 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full border border-signal/40"
-                animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
+                key={delay}
+                className="absolute top-0 left-1/2 size-24 -translate-x-1/2 rounded-full border border-signal/40"
+                animate={{ scale: [1, 1.8], opacity: [0.5, 0] }}
                 transition={{
                   duration: 2.6,
                   repeat: Infinity,
                   ease: "easeOut",
-                  delay: 1.3,
+                  delay,
                 }}
               />
-            </>
-          )}
+            ))}
 
-          {/* icône message central */}
-          <div className="relative flex h-16 w-16 items-center justify-center rounded-full border border-brass/40 bg-ink/80 backdrop-blur-sm">
+          {/* icône message */}
+          <div
+            className="relative flex size-24 items-center justify-center rounded-full border-2 border-signal bg-navy/90 backdrop-blur-sm"
+            style={{ boxShadow: "0 0 28px 2px rgba(249,97,13,0.3)" }}
+          >
             <div className="absolute inset-0 rounded-full bg-signal/10 blur-md" />
             <MessageSquareText
-              className="relative h-7 w-7 text-brass"
+              className="relative size-9 text-signal"
               strokeWidth={1.5}
             />
           </div>
 
-          {/* connecteur */}
           <div className="my-5 h-8 w-px bg-linear-to-b from-paper/20 to-transparent" />
 
-          {/* chiffres du code, révélés un par un */}
+          {/* chiffres du code */}
           <div className="flex items-center gap-2.5">
             {DIGITS.map((digit, i) => {
               const isRevealed = i < revealed;
@@ -183,12 +173,14 @@ export function OtpVisualPanel({
           delay: 0.2,
           ease: [0.21, 0.47, 0.32, 0.98],
         }}
-        className="relative z-10 px-10 pb-12"
+        className="relative z-10 px-12 pb-12"
       >
-        <p className="text-xs uppercase tracking-widest text-paper/40">
-          Étape finale
-        </p>
-        <p className="mt-2 max-w-xs text-sm text-paper/60">{subtitle}</p>
+        <div className="max-w-md border-t border-paper/10 pt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-paper/60">
+            Étape finale
+          </p>
+          <p className="mt-2 max-w-sm text-sm text-paper/60">{subtitle}</p>
+        </div>
       </motion.div>
     </div>
   );

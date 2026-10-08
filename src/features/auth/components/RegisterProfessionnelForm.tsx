@@ -1,384 +1,208 @@
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Check, Upload, ArrowLeft, ArrowRight, ShieldCheck } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
-import { Label } from "@/shared/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/shared/components/ui/select";
-import {
-  registerProfessionnelSchema,
   REGISTER_PROFESSIONNEL_STEPS,
+  STEP_SCHEMAS,
   type RegisterProfessionnelValues,
 } from "../schema/registerProfessionnel.schema";
+import { DOCUMENTS_BY_METIER } from "../lib/professionalConfig";
 import { useRegisterProfessionnel } from "../hooks/useRegisterProfessionnel";
-import { SENEGAL_ZONES } from "../lib/senegalZones";
-import { METIERS } from "@/features/demandes/lib/metiers";
+import {
+  StepAccount,
+  StepDocuments,
+  StepLocation,
+  StepPresentation,
+  StepProfile,
+} from "./RegisterProfessionnelSteps";
+
+const CTA = [
+  "Étape suivante",
+  "Continuer vers l'étape 3",
+  "Continuer vers l'étape 4",
+  "Continuer vers la finalisation (Étape 5)",
+  "Confirmer et soumettre mon inscription",
+];
+
+const NOTES = [
+  null,
+  "En continuant, vous confirmez l'exactitude des informations ordinales et acceptez les Conditions Générales Déontologiques de SOS Yoon.",
+  "En continuant, vous certifiez sur l'honneur l'exactitude et l'authenticité des pièces justificatives téléversées conformément aux Conditions Générales Déontologiques de SOS Yoon.",
+  "En validant votre zone d'exercice, vous attestez être habilité à exercer dans ce ressort juridique conformément aux règles de votre ordre professionnel.",
+  "Votre demande fera l'objet d'une vérification de conformité auprès de l'ordre professionnel sous un délai de 24 à 48 heures.",
+];
 
 export function RegisterProfessionnelForm() {
   const [step, setStep] = useState(0);
+  const stepRef = useRef(0);
   const { submit, isSubmitting } = useRegisterProfessionnel();
 
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  // Resolver dynamique : on ne valide que le schéma de l'étape courante.
+  const resolver: Resolver<RegisterProfessionnelValues> = (
+    values,
+    context,
+    options,
+  ) =>
+    zodResolver(STEP_SCHEMAS[stepRef.current] as never)(
+      values,
+      context,
+      options as never,
+    ) as never;
+
   const form = useForm<RegisterProfessionnelValues>({
-    resolver: zodResolver(registerProfessionnelSchema),
+    resolver,
     defaultValues: {
-      nom: "",
       prenom: "",
+      nom: "",
       telephone: "",
       email: "",
       password: "",
       confirmPassword: "",
-      zoneIntervention: "",
       numeroOrdre: "",
+      organisme: "",
+      anneeInscription: "",
+      anneesExperience: "",
+      specialites: [],
+      declarationHonneur: false,
+      region: "",
+      ville: "",
+      commune: "",
+      adresse: "",
+      biographie: "",
+      langues: [],
+      tarifConsultation: "",
+      modaliteFacturation: "",
     },
   });
 
-  const currentStep = REGISTER_PROFESSIONNEL_STEPS[step];
   const isLastStep = step === REGISTER_PROFESSIONNEL_STEPS.length - 1;
-  const diplomeFiles = form.watch("diplome") as FileList | undefined;
-  const diplomeFileName = diplomeFiles?.[0]?.name;
+  const total = REGISTER_PROFESSIONNEL_STEPS.length;
+  const metier = form.watch("metier");
+
+  const subtitles = [
+    "Renseignez vos informations.",
+    `Étape 2 sur ${total} — Renseignez vos habilitations et spécialités pour certifier votre compte praticien.`,
+    `Étape 3 sur ${total} — Téléversez vos justificatifs officiels pour certifier votre statut de ${
+      metier ? DOCUMENTS_BY_METIER[metier].statut : "professionnel du droit"
+    }.`,
+    `Étape 4 sur ${total} — Définissez votre zone d'exercice principal et vos modalités de réception pour être mis en relation avec les justiciables de votre ressort.`,
+    `Étape 5 sur ${total} — Présentez votre profil aux justiciables et confirmez vos engagements déontologiques pour soumettre votre dossier de certification.`,
+  ];
 
   async function handleNext() {
-    const valid = await form.trigger(
-      currentStep.fields as unknown as (keyof RegisterProfessionnelValues)[]
-    );
+    const valid = await form.trigger();
     if (!valid) return;
 
-    if (isLastStep) {
-      const ok = await submit(form.getValues());
-      if (ok) {
-        // TODO: rediriger vers un écran de confirmation une fois disponible
-      }
+    if (!isLastStep) {
+      setStep((s) => s + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
       return;
     }
 
-    setStep((s) => s + 1);
+    // Garde-fou : on revalide toutes les étapes avant l'envoi
+    const values = form.getValues();
+    const firstInvalid = STEP_SCHEMAS.findIndex(
+      (s) => !s.safeParse(values).success,
+    );
+    if (firstInvalid !== -1) {
+      setStep(firstInvalid);
+      return;
+    }
+
+    const ok = await submit(values);
+    if (ok) {
+      // TODO: rediriger vers un écran de confirmation
+      // (compte en attente de vérification sous 24-48 h, pas d'accès à /pro immédiat)
+    }
   }
 
   function handleBack() {
     setStep((s) => Math.max(0, s - 1));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
-    <div className="w-full space-y-6">
-      {/* Stepper */}
-      <div className="flex items-center justify-center">
-        {REGISTER_PROFESSIONNEL_STEPS.map((s, index) => {
-          const isActive = index === step;
-          const isDone = index < step;
-          return (
-            <div key={s.id} className="flex items-center">
-              <div
-                className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs font-medium transition-colors ${
-                  isDone
-                    ? "border-signal bg-signal text-paper"
-                    : isActive
-                      ? "border-signal text-signal"
-                      : "border-ink/15 text-ink/40"
-                }`}
-              >
-                {isDone ? <Check className="h-3.5 w-3.5" /> : index + 1}
-              </div>
-              {index < REGISTER_PROFESSIONNEL_STEPS.length - 1 && (
-                <div
-                  className={`h-px w-8 transition-colors md:w-12 ${
-                    isDone ? "bg-signal" : "bg-ink/15"
-                  }`}
-                />
-              )}
-            </div>
-          );
-        })}
+    <div
+      className={`mx-auto w-full transition-[max-width] ${step === 0 ? "max-w-md" : "max-w-xl"}`}
+    >
+      {" "}
+      <div>
+        <h1 className="font-display text-3xl font-bold leading-tight text-ink">
+          {REGISTER_PROFESSIONNEL_STEPS[step].title}
+        </h1>
+        <p className="mt-2 text-sm text-navy/50">{subtitles[step]}</p>
       </div>
-
-      <p className="text-center text-sm font-medium text-ink/50">
-        Étape {step + 1} sur {REGISTER_PROFESSIONNEL_STEPS.length} —{" "}
-        {currentStep.title}
-      </p>
-
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault();
           handleNext();
         }}
-        className="space-y-5"
+        className="mt-6"
       >
-        {step === 0 && (
-          <>
-            <div className="space-y-1.5">
-              <Label htmlFor="prenom" className="text-sm text-ink/70">
-                Prénom
-              </Label>
-              <Input
-                id="prenom"
-                type="text"
-                autoComplete="given-name"
-                placeholder="Fatou"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("prenom")}
-              />
-              {form.formState.errors.prenom && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.prenom.message}
-                </p>
-              )}
-            </div>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {step === 0 && <StepAccount form={form} />}
+            {step === 1 && <StepProfile form={form} />}
+            {step === 2 && <StepDocuments form={form} />}
+            {step === 3 && <StepLocation form={form} />}
+            {step === 4 && <StepPresentation form={form} />}
+          </motion.div>
+        </AnimatePresence>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="nom" className="text-sm text-ink/70">
-                Nom
-              </Label>
-              <Input
-                id="nom"
-                type="text"
-                autoComplete="family-name"
-                placeholder="Ndiaye"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("nom")}
-              />
-              {form.formState.errors.nom && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.nom.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="telephone" className="text-sm text-ink/70">
-                Numéro de téléphone
-              </Label>
-              <Input
-                id="telephone"
-                type="tel"
-                autoComplete="tel"
-                placeholder="77 123 45 67"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("telephone")}
-              />
-              {form.formState.errors.telephone && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.telephone.message}
-                </p>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === 1 && (
-          <>
-            <div className="space-y-1.5">
-              <Label htmlFor="email" className="text-sm text-ink/70">
-                Adresse email
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                placeholder="fatou.ndiaye@exemple.com"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("email")}
-              />
-              {form.formState.errors.email && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="password" className="text-sm text-ink/70">
-                Mot de passe
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                placeholder="8 caractères min., 1 majuscule, 1 chiffre"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("password")}
-              />
-              {form.formState.errors.password && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="confirmPassword" className="text-sm text-ink/70">
-                Confirmer le mot de passe
-              </Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                placeholder="Ressaisissez votre mot de passe"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("confirmPassword")}
-              />
-              {form.formState.errors.confirmPassword && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === 2 && (
-          <>
-            <div className="space-y-1.5">
-              <Label htmlFor="metier" className="text-sm text-ink/70">
-                Profession
-              </Label>
-              <Controller
-                name="metier"
-                control={form.control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id="metier"
-                      className="h-10 w-full border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                    >
-                      <SelectValue placeholder="Sélectionnez votre profession" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {METIERS.map(({ value, label }) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.metier && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.metier.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="zoneIntervention" className="text-sm text-ink/70">
-                Zone d'intervention
-              </Label>
-              <Controller
-                name="zoneIntervention"
-                control={form.control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger
-                      id="zoneIntervention"
-                      className="h-10 w-full border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                    >
-                      <SelectValue placeholder="Sélectionnez une région" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {SENEGAL_ZONES.map((zone) => (
-                        <SelectItem key={zone} value={zone}>
-                          {zone}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.zoneIntervention && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.zoneIntervention.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-1.5">
-              <Label htmlFor="numeroOrdre" className="text-sm text-ink/70">
-                Numéro d'inscription à l'ordre
-              </Label>
-              <Input
-                id="numeroOrdre"
-                type="text"
-                placeholder="ex. B-2024-0456"
-                className="h-10 border-ink/15 bg-white px-3.5 text-sm focus-visible:border-signal focus-visible:ring-signal/30"
-                {...form.register("numeroOrdre")}
-              />
-              {form.formState.errors.numeroOrdre && (
-                <p className="text-sm text-red-600">
-                  {form.formState.errors.numeroOrdre.message}
-                </p>
-              )}
-            </div>
-          </>
-        )}
-
-        {step === 3 && (
-          <div className="space-y-1.5">
-            <Label htmlFor="diplome" className="text-sm text-ink/70">
-              Diplôme (PDF, JPG ou PNG)
-            </Label>
-            <label
-              htmlFor="diplome"
-              className="flex h-28 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-2xl border border-dashed border-ink/20 bg-white px-4 text-center transition-colors hover:border-signal/50"
-            >
-              <Upload className="h-5 w-5 text-brass" />
-              <span className="text-sm font-medium text-ink/70">
-                {diplomeFileName ?? "Cliquez pour importer votre diplôme"}
-              </span>
-              <span className="text-xs text-ink/40">Taille max. 5 Mo</span>
-            </label>
-            <input
-              id="diplome"
-              type="file"
-              accept="application/pdf,image/png,image/jpeg"
-              className="sr-only"
-              {...form.register("diplome")}
-            />
-            {form.formState.errors.diplome && (
-              <p className="text-sm text-red-600">
-                {form.formState.errors.diplome.message as string}
-              </p>
-            )}
-          </div>
-        )}
-
-        <div className="flex items-center gap-3 pt-1">
+        <div className="mt-7 flex items-center gap-3">
           {step > 0 && (
             <Button
               type="button"
               variant="outline"
               onClick={handleBack}
-              className="h-10 flex-1 gap-2 rounded-xl border-ink/15 text-sm text-ink hover:bg-ink/5"
+              className="h-10.5 shrink-0 gap-1.5 rounded-lg border-ink/10 px-4 text-sm font-medium text-ink hover:bg-ink/5"
             >
-              <ArrowLeft className="h-4 w-4" />
-              Précédent
+              <ArrowLeft className="size-4" />
+              {isLastStep ? "Retour à l'étape 4" : "Retour"}
             </Button>
           )}
           <Button
             type="submit"
             disabled={isSubmitting}
-            className="h-10 flex-1 gap-2 rounded-xl bg-signal text-sm font-medium text-paper hover:bg-signal hover:brightness-105 disabled:opacity-60"
+            className="h-10.5 flex-1 gap-2 rounded-lg bg-signal text-sm font-medium text-white shadow-lg shadow-signal/25 hover:bg-signal/90 disabled:opacity-60"
           >
             {isSubmitting ? (
               "Envoi en cours…"
-            ) : isLastStep ? (
-              <>
-                <ShieldCheck className="h-4 w-4" />
-                Envoyer ma demande
-              </>
             ) : (
               <>
-                Suivant
-                <ArrowRight className="h-4 w-4" />
+                {CTA[step]}
+                {isLastStep ? (
+                  <Check className="size-4" />
+                ) : (
+                  <ArrowRight className="size-4" />
+                )}
               </>
             )}
           </Button>
         </div>
+
+        <p className="mt-4 text-center text-xs leading-relaxed text-navy/40">
+          {NOTES[step] ?? (
+            <>
+              En continuant, vous acceptez les Conditions Générales
+              d'Utilisation et la Politique de Confidentialité de SOS Yoon.
+            </>
+          )}
+        </p>
       </form>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Scale, Gavel, Stamp, BookOpen, type LucideIcon } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 interface Metier {
   label: string;
@@ -16,6 +17,8 @@ const metiers: Metier[] = [
 ];
 
 const RADIUS = 34; // % du conteneur
+const SIGNAL = "var(--color-signal)";
+const SIGNAL_SOFT = "rgba(249, 97, 13, 0.3)"; // = signal à 30 %
 
 function positionOf(angle: number) {
   const rad = (angle * Math.PI) / 180;
@@ -40,8 +43,9 @@ interface AuthVisualPanelProps {
 
 export function AuthVisualPanel({
   title = "Le bon professionnel du droit, en quelques minutes.",
-  subtitle = "Dès votre demande déposée, le dispatch identifie et sollicite le professionnel disponible le plus proche.",
+  subtitle = "Votre compte particulier vous permet de déposer une demande et de suivre son traitement en temps réel auprès d'officiers et auxiliaires de justice agréés.",
 }: AuthVisualPanelProps) {
+  const reduceMotion = useReducedMotion();
   const [active, setActive] = useState(0);
 
   useEffect(() => {
@@ -54,8 +58,8 @@ export function AuthVisualPanel({
   const target = positionOf(metiers[active].angle);
 
   return (
-    <div className="relative hidden h-full w-full flex-col justify-between overflow-hidden bg-ink md:flex">
-      {/* grain */}
+    <div className="relative hidden h-full w-full flex-col justify-between overflow-hidden bg-navy md:flex">
+      {/* grille */}
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-[0.05] mix-blend-overlay"
         style={{
@@ -65,43 +69,51 @@ export function AuthVisualPanel({
         }}
       />
 
-      {/* blobs ambiants animés */}
+      {/* lueur orange en haut à gauche (visible sur les maquettes) */}
       <motion.div
-        className="pointer-events-none absolute -top-24 -left-24 h-80 w-80 rounded-full bg-brass/10 blur-[100px]"
-        animate={{ x: [0, 30, 0], y: [0, 20, 0] }}
+        className="pointer-events-none absolute -top-32 -left-32 h-96 w-96 rounded-full bg-signal/25 blur-[110px]"
+        animate={reduceMotion ? undefined : { x: [0, 30, 0], y: [0, 20, 0] }}
         transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
       />
-      <motion.div
-        className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-signal/10 blur-[100px]"
-        animate={{ x: [0, -20, 0], y: [0, -25, 0] }}
-        transition={{ duration: 16, repeat: Infinity, ease: "easeInOut" }}
-      />
+      {/* halo diffus derrière le radar */}
+      <div className="pointer-events-none absolute top-1/2 left-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-signal/10 blur-[110px]" />
 
-      {/* en-tête */}
+      {/* en-tête : logo */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="relative z-10 px-12 pt-12"
+      >
+        <BrandLogo />
+      </motion.div>
+
+      {/* titre */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="relative z-10 px-10 pt-12"
+        className="relative z-10 px-12 pt-16"
       >
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-signal">
-          SOS Yoon
-        </p>
-        <h2 className="font-display mt-3 max-w-xs text-2xl leading-snug text-paper text-balance">
+        <h2 className="font-display max-w-sm text-4xl leading-[1.1] text-paper text-balance">
           {title}
         </h2>
       </motion.div>
 
       {/* radar */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-10">
-        <div className="relative aspect-square w-full max-w-90">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-12">
+        <div className="relative aspect-square w-full max-w-84">
           {/* particules flottantes */}
           {particles.map((p, i) => (
             <motion.span
               key={i}
               className="absolute h-1 w-1 rounded-full bg-paper/30"
               style={{ left: p.left, top: p.top }}
-              animate={{ opacity: [0.2, 0.8, 0.2], y: [0, -8, 0] }}
+              animate={
+                reduceMotion
+                  ? undefined
+                  : { opacity: [0.2, 0.8, 0.2], y: [0, -8, 0] }
+              }
               transition={{
                 duration: 5,
                 repeat: Infinity,
@@ -111,32 +123,43 @@ export function AuthVisualPanel({
             />
           ))}
 
-          {/* anneaux d'orbite */}
-          {["85%", "62%", "40%"].map((size) => (
+          {/* disque extérieur teinté + anneaux intérieurs */}
+          <div
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal/30"
+            style={{
+              width: "85%",
+              height: "85%",
+              background:
+                "radial-gradient(circle, transparent 35%, rgba(249,97,13,0.14) 100%)",
+            }}
+          />
+          {["62%", "40%"].map((size) => (
             <div
               key={size}
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-paper/10"
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-signal/20"
               style={{ width: size, height: size }}
             />
           ))}
 
           {/* balayage radar */}
-          <div
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full"
-            style={{ width: "85%", height: "85%" }}
-          >
-            <motion.div
-              className="absolute -inset-1/2"
-              style={{
-                background:
-                  "conic-gradient(from 0deg, transparent 0deg, rgba(240,162,2,0.32) 22deg, transparent 70deg)",
-              }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-            />
-          </div>
+          {!reduceMotion && (
+            <div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-full"
+              style={{ width: "85%", height: "85%" }}
+            >
+              <motion.div
+                className="absolute -inset-1/2"
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, transparent 0deg, rgba(249,97,13,0.28) 22deg, transparent 70deg)",
+                }}
+                animate={{ rotate: 360 }}
+                transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+          )}
 
-          {/* ligne de connexion vers le professionnel trouvé */}
+          {/* ligne vers le professionnel trouvé */}
           <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full">
             <motion.line
               key={active}
@@ -144,7 +167,7 @@ export function AuthVisualPanel({
               y1={50}
               x2={target.x}
               y2={target.y}
-              stroke="var(--color-signal)"
+              stroke={SIGNAL}
               strokeWidth={0.6}
               strokeLinecap="round"
               initial={{ pathLength: 0, opacity: 0 }}
@@ -154,15 +177,18 @@ export function AuthVisualPanel({
           </svg>
 
           {/* emblème central : balance de justice */}
-          <div className="absolute top-1/2 left-1/2 flex h-[26%] w-[26%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-brass/40 bg-ink/80 backdrop-blur-sm">
+          <div
+            className="absolute top-1/2 left-1/2 flex h-[30%] w-[30%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-signal bg-navy/90 backdrop-blur-sm"
+            style={{ boxShadow: "0 0 24px 2px rgba(249,97,13,0.35)" }}
+          >
             <div className="absolute inset-0 rounded-full bg-signal/10 blur-md" />
             <Scale
-              className="relative h-1/3 w-1/3 text-brass"
+              className="relative h-[40%] w-[40%] text-signal"
               strokeWidth={1.5}
             />
           </div>
 
-          {/* noeuds : les 4 métiers */}
+          {/* nœuds : les 4 métiers */}
           {metiers.map((metier, i) => {
             const pos = positionOf(metier.angle);
             const isActive = i === active;
@@ -176,19 +202,17 @@ export function AuthVisualPanel({
                 <motion.div
                   animate={{
                     scale: isActive ? 1.12 : 1,
-                    borderColor: isActive
-                      ? "var(--color-signal)"
-                      : "rgba(250,247,242,0.15)",
+                    borderColor: isActive ? SIGNAL : SIGNAL_SOFT,
                   }}
                   transition={{ duration: 0.4 }}
-                  className="relative flex h-11 w-11 items-center justify-center rounded-full border bg-ink/90 shadow-lg backdrop-blur-sm"
+                  className="relative flex h-11 w-11 items-center justify-center rounded-full border bg-navy/90 shadow-lg backdrop-blur-sm"
                 >
-                  {isActive && (
+                  {isActive && !reduceMotion && (
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal/30" />
                   )}
                   <Icon
                     size={16}
-                    className={isActive ? "text-signal" : "text-paper/50"}
+                    className={isActive ? "text-signal" : "text-signal/60"}
                   />
                 </motion.div>
 
@@ -199,8 +223,9 @@ export function AuthVisualPanel({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -4 }}
                       transition={{ duration: 0.3 }}
-                      className="absolute top-full left-1/2 mt-2 -translate-x-1/2 whitespace-nowrap rounded-full border border-signal/30 bg-ink/90 px-2.5 py-1 text-[10px] text-signal"
+                      className="absolute top-full left-1/2 mt-2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full border border-signal/30 bg-navy/90 px-2.5 py-1 text-[10px] text-signal"
                     >
+                      <span className="size-1.5 rounded-full bg-signal" />
                       {metier.label} · disponible
                     </motion.div>
                   )}
@@ -220,12 +245,14 @@ export function AuthVisualPanel({
           delay: 0.2,
           ease: [0.21, 0.47, 0.32, 0.98],
         }}
-        className="relative z-10 px-10 pb-12"
+        className="relative z-10 px-12 pb-12"
       >
-        <p className="text-xs uppercase tracking-widest text-paper/40">
-          Avocat · Huissier · Notaire · Juriste-conseil
-        </p>
-        <p className="mt-2 max-w-xs text-sm text-paper/60">{subtitle}</p>
+        <div className="max-w-md border-t border-paper/10 pt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-paper/60">
+            Avocat · Huissier · Notaire · Juriste-conseil
+          </p>
+          <p className="mt-2 max-w-sm text-sm text-paper/60">{subtitle}</p>
+        </div>
       </motion.div>
     </div>
   );

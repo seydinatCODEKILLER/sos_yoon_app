@@ -90,13 +90,15 @@ apiClient.interceptors.response.use(
     if (status === 401 && !originalConfig._retry) {
       originalConfig._retry = true;
 
-      if (tokenManager.isRefreshing) {
-        return new Promise((resolve) => {
-          tokenManager.subscribeTokenRefresh((newToken: string) => {
-            originalConfig.headers.Authorization = `Bearer ${newToken}`;
-            resolve(apiClient(originalConfig));
-          });
-        });
+      if (status === 401 && !originalConfig._retry) {
+        originalConfig._retry = true;
+        try {
+          const newAccessToken = await refreshAccessToken();
+          originalConfig.headers.Authorization = `Bearer ${newAccessToken}`;
+          return apiClient(originalConfig);
+        } catch (refreshError) {
+          return Promise.reject(refreshError);
+        }
       }
 
       try {

@@ -17,7 +17,7 @@ export function RegisterParticulierForm() {
 
   const form = useForm<RegisterParticulierValues>({
     resolver: zodResolver(registerParticulierSchema),
-    defaultValues: { nom: "", prenom: "", telephone: "" },
+    defaultValues: { telephone: "" },
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
@@ -29,43 +29,6 @@ export function RegisterParticulierForm() {
 
   return (
     <form onSubmit={onSubmit} className="w-full space-y-6">
-      <div className="space-y-2">
-        <Label htmlFor="prenom" className="text-sm text-ink/70">
-          Prénom
-        </Label>
-        <Input
-          id="prenom"
-          type="text"
-          autoComplete="given-name"
-          placeholder="Awa"
-          className="h-12 border-ink/15 bg-white px-4 text-base focus-visible:border-signal focus-visible:ring-signal/30"
-          {...form.register("prenom")}
-        />
-        {form.formState.errors.prenom && (
-          <p className="text-sm text-red-600">
-            {form.formState.errors.prenom.message}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="nom" className="text-sm text-ink/70">
-          Nom
-        </Label>
-        <Input
-          id="nom"
-          type="text"
-          autoComplete="family-name"
-          placeholder="Diop"
-          className="h-12 border-ink/15 bg-white px-4 text-base focus-visible:border-signal focus-visible:ring-signal/30"
-          {...form.register("nom")}
-        />
-        {form.formState.errors.nom && (
-          <p className="text-sm text-red-600">
-            {form.formState.errors.nom.message}
-          </p>
-        )}
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="telephone" className="text-sm text-ink/70">

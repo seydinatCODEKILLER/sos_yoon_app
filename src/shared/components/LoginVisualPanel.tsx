@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Fingerprint, ShieldCheck } from "lucide-react";
 
+const SIGNAL = "var(--color-signal)";
+
 const espaces = [
   "Vos demandes en cours",
   "Vos échanges",
@@ -10,30 +12,9 @@ const espaces = [
 ];
 
 const orbitRings = [
-  {
-    size: "88%",
-    duration: 30,
-    reverse: false,
-    color: "signal",
-    dot: 8,
-    glow: 14,
-  },
-  {
-    size: "64%",
-    duration: 20,
-    reverse: true,
-    color: "brass",
-    dot: 6,
-    glow: 10,
-  },
-  {
-    size: "42%",
-    duration: 13,
-    reverse: false,
-    color: "signal",
-    dot: 5,
-    glow: 8,
-  },
+  { size: "88%", duration: 30, reverse: false, dot: 8, glow: 14 },
+  { size: "64%", duration: 20, reverse: true, dot: 6, glow: 10 },
+  { size: "42%", duration: 13, reverse: false, dot: 5, glow: 8 },
 ] as const;
 
 const particles = [
@@ -51,7 +32,7 @@ interface LoginVisualPanelProps {
 
 export function LoginVisualPanel({
   title = "Bon retour. Votre espace vous attend.",
-  subtitle = "Reprennez là où vous vous êtes arrêté : vos demandes, vos échanges et vos documents, réunis au même endroit.",
+  subtitle = "Reprenez là où vous vous êtes arrêté : vos demandes, vos échanges et vos documents, réunis au même endroit.",
 }: LoginVisualPanelProps) {
   const reduceMotion = useReducedMotion();
   const [active, setActive] = useState(0);
@@ -65,8 +46,8 @@ export function LoginVisualPanel({
   }, []);
 
   return (
-    <div className="relative hidden h-full w-full flex-col justify-between overflow-hidden bg-ink md:flex">
-      {/* grain */}
+    <div className="relative hidden h-full w-full flex-col justify-between overflow-hidden bg-navy md:flex">
+      {/* grille */}
       <div
         className="pointer-events-none absolute inset-0 z-0 opacity-[0.05] mix-blend-overlay"
         style={{
@@ -76,50 +57,48 @@ export function LoginVisualPanel({
         }}
       />
 
-      {/* blobs ambiants — positions inversées vs register */}
+      {/* grande lueur orange derrière les orbites */}
       <motion.div
-        className="pointer-events-none absolute -top-24 -right-24 h-80 w-80 rounded-full bg-signal/10 blur-[100px]"
-        animate={reduceMotion ? undefined : { x: [0, -25, 0], y: [0, 20, 0] }}
-        transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="pointer-events-none absolute -bottom-24 -left-16 h-72 w-72 rounded-full bg-brass/10 blur-[100px]"
-        animate={reduceMotion ? undefined : { x: [0, 20, 0], y: [0, -20, 0] }}
+        className="pointer-events-none absolute top-[38%] -left-32 h-120 w-120 rounded-full bg-signal/20 blur-[120px]"
+        animate={reduceMotion ? undefined : { x: [0, 25, 0], y: [0, -20, 0] }}
         transition={{ duration: 17, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      {/* badge sécurité — écho au formulaire register */}
+      {/* en-tête : logo + badge sécurité */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="absolute top-8 right-8 z-10 flex items-center gap-1.5 rounded-full border border-paper/15 bg-paper/5 px-3 py-1.5 backdrop-blur-sm"
+        transition={{ duration: 0.5 }}
+        className="relative z-10 flex items-center justify-between px-12 pt-12"
       >
-        <ShieldCheck className="h-3.5 w-3.5 text-brass" strokeWidth={1.75} />
-        <span className="text-[11px] font-medium text-paper/70">
-          Connexion sécurisée
+        {/* TODO : remplacer par le logo SVG officiel */}
+        <span className="text-lg font-bold tracking-[0.18em] text-paper">
+          SOSYOON
         </span>
+
+        <div className="flex items-center gap-1.5 rounded-full border border-paper/10 bg-paper/5 px-3 py-1.5 backdrop-blur-sm">
+          <ShieldCheck className="h-3.5 w-3.5 text-signal" strokeWidth={1.75} />
+          <span className="text-[11px] font-medium text-paper/70">
+            Connexion sécurisée
+          </span>
+        </div>
       </motion.div>
 
-      {/* en-tête */}
+      {/* titre */}
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="relative z-10 px-10 pt-12"
+        className="relative z-10 px-12 pt-16"
       >
-        <p className="text-xs font-medium uppercase tracking-[0.2em] text-signal">
-          SOS Yoon
-        </p>
-        <h2 className="font-display mt-3 max-w-xs text-2xl leading-snug text-paper text-balance">
+        <h2 className="font-display max-w-sm text-4xl leading-[1.1] text-paper text-balance">
           {title}
         </h2>
       </motion.div>
 
-      {/* orbes */}
-      <div className="relative z-10 flex flex-1 items-center justify-center px-10">
-        <div className="relative aspect-square w-full max-w-90">
-          {/* particules flottantes */}
+      {/* orbites */}
+      <div className="relative z-10 flex flex-1 items-center justify-center px-12">
+        <div className="relative aspect-square w-full max-w-84">
           {particles.map((p, i) => (
             <motion.span
               key={i}
@@ -139,90 +118,80 @@ export function LoginVisualPanel({
             />
           ))}
 
-          {/* anneaux en rotation lente, directions alternées, chaque satellite avec sa propre identité */}
-          {orbitRings.map((ring, i) => {
-            const dotColor =
-              ring.color === "signal"
-                ? "var(--color-signal)"
-                : "var(--color-brass)";
-            return (
-              <motion.div
-                key={i}
-                className="absolute rounded-full border border-dashed border-paper/15"
-                style={{
-                  width: ring.size,
-                  height: ring.size,
-                  left: "50%",
-                  top: "50%",
-                }}
-                animate={
-                  reduceMotion
-                    ? { x: "-50%", y: "-50%" }
-                    : {
-                        x: "-50%",
-                        y: "-50%",
-                        rotate: ring.reverse ? -360 : 360,
-                      }
-                }
-                transition={
-                  reduceMotion
-                    ? undefined
-                    : {
-                        duration: ring.duration,
-                        repeat: Infinity,
-                        ease: "linear",
-                      }
-                }
-              >
-                {/* traînée lumineuse derrière le satellite */}
-                {!reduceMotion && (
-                  <span
-                    className="absolute left-1/2 -translate-x-1/2 rounded-full"
-                    style={{
-                      top: -ring.dot / 2,
-                      width: ring.dot,
-                      height: ring.dot * 3.5,
-                      background: `linear-gradient(to bottom, ${dotColor}, transparent)`,
-                      opacity: 0.35,
-                      transformOrigin: "center top",
-                      transform: ring.reverse
-                        ? "rotate(8deg)"
-                        : "rotate(-8deg)",
-                    }}
-                  />
-                )}
-
-                {/* satellite avec pulsation subtile */}
-                <motion.span
+          {orbitRings.map((ring, i) => (
+            <motion.div
+              key={i}
+              className="absolute rounded-full border border-dashed border-signal/20"
+              style={{
+                width: ring.size,
+                height: ring.size,
+                left: "50%",
+                top: "50%",
+              }}
+              animate={
+                reduceMotion
+                  ? { x: "-50%", y: "-50%" }
+                  : {
+                      x: "-50%",
+                      y: "-50%",
+                      rotate: ring.reverse ? -360 : 360,
+                    }
+              }
+              transition={
+                reduceMotion
+                  ? undefined
+                  : {
+                      duration: ring.duration,
+                      repeat: Infinity,
+                      ease: "linear",
+                    }
+              }
+            >
+              {!reduceMotion && (
+                <span
                   className="absolute left-1/2 -translate-x-1/2 rounded-full"
                   style={{
                     top: -ring.dot / 2,
                     width: ring.dot,
-                    height: ring.dot,
-                    background: dotColor,
-                    boxShadow: `0 0 ${ring.glow}px 2px ${dotColor}99`,
-                  }}
-                  animate={
-                    reduceMotion
-                      ? undefined
-                      : { scale: [1, 1.25, 1], opacity: [0.85, 1, 0.85] }
-                  }
-                  transition={{
-                    duration: 2.4,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    delay: i * 0.5,
+                    height: ring.dot * 3.5,
+                    background: `linear-gradient(to bottom, ${SIGNAL}, transparent)`,
+                    opacity: 0.35,
+                    transformOrigin: "center top",
+                    transform: ring.reverse ? "rotate(8deg)" : "rotate(-8deg)",
                   }}
                 />
-              </motion.div>
-            );
-          })}
+              )}
 
-          {/* pulsations d'accueil — écho du beacon de la page d'accueil */}
-          {!reduceMotion && (
-            <>
               <motion.span
-                className="absolute top-1/2 left-1/2 h-[42%] w-[42%] rounded-full border border-brass/50"
+                className="absolute left-1/2 -translate-x-1/2 rounded-full"
+                style={{
+                  top: -ring.dot / 2,
+                  width: ring.dot,
+                  height: ring.dot,
+                  background: SIGNAL,
+                  boxShadow: `0 0 ${ring.glow}px 2px ${SIGNAL}`,
+                }}
+                animate={
+                  reduceMotion
+                    ? undefined
+                    : { scale: [1, 1.25, 1], opacity: [0.85, 1, 0.85] }
+                }
+                transition={{
+                  duration: 2.4,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: i * 0.5,
+                }}
+              />
+            </motion.div>
+          ))}
+
+          {/* pulsations */}
+          {!reduceMotion &&
+            [0, 1.7].map((delay) => (
+              <motion.span
+                key={delay}
+                className="absolute top-1/2 left-1/2 h-[42%] w-[42%] rounded-full border border-signal/40"
                 animate={{
                   x: "-50%",
                   y: "-50%",
@@ -233,36 +202,21 @@ export function LoginVisualPanel({
                   duration: 3.4,
                   repeat: Infinity,
                   ease: "easeOut",
+                  delay,
                 }}
               />
-              <motion.span
-                className="absolute top-1/2 left-1/2 h-[42%] w-[42%] rounded-full border border-brass/50"
-                animate={{
-                  x: "-50%",
-                  y: "-50%",
-                  scale: [1, 1.9],
-                  opacity: [0.5, 0],
-                }}
-                transition={{
-                  duration: 3.4,
-                  repeat: Infinity,
-                  ease: "easeOut",
-                  delay: 1.7,
-                }}
-              />
-            </>
-          )}
+            ))}
 
-          {/* emblème central : empreinte = votre espace personnel */}
-          <div className="absolute top-1/2 left-1/2 flex h-[30%] w-[30%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-brass/40 bg-ink/80 backdrop-blur-sm">
-            <div className="absolute inset-0 rounded-full bg-brass/10 blur-md" />
+          {/* emblème central */}
+          <div className="absolute top-1/2 left-1/2 flex h-[30%] w-[30%] -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-signal/40 bg-navy/80 backdrop-blur-sm">
+            <div className="absolute inset-0 rounded-full bg-signal/10 blur-md" />
             <Fingerprint
-              className="relative h-[45%] w-[45%] text-brass"
+              className="relative h-[45%] w-[45%] text-signal"
               strokeWidth={1.25}
             />
           </div>
 
-          {/* libellé cyclique — écho des métiers du register, adapté à l'espace connecté */}
+          {/* libellé cyclique */}
           <div className="absolute top-full left-1/2 mt-4 -translate-x-1/2">
             <AnimatePresence mode="wait">
               <motion.span
@@ -271,8 +225,9 @@ export function LoginVisualPanel({
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -6 }}
                 transition={{ duration: 0.35 }}
-                className="whitespace-nowrap rounded-full border border-paper/15 bg-ink/70 px-3 py-1 text-[11px] text-paper/70 backdrop-blur-sm"
+                className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-paper/10 bg-navy/80 px-3 py-1 text-[11px] text-paper/70 backdrop-blur-sm"
               >
+                <span className="h-1.5 w-1.5 rounded-full bg-signal" />
                 {espaces[active]}
               </motion.span>
             </AnimatePresence>
@@ -289,12 +244,14 @@ export function LoginVisualPanel({
           delay: 0.2,
           ease: [0.21, 0.47, 0.32, 0.98],
         }}
-        className="relative z-10 px-10 pb-12"
+        className="relative z-10 px-12 pb-12"
       >
-        <p className="text-xs uppercase tracking-widest text-paper/40">
-          Connexion sécurisée
-        </p>
-        <p className="mt-2 max-w-xs text-sm text-paper/60">{subtitle}</p>
+        <div className="max-w-md border-t border-paper/10 pt-6">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-signal">
+            Connexion sécurisée
+          </p>
+          <p className="mt-2 max-w-xs text-sm text-paper/60">{subtitle}</p>
+        </div>
       </motion.div>
     </div>
   );

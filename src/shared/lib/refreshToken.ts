@@ -1,50 +1,49 @@
 import axios from "axios";
 import { API_CONFIG } from "@/config/api.config";
 import { tokenManager } from "./tokenManager";
+import type { RefreshPayload, TokenResponse } from "@/features/auth/types/types";
 
 const rawClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
   timeout: API_CONFIG.TIMEOUT,
 });
 
+let inflight: Promise<TokenResponse> | null = null;
+
 /**
- * Rafraîchit l'access token. Point d'entrée unique, partagé entre
- * l'intercepteur Axios (apiClient.ts) et le socket (à venir),
- * pour ne jamais dupliquer la logique de rotation des tokens.
- *
- * ⚠️ json-server-auth ne fournit pas nativement de mécanisme de refresh
- * token — cette fonction est prête pour le vrai backend, mais échouera
- * tant qu'on est sur le mock. À activer réellement une fois l'API prête.
+ * POST /auth/rafraichir — renvoie la session complète (jetons, utilisateur,
+ * portée). Le refresh token est à usage unique : le nouveau remplace l'ancien.
+ * Partagé entre l'intercepteur, la restauration de session et le socket (à venir).
  */
-export async function refreshAccessToken(): Promise<string> {
-  if (tokenManager.isRefreshing) {
-    return new Promise((resolve) => {
-      tokenManager.subscribeTokenRefresh((newToken) => resolve(newToken));
-    });
-  }
+export function refreshSession(): Promise<TokenResponse> {
+  if (inflight) return inflight;
 
-  tokenManager.isRefreshing = true;
+  inflight = (async () => {
+    try {
+      const refreshToken = tokenManager.getRefreshToken();
+      if (!refreshToken) throw new Error("Pas de refresh token disponible");
 
-  try {
-    const refreshToken = tokenManager.getRefreshToken();
-    if (!refreshToken) {
-      throw new Error("Pas de refresh token disponible");
+      const payload: RefreshPayload = { refreshToken };
+      const { data } = await rawClient.post<TokenResponse>(
+        "/auth/rafraichir",
+        payload,
+      );
+
+      tokenManager.saveTokens(data.accessToken, data.refreshToken);
+      tokenManager.onSessionRefreshed(data); // met à jour user + portée dans le store
+      return data;
+    } catch (err) {
+      tokenManager.clearTokens();
+      tokenManager.logout("Session expirée. Veuillez vous reconnecter.");
+      throw err;
     }
+  })().finally(() => {
+    inflight = null;
+  });
 
-    const response = await rawClient.post("/refresh", { refreshToken });
+  return inflight;
+}
 
-    const newAccessToken: string = response.data.accessToken;
-    const newRefreshToken: string = response.data.refreshToken;
-
-    tokenManager.saveTokens(newAccessToken, newRefreshToken);
-    tokenManager.onTokenRefreshed(newAccessToken);
-    return newAccessToken;
-  } catch (err) {
-    tokenManager.onRefreshFailed();
-    tokenManager.clearTokens();
-    tokenManager.logout("Session expirée. Veuillez vous reconnecter.");
-    throw err;
-  } finally {
-    tokenManager.isRefreshing = false;
-  }
+export async function refreshAccessToken(): Promise<string> {
+  return (await refreshSession()).accessToken;
 }

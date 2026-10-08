@@ -5,3 +5,6 @@
  * une fois l'API réelle connectée.
  */
 export const AUTH_GUARD_ENABLED = false;
+
+/** TEMPORAIRE : passe à `false` quand le back-end est connecté. */
+export const USE_MOCK_API = true;

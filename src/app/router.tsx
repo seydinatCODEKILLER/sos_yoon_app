@@ -29,7 +29,6 @@ import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfess
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
 import { VoiceRequestPage } from "@/features/demandes/pages/VoiceRequestPage";
-import { RequestPhonePage } from "@/features/demandes/pages/RequestPhonePage";
 import { MetierChoicePage } from "@/features/demandes/pages/MetierChoicePage";
 import { WrittenRequestPage } from "@/features/demandes/pages/WrittenRequestPage";
 
@@ -42,7 +41,7 @@ export const router = createBrowserRouter([
   },
   { path: "/demande/ecrit", element: <WrittenRequestPage /> },
   { path: "/demande/ecrit/metier", element: <MetierChoicePage /> },
-  { path: "/demande/telephone", element: <RequestPhonePage /> },
+  { path: "/demande/telephone", element: <PagePlaceholder title="Chatbot d'orientation" /> },
   {
     path: "/chatbot",
     element: <PagePlaceholder title="Chatbot d'orientation" />,

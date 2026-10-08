@@ -1,4 +1,5 @@
 import { PUBLIC_ENDPOINTS } from "@/config/api.config";
+import type { TokenResponse } from "@/features/auth/types/types";
 
 const KEYS = {
   ACCESS_TOKEN: "sosyoon_access_token",
@@ -7,6 +8,7 @@ const KEYS = {
 
 class TokenManager {
   private logoutHandler: ((reason?: string) => void) | null = null;
+  private sessionHandler: ((response: TokenResponse) => void) | null = null;
   private refreshSubscribers: ((token: string) => void)[] = [];
   isRefreshing = false;
 
@@ -60,10 +62,17 @@ class TokenManager {
     this.logoutHandler?.(reason);
   }
 
+  setSessionHandler(handler: (response: TokenResponse) => void): void {
+    this.sessionHandler = handler;
+  }
+  onSessionRefreshed(response: TokenResponse): void {
+    this.sessionHandler?.(response);
+  }
+
   // ── Utils ────────────────────────────────────────────────────
 
   isPublicEndpoint(url: string): boolean {
-    return PUBLIC_ENDPOINTS.some((endpoint) => url.includes(endpoint));
+    return PUBLIC_ENDPOINTS.some((endpoint) => url.startsWith(endpoint));
   }
 }
 

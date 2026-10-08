@@ -14,6 +14,26 @@ export const DEFAULT_HEADERS = {
   "Content-Type": "application/json",
 } as const;
 
-export const PUBLIC_ENDPOINTS = ["/register", "/login", "/refresh"] as const;
+/** Pas d'en-tête Authorization sur ces chemins (comparés au début de l'URL). */
+export const PUBLIC_ENDPOINTS = [
+  "/auth/particulier/inscription/",
+  "/auth/particulier/connexion/",
+  "/auth/particulier/renvoyer-code",
+  "/auth/pro/inscription",
+  "/auth/pro/connexion",
+  "/auth/email/",
+  "/auth/mot-de-passe-oublie",
+  "/auth/mot-de-passe/reinitialiser",
+  "/auth/rafraichir",
+  "/admin/auth/connexion",
+  "/admin/auth/2fa/verifier",
+  "/referentiels/",
+] as const;
 
-export const EXPECTED_401_ENDPOINTS = ["/login", "/refresh"] as const;
+/** Un 401 ici est une vraie erreur (mauvais identifiants, jeton refusé) : pas de refresh. */
+export const EXPECTED_401_ENDPOINTS = [
+  "/auth/pro/connexion",
+  "/admin/auth/connexion",
+  "/admin/auth/2fa/verifier",
+  "/auth/rafraichir",
+] as const;
