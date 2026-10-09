@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Loader2, Mic, RotateCcw, Square } from "lucide-react";
+import { Loader2, Mic, Square } from "lucide-react";
 import { DUREE_MAX_SECONDES, useAudioRecorder } from "../hooks/useVoiceRecorder";
 import { formatDuree } from "../lib/formatDuration";
 import { useEnvoyerMessageVocal } from "../hooks/useEnvoyerMessageVocal";
+import { MessageVocalEnregistre } from "./MessageVocalEnregistre";
 
 const BARS = [10, 18, 28, 20, 12, 22, 8];
 
@@ -76,44 +77,15 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
   }
 
   // ── Enregistrement terminé : écoute, réenregistrement, suite ──
+  // ── Enregistrement terminé ──
   if (status === "recorded" && audio) {
     return (
-      <div className="mx-auto w-full max-w-md rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-ink">Votre message vocal</p>
-          <span className="text-xs tabular-nums text-ink/50">{formatDuree(audio.dureeSecondes)}</span>
-        </div>
-        <audio controls src={audio.url} className="mt-4 w-full" />
-        <p className="mt-3 text-xs text-ink/50">
-          Écoutez-le avant de continuer. Vous pouvez le réenregistrer.
-        </p>
-        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <button
-            type="button"
-            onClick={reset}
-            disabled={isSubmitting}
-            className="inline-flex items-center justify-center gap-2 rounded-xl border border-ink/10 px-4 py-2.5 text-sm font-medium text-ink/70 transition-colors hover:bg-ink/5 disabled:opacity-50"
-          >
-            <RotateCcw className="size-4" /> Réenregistrer
-          </button>
-          <button
-            type="button"
-            onClick={handleContinue}
-            disabled={isSubmitting}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-signal px-5 text-sm font-semibold text-paper shadow-[0_6px_18px_rgba(249,97,13,0.3)] transition hover:brightness-105 disabled:opacity-60"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="size-4 animate-spin" /> Envoi…
-              </>
-            ) : (
-              <>
-                Continuer vers la localisation <ArrowRight className="size-4" />
-              </>
-            )}
-          </button>
-        </div>
-      </div>
+      <MessageVocalEnregistre
+        audio={audio}
+        onReset={reset}
+        onContinue={handleContinue}
+        isSubmitting={isSubmitting}
+      />
     );
   }
 
