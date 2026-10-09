@@ -109,3 +109,16 @@ export const profilPathByRole: Record<UserRole, string> = {
   PRO: "/pro/profil",
   ADMIN: "/admin/parametres",
 };
+
+/** Nom du portail affiché dans le fil d'Ariane du header */
+export const portalLabelByRole: Record<UserRole, string> = {
+  PARTICULIER: "Portail Citoyen",
+  PRO: "Espace Professionnel",
+  ADMIN: "Administration",
+};
+
+/** Page des notifications (pas d'équivalent côté admin) */
+export const notificationsPathByRole: Partial<Record<UserRole, string>> = {
+  PARTICULIER: "/app/notifications",
+  PRO: "/pro/notifications",
+};

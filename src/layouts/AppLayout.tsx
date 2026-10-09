@@ -1,7 +1,9 @@
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet, useLocation, useMatches } from "react-router-dom";
 import { useIsMobile } from "@/shared/hooks/useIsMobile";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { AUTH_GUARD_ENABLED } from "@/shared/lib/featureFlags";
+import { getNavItems } from "@/config/navigation";
+import { getActiveNavPath } from "@/shared/lib/getActiveNavPath";
 import type { UserRole } from "@/types/user.types";
 import { DesktopLayout } from "./DesktopLayout";
 import { MobileLayout } from "./MobileLayout";
@@ -16,15 +18,31 @@ function roleFromPath(pathname: string): UserRole {
 export function AppLayout() {
   const isMobile = useIsMobile();
   const { pathname } = useLocation();
+  const matches = useMatches();
   const userRole = useAuthStore((s) => s.user?.role);
 
   const role = userRole ?? (AUTH_GUARD_ENABLED ? null : roleFromPath(pathname));
   if (!role) return null;
 
-  const Layout = isMobile ? MobileLayout : DesktopLayout;
+  if (isMobile) {
+    return (
+      <MobileLayout role={role}>
+        <Outlet />
+      </MobileLayout>
+    );
+  }
+
+  const routeTitle = [...matches]
+    .reverse()
+    .map((m) => (m.handle as { title?: string } | undefined)?.title)
+    .find(Boolean);
+  const items = getNavItems(role);
+  const activePath = getActiveNavPath(items, pathname);
+  const title = routeTitle ?? items.find((i) => i.path === activePath)?.label;
+
   return (
-    <Layout role={role}>
+    <DesktopLayout role={role} title={title}>
       <Outlet />
-    </Layout>
+    </DesktopLayout>
   );
 }

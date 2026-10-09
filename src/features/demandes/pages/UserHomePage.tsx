@@ -1,238 +1,100 @@
-import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
-import { fr } from "date-fns/locale";
-import { ArrowRight, FileText, Bell, Mic } from "lucide-react";
-import { useAuthStore } from "@/features/auth/store/auth.store";
-import { getDemandeStatusInfo } from "../lib/demandeStatus";
-import { METIERS } from "../lib/metiers";
-import { NOTIFICATION_ICONS } from "@/features/notifications/lib/notificationIcons";
-import { useRecentNotifications } from "@/features/notifications/hooks/useRecentNotifications";
-import { useRecentDemandes } from "../hooks/useRecentDemandes";
+import { Link, useNavigate } from "react-router-dom";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowRight, FolderOpen, Lock, ShieldCheck } from "lucide-react";
+import { AssistantFab } from "@/features/assistant/components/AssistantFab";
 
-const accentDot = {
-  ink: "bg-ink/40",
-  brass: "bg-brass",
-  signal: "bg-signal",
-  red: "bg-red-500",
-};
-
-function getMetierLabel(metier: string | null) {
-  if (!metier) return "Analyse en cours";
-  return METIERS.find((m) => m.value === metier)?.label ?? metier;
+function PulseRing({ delay, animate }: { delay: number; animate: boolean }) {
+  return (
+    <motion.span
+      aria-hidden
+      className="absolute inset-14.5 rounded-full border border-signal/40"
+      initial={{ scale: 1, opacity: 0 }}
+      animate={
+        animate ? { scale: [1, 1.9], opacity: [0.45, 0] } : { opacity: 0 }
+      }
+      transition={{ duration: 3.2, repeat: Infinity, ease: "easeOut", delay }}
+    />
+  );
 }
 
 export function UserHomePage() {
   const navigate = useNavigate();
-  const user = useAuthStore((s) => s.user);
-  const { data: demandes, isLoading: loadingDemandes } = useRecentDemandes();
-  const { data: notifData, isLoading: loadingNotifs } = useRecentNotifications();
-
-const demandesEnCours =
-  demandes?.filter((d) => getDemandeStatusInfo(d.statut).accent !== "signal")
-    .length ?? 0;
-  const notifsNonLues = notifData?.items.filter((n) => !n.lu).length ?? 0;
+  const reduceMotion = useReducedMotion();
 
   return (
-    <div className="mx-auto max-w-5xl">
-      {/* Salutation */}
-      <div className="px-1">
-        <p className="text-[15px] text-ink/50">
-          Bonjour{user?.prenom ? `, ${user.prenom}` : ""} 👋
-        </p>
-        <h1 className="mt-1 font-display text-[28px] font-semibold leading-tight text-ink sm:text-[32px]">
-          Comment pouvons-nous vous aider ?
-        </h1>
-      </div>
+    <div className="mx-auto flex max-w-2xl flex-col items-center px-6 py-4 text-center md:min-h-[calc(100dvh-3.5rem)] md:justify-center">
 
-      {/* Grille bento */}
-      <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-6">
-        {/* CTA principale */}
-        <button
+      <h2 className="mt-8 text-balance font-display text-4xl font-bold leading-[1.1] text-navy sm:text-5xl">
+        Quelle est votre urgence aujourd'hui ?
+      </h2>
+      <p className="mt-5 max-w-lg text-pretty text-base text-ink/55">
+        Décrivez votre situation, on s'occupe de vous mettre en relation
+        immédiate avec le bon professionnel assermenté.
+      </p>
+
+      {/* Bouton SOS */}
+      <div className="relative mt-10 grid size-64 place-items-center">
+        <span
+          aria-hidden
+          className="absolute inset-0 rounded-full border border-signal/15"
+        />
+        <span
+          aria-hidden
+          className="absolute inset-7 rounded-full border border-signal/10"
+        />
+        <PulseRing delay={0} animate={!reduceMotion} />
+        <PulseRing delay={1.6} animate={!reduceMotion} />
+
+        <motion.button
           type="button"
           onClick={() => navigate("/app/demandes/nouvelle")}
-          className="group relative col-span-1 overflow-hidden rounded-[28px] bg-ink p-7 text-left transition-transform duration-300 hover:-translate-y-0.5 sm:col-span-4"
+          aria-label="SOS — Trouver un professionnel du droit"
+          whileHover={reduceMotion ? undefined : { scale: 1.04 }}
+          whileTap={reduceMotion ? undefined : { scale: 0.97 }}
+          className="relative z-10 flex size-35 flex-col items-center justify-center rounded-full bg-[radial-gradient(circle_at_50%_30%,#ff7d22,#e8580a)] text-paper shadow-[0_0_70px_10px_rgba(249,97,13,0.35)] outline-none focus-visible:ring-4 focus-visible:ring-signal/40"
         >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full opacity-30 blur-[80px]"
-            style={{ background: "var(--color-signal)" }}
-          />
-          <span className="flex h-11 w-11 items-center justify-center rounded-full bg-signal/15 text-signal">
-            <Mic className="h-5 w-5" />
+          <span className="font-display text-3xl font-bold tracking-wider">
+            SOS
           </span>
-          <h2 className="mt-8 font-display text-[26px] font-semibold leading-tight text-paper">
-            Nouvelle demande
-          </h2>
-          <p className="mt-2 max-w-[30ch] text-[14px] text-paper/50">
-            Vocal, écrit ou chatbot — décrivez votre situation, on s'occupe
-            du reste.
-          </p>
-          <span className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-signal">
-            Commencer
-            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+          <span className="mt-1 max-w-[11ch] text-balance text-[13px] leading-snug text-paper/90">
+            Trouver un professionnel du droit
           </span>
-        </button>
-
-        {/* Deux stats empilées */}
-        <div className="flex flex-col gap-4 sm:col-span-2">
-          <button
-            type="button"
-            onClick={() => navigate("/app/demandes")}
-            className="flex flex-1 flex-col justify-center rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 transition-transform duration-300 hover:-translate-y-0.5"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-signal/10 text-signal">
-              <FileText className="h-4 w-4" />
-            </span>
-            <p className="mt-4 font-display text-[28px] font-semibold leading-none text-ink">
-              {loadingDemandes ? "—" : demandesEnCours}
-            </p>
-            <p className="mt-1.5 text-[13px] text-ink/45">
-              Demande{demandesEnCours > 1 ? "s" : ""} en cours
-            </p>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => navigate("/app/notifications")}
-            className="flex flex-1 flex-col justify-center rounded-[28px] bg-white p-6 text-left shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 transition-transform duration-300 hover:-translate-y-0.5"
-          >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-brass/15 text-brass">
-              <Bell className="h-4 w-4" />
-            </span>
-            <p className="mt-4 font-display text-[28px] font-semibold leading-none text-ink">
-              {loadingNotifs ? "—" : notifsNonLues}
-            </p>
-            <p className="mt-1.5 text-[13px] text-ink/45">
-              Non lue{notifsNonLues > 1 ? "s" : ""}
-            </p>
-          </button>
-        </div>
-
-        {/* Demandes récentes */}
-        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 sm:col-span-3">
-          <div className="flex items-center justify-between px-6 pt-5">
-            <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink/40">
-              Demandes récentes
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate("/app/demandes")}
-              className="text-[13px] font-medium text-signal hover:underline"
-            >
-              Voir tout
-            </button>
-          </div>
-
-          <div className="mt-3">
-            {loadingDemandes && (
-              <div className="mx-6 mb-5 h-14 animate-pulse rounded-xl bg-ink/4" />
-            )}
-
-            {!loadingDemandes && demandes?.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                <FileText className="h-5 w-5 text-ink/25" />
-                <p className="text-[13px] text-ink/45">
-                  Vous n'avez pas encore de demande en cours.
-                </p>
-              </div>
-            )}
-
-            {demandes?.slice(0, 3).map((demande, i, arr) => {
-              const status = getDemandeStatusInfo(demande.statut);
-              return (
-                <button
-                  key={demande.id}
-                  type="button"
-                  onClick={() => navigate(`/app/demandes/${demande.id}`)}
-                  className={`flex w-full items-center gap-3 px-6 py-3.5 text-left transition-colors hover:bg-ink/4 ${
-                    i > 0 ? "border-t border-ink/6" : ""
-                  } ${i === arr.length - 1 ? "pb-5" : ""}`}
-                >
-                  <span
-                    className={`h-1.5 w-1.5 shrink-0 rounded-full ${accentDot[status.accent]}`}
-                  />
-                  <span className="flex-1">
-                    <span className="block text-[14px] font-medium text-ink">
-                      {getMetierLabel(demande.metierIdentifie)}
-                    </span>
-                    <span className="block text-[13px] text-ink/45">
-                      {status.label}
-                    </span>
-                  </span>
-                  <span className="text-[12px] text-ink/35">
-                    {formatDistanceToNow(new Date(demande.createdAt), {
-                      addSuffix: true,
-                      locale: fr,
-                    })}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Notifications récentes */}
-        <div className="overflow-hidden rounded-[28px] bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] ring-1 ring-ink/6 sm:col-span-3">
-          <div className="flex items-center justify-between px-6 pt-5">
-            <h2 className="text-[13px] font-medium uppercase tracking-wide text-ink/40">
-              Notifications
-            </h2>
-            <button
-              type="button"
-              onClick={() => navigate("/app/notifications")}
-              className="text-[13px] font-medium text-signal hover:underline"
-            >
-              Voir tout
-            </button>
-          </div>
-
-          <div className="mt-3">
-            {loadingNotifs && (
-              <div className="mx-6 mb-5 h-14 animate-pulse rounded-xl bg-ink/4" />
-            )}
-
-            {!loadingNotifs && notifData?.items.length === 0 && (
-              <div className="flex flex-col items-center gap-2 px-6 py-10 text-center">
-                <Bell className="h-5 w-5 text-ink/25" />
-                <p className="text-[13px] text-ink/45">
-                  Aucune notification pour le moment.
-                </p>
-              </div>
-            )}
-
-            {notifData?.items.slice(0, 3).map((notif, i, arr) => {
-              const { icon: Icon, accent } = NOTIFICATION_ICONS[notif.type];
-              return (
-                <div
-                  key={notif.id}
-                  className={`flex items-start gap-3 px-6 py-3.5 ${
-                    i > 0 ? "border-t border-ink/6" : ""
-                  } ${i === arr.length - 1 ? "pb-5" : ""}`}
-                >
-                  <span
-                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink/4 ${
-                      accent === "red" ? "text-red-500" : ""
-                    } ${accent === "signal" ? "text-signal" : ""} ${
-                      accent === "brass" ? "text-brass" : ""
-                    } ${accent === "ink" ? "text-ink/50" : ""}`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                  </span>
-                  <div className="flex-1">
-                    <p className="text-[14px] font-medium text-ink">
-                      {notif.titre}
-                    </p>
-                    <p className="text-[13px] text-ink/45">{notif.message}</p>
-                  </div>
-                  {!notif.lu && (
-                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-signal" />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        </motion.button>
       </div>
+
+      {/* Accès aux demandes */}
+      <Link
+        to="/app/demandes"
+        className="group mt-10 flex w-full max-w-md items-center gap-3 rounded-2xl border border-ink/10 bg-white px-4 py-3 text-left shadow-sm transition-shadow hover:shadow-md"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-ink/5 text-ink/70">
+          <FolderOpen className="size-4.5" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-medium text-ink">
+            Vos demandes en cours
+          </span>
+          <span className="block text-xs text-ink/50">
+            Suivi en direct avec votre professionnel de permanence
+          </span>
+        </span>
+        <ArrowRight className="size-4 text-signal transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
+      {/* Réassurance */}
+      <p className="mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs text-ink/55">
+        <span className="inline-flex items-center gap-1.5">
+          <ShieldCheck className="size-3.5 text-signal" aria-hidden />
+          Avocats &amp; Huissiers assermentés
+        </span>
+        <span aria-hidden className="size-1 rounded-full bg-ink/25" />
+        <span className="inline-flex items-center gap-1.5">
+          <Lock className="size-3.5 text-signal" aria-hidden />
+          100% Confidentiel
+        </span>
+      </p>
+
+      <AssistantFab />
     </div>
   );
 }
