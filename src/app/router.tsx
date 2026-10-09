@@ -10,6 +10,7 @@ import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticuli
 import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
+import { DemanderAidePage } from "@/features/demandes/pages/DemanderAidePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -47,7 +48,8 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/demandes/nouvelle",
-            element: <PagePlaceholder title="Demander de l'aide" />,
+            element: <DemanderAidePage />,
+            handle: { section: "Demandes d'aide", title: "Urgence Juridique" },
           },
           {
             path: "/app/demandes",

@@ -8,11 +8,12 @@ import { HeaderActions } from "./HeaderActions";
 
 interface DesktopLayoutProps {
   role: UserRole;
+   section?: string; 
   title?: string;
   children: ReactNode;
 }
 
-export function DesktopLayout({ role, title, children }: DesktopLayoutProps) {
+export function DesktopLayout({ role, section, title, children }: DesktopLayoutProps) {
   return (
     <SidebarProvider style={sidebarThemes[role]}>
       <AppSidebar role={role} />
@@ -20,7 +21,7 @@ export function DesktopLayout({ role, title, children }: DesktopLayoutProps) {
         <header className="sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-border/60 bg-paper/80 px-4 backdrop-blur supports-backdrop-filter:bg-paper/60">
           <SidebarTrigger className="text-foreground/60 hover:text-foreground" />
           <nav aria-label="Fil d'Ariane" className="flex min-w-0 items-center gap-2 text-sm">
-            <span className="hidden text-ink/50 sm:inline">{portalLabelByRole[role]}</span>
+            <span className="hidden text-ink/50 sm:inline">{section ?? portalLabelByRole[role]}</span>
             {title && (
               <>
                 <span className="hidden text-ink/25 sm:inline">/</span>
