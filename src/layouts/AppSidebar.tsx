@@ -56,7 +56,7 @@ export function AppSidebar({ role }: { role: UserRole }) {
                         render={<Link to={path} />}
                         isActive={isActive}
                         tooltip={label}
-                        className="text-(--nav-muted) hover:bg-sidebar-accent hover:text-sidebar-foreground data-[active=true]:bg-(--nav-active-bg) data-[active=true]:font-medium data-[active=true]:text-(--nav-active-fg) data-[active=true]:hover:bg-(--nav-active-bg) data-[active=true]:hover:text-(--nav-active-fg)"
+                        className="text-(--nav-muted) hover:bg-sidebar-accent hover:text-sidebar-foreground data-active:bg-(--nav-active-bg) data-active:font-medium data-active:text-(--nav-active-fg) data-active:hover:bg-(--nav-active-bg) data-active:hover:text-(--nav-active-fg)"
                       >
                         <Icon />
                         <span>{label}</span>
