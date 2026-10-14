@@ -11,6 +11,8 @@ import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfess
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
 import { DemanderAidePage } from "@/features/demandes/pages/DemanderAidePage";
+import { CodeSecretInscriptionPage } from "@/features/auth/pages/CodeSecretInscriptionPage";
+import { CodeOubliePage } from "@/features/auth/pages/CodeOubliePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -21,10 +23,16 @@ export const router = createBrowserRouter([
   { path: "/register/particulier", element: <RegisterParticulierPage /> },
   { path: "/register/professionnel", element: <RegisterProfessionnelPage /> },
   { path: "/verification-otp", element: <VerifyOtpPage /> },
+  { path: "/code-oublie", element: <CodeOubliePage /> },
   {
     path: "/verification-email",
     element: <PagePlaceholder title="Vérification de l'email" />,
   },
+
+  { path: "/inscription/code-secret", element: <CodeSecretInscriptionPage /> },
+{ path: "/cgu", element: <PagePlaceholder title="Conditions Générales d'Utilisation" /> },
+{ path: "/confidentialite", element: <PagePlaceholder title="Politique de Confidentialité" /> },
+  { path: "/code-oublie", element: <PagePlaceholder title="Code secret oublié" /> },
   {
     path: "/mot-de-passe-oublie",
     element: <PagePlaceholder title="Mot de passe oublié" />,
@@ -58,14 +66,6 @@ export const router = createBrowserRouter([
           {
             path: "/app/demandes/:id",
             element: <PagePlaceholder title="Détail de la demande" />,
-          },
-          {
-            path: "/app/messages",
-            element: <PagePlaceholder title="Messages" />,
-          },
-          {
-            path: "/app/assistant",
-            element: <PagePlaceholder title="Assistant juridique" />,
           },
           {
             path: "/app/notifications",

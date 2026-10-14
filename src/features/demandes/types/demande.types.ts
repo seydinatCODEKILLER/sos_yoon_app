@@ -57,3 +57,57 @@ export interface DemandeDetail {
   compteRenduDisponible: boolean;
   avisDonne: boolean;
 }
+
+export interface LocalisationPayload {
+  latitude: number | null;   // null si le GPS est refusé
+  longitude: number | null;
+  libelle: string;
+  communeId?: number | null; // obligatoire si latitude/longitude sont null
+}
+
+export interface LocalisationResultat {
+  libelle: string;
+  rayonKm: number;
+  secteur: string;
+  professionnelsDisponiblesDansZone: boolean;
+}
+
+export interface Commune {
+  id: number;
+  nom: string;
+}
+
+export type EtapeSuivi = "ENREGISTREE" | "ANALYSEE" | "NOTIFIES" | "ACCEPTEE";
+
+export interface ProfessionnelAccepte {
+  id: string;
+  /** "Me Mamadou Diallo" */
+  nomComplet: string;
+  /** "huissier de justice" */
+  metier: string;
+  /** "Chambre Nationale des Huissiers de Justice" */
+  organisme: string;
+  verifie: boolean;
+  disponibleImmediatement: boolean;
+  distanceKm: number;
+  /** "Dakar-Plateau" */
+  communeLibelle: string;
+  delaiContactMinutes: number;
+  photoUrl: string | null;
+  /** Format international, chiffres seulement : "221771234567" (sert à tel: et wa.me) */
+  telephone: string;
+}
+
+export interface SuiviDemande {
+  demandeId: string;
+  statut: string;
+  etape: EtapeSuivi;
+  /** "constat d'huissier" */
+  matiereLibelle: string | null;
+  nbProfessionnelsNotifies: number;
+  /** true quand la recherche s'est étendue aux secteurs mitoyens */
+  zoneElargie: boolean;
+  dateEnvoi: string;
+  dateAcceptation: string | null;
+  professionnel: ProfessionnelAccepte | null;
+}

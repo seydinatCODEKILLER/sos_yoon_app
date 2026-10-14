@@ -1,17 +1,37 @@
 import type { ComponentType, SVGProps } from "react";
 import {
-  Asterisk, Bell, Bot, Briefcase, CalendarDays, Contact, FileText, Folder,
-  Home, LayoutDashboard, MessageSquare, Settings, User, Users, Zap,
+  Bell,
+  Briefcase,
+  CalendarDays,
+  Contact,
+  FileText,
+  Folder,
+  Home,
+  LayoutDashboard,
+  MessageSquare,
+  Settings,
+  User,
+  Users,
+  Zap,
 } from "lucide-react";
 import type { UserRole } from "@/types/user.types";
 
 /** Clés des valeurs dynamiques fournies par useNavBadges */
 export type NavBadgeKey =
-  | "demandes" | "dossiers" | "agenda" | "messages"
-  | "notifications" | "professionnelsEnAttente";
+  | "demandes"
+  | "dossiers"
+  | "agenda"
+  | "messages"
+  | "notifications"
+  | "professionnelsEnAttente";
 
 export type NavBadge =
-  | { kind: "count"; key: NavBadgeKey; tone?: "pill" | "muted"; suffix?: string }
+  | {
+      kind: "count";
+      key: NavBadgeKey;
+      tone?: "pill" | "muted";
+      suffix?: string;
+    }
   | { kind: "dot"; key?: NavBadgeKey; color?: "signal" | "success" | "neutral" }
   | { kind: "label"; text: string }; // ex. "IA", fixe
 
@@ -37,17 +57,30 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
     {
       title: "Navigation",
       items: [
-        { label: "Accueil", path: "/app", icon: Home, end: true, mobile: true,
-          badge: { kind: "dot", color: "signal" } },
-        { label: "Demander de l'aide", shortLabel: "Aide", path: "/app/demandes/nouvelle",
-          icon: Asterisk, mobile: true },
-        { label: "Mes demandes", shortLabel: "Suivi", path: "/app/demandes",
-          icon: FileText, mobile: true, badge: { kind: "count", key: "demandes", tone: "pill" } },
-        { label: "Messages", path: "/app/messages", icon: MessageSquare, mobile: true },
-        { label: "Assistant juridique", shortLabel: "Assistant", path: "/app/assistant",
-          icon: Bot, badge: { kind: "label", text: "IA" } },
-        { label: "Notifications", shortLabel: "Alertes", path: "/app/notifications",
-          icon: Bell, badge: { kind: "dot", key: "notifications", color: "success" } },
+        {
+          label: "Accueil",
+          path: "/app",
+          icon: Home,
+          end: true,
+          mobile: true,
+          badge: { kind: "dot", color: "signal" },
+        },
+        {
+          label: "Demandes",
+          path: "/app/demandes",
+          icon: FileText,
+          mobile: true,
+          badge: { kind: "count", key: "demandes", tone: "pill" },
+        },
+        {
+          label: "Notifications",
+          shortLabel: "Alertes",
+          path: "/app/notifications",
+          icon: Bell,
+          mobile: true,
+          badge: { kind: "dot", key: "notifications", color: "success" },
+        },
+        { label: "Profil", path: "/app/profil", icon: User, mobile: true },
       ],
     },
   ],
@@ -56,19 +89,49 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
     {
       title: "Menu principal",
       items: [
-        { label: "Tableau de bord", shortLabel: "Accueil", path: "/pro", icon: LayoutDashboard,
-          end: true, mobile: true, badge: { kind: "dot", color: "neutral" } },
-        { label: "Demandes", path: "/pro/demandes", icon: FileText, mobile: true,
-          badge: { kind: "count", key: "demandes", tone: "pill" } },
-        { label: "Dossiers", path: "/pro/dossiers", icon: Folder,
-          badge: { kind: "count", key: "dossiers", tone: "muted" } },
+        {
+          label: "Tableau de bord",
+          shortLabel: "Accueil",
+          path: "/pro",
+          icon: LayoutDashboard,
+          end: true,
+          mobile: true,
+          badge: { kind: "dot", color: "neutral" },
+        },
+        {
+          label: "Demandes",
+          path: "/pro/demandes",
+          icon: FileText,
+          mobile: true,
+          badge: { kind: "count", key: "demandes", tone: "pill" },
+        },
+        {
+          label: "Dossiers",
+          path: "/pro/dossiers",
+          icon: Folder,
+          badge: { kind: "count", key: "dossiers", tone: "muted" },
+        },
         { label: "Clients", path: "/pro/clients", icon: Contact },
-        { label: "Agenda", path: "/pro/agenda", icon: CalendarDays, mobile: true,
-          badge: { kind: "count", key: "agenda", tone: "pill", suffix: "auj." } },
-        { label: "Messages", path: "/pro/messages", icon: MessageSquare, mobile: true,
-          badge: { kind: "count", key: "messages", tone: "pill" } },
-        { label: "Notifications", path: "/pro/notifications", icon: Bell,
-          badge: { kind: "count", key: "notifications", tone: "pill" } },
+        {
+          label: "Agenda",
+          path: "/pro/agenda",
+          icon: CalendarDays,
+          mobile: true,
+          badge: { kind: "count", key: "agenda", tone: "pill", suffix: "auj." },
+        },
+        {
+          label: "Messages",
+          path: "/pro/messages",
+          icon: MessageSquare,
+          mobile: true,
+          badge: { kind: "count", key: "messages", tone: "pill" },
+        },
+        {
+          label: "Notifications",
+          path: "/pro/notifications",
+          icon: Bell,
+          badge: { kind: "count", key: "notifications", tone: "pill" },
+        },
       ],
     },
     {
@@ -81,15 +144,45 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
     {
       title: "Navigation",
       items: [
-        { label: "Dashboard", path: "/admin", icon: LayoutDashboard, end: true, mobile: true,
-          badge: { kind: "dot", color: "signal" } },
-        { label: "Utilisateurs", path: "/admin/utilisateurs", icon: Users, mobile: true },
-        { label: "Professionnels", shortLabel: "Pros", path: "/admin/professionnels",
-          icon: Briefcase, mobile: true,
-          badge: { kind: "count", key: "professionnelsEnAttente", tone: "pill" } },
-        { label: "Demandes", path: "/admin/demandes", icon: FileText, mobile: true },
-        { label: "Moteur IA / Triage", shortLabel: "IA", path: "/admin/moteur-ia", icon: Zap,
-          badge: { kind: "dot", color: "neutral" } },
+        {
+          label: "Dashboard",
+          path: "/admin",
+          icon: LayoutDashboard,
+          end: true,
+          mobile: true,
+          badge: { kind: "dot", color: "signal" },
+        },
+        {
+          label: "Utilisateurs",
+          path: "/admin/utilisateurs",
+          icon: Users,
+          mobile: true,
+        },
+        {
+          label: "Professionnels",
+          shortLabel: "Pros",
+          path: "/admin/professionnels",
+          icon: Briefcase,
+          mobile: true,
+          badge: {
+            kind: "count",
+            key: "professionnelsEnAttente",
+            tone: "pill",
+          },
+        },
+        {
+          label: "Demandes",
+          path: "/admin/demandes",
+          icon: FileText,
+          mobile: true,
+        },
+        {
+          label: "Moteur IA / Triage",
+          shortLabel: "IA",
+          path: "/admin/moteur-ia",
+          icon: Zap,
+          badge: { kind: "dot", color: "neutral" },
+        },
         { label: "Paramètres", path: "/admin/parametres", icon: Settings },
       ],
     },

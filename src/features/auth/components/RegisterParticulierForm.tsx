@@ -1,15 +1,15 @@
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MessageSquare } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import { Input } from "@/shared/components/ui/input";
+import { Link } from "react-router-dom";
+import { Loader2, MessageSquare } from "lucide-react";
 import { Label } from "@/shared/components/ui/label";
-import {
-  registerParticulierSchema,
-  type RegisterParticulierValues,
-} from "../schema/registerParticulier.schema";
+import { registerParticulierSchema, type RegisterParticulierValues } from "../schema/registerParticulier.schema";
 import { useRegisterParticulier } from "../hooks/useRegisterParticulier";
+import { toInternationalPhone } from "../lib/phone";
+import { PhoneField } from "./PhoneField";
+
+const LEGAL_LINK = "underline underline-offset-2 hover:text-ink";
 
 export function RegisterParticulierForm() {
   const navigate = useNavigate();
@@ -19,50 +19,49 @@ export function RegisterParticulierForm() {
     resolver: zodResolver(registerParticulierSchema),
     defaultValues: { telephone: "" },
   });
+  const error = form.formState.errors.telephone;
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const ok = await submit(values);
-    if (ok) {
-      navigate("/verification-otp", { state: { telephone: values.telephone } });
+    if (await submit(values)) {
+      navigate("/verification-otp", {
+        state: { telephone: toInternationalPhone(values.telephone) },
+      });
     }
   });
 
   return (
-    <form onSubmit={onSubmit} className="w-full space-y-6">
-
-      <div className="space-y-2">
-        <Label htmlFor="telephone" className="text-sm text-ink/70">
+    <form onSubmit={onSubmit} noValidate className="w-full space-y-5">
+      <div className="space-y-1.5">
+        <Label htmlFor="telephone" className="text-sm font-semibold text-ink">
           Numéro de téléphone
         </Label>
-        <Input
-          id="telephone"
-          type="tel"
-          autoComplete="tel"
-          placeholder="77 123 45 67"
-          className="h-12 border-ink/15 bg-white px-4 text-base focus-visible:border-signal focus-visible:ring-signal/30"
-          {...form.register("telephone")}
-        />
-        {form.formState.errors.telephone && (
-          <p className="text-sm text-red-600">
-            {form.formState.errors.telephone.message}
-          </p>
+        <PhoneField id="telephone" invalid={!!error} {...form.register("telephone")} />
+        {error ? (
+          <p role="alert" className="text-sm text-red-600">{error.message}</p>
+        ) : (
+          <p className="text-xs text-ink/50">Vous recevrez un code à usage unique par SMS.</p>
         )}
       </div>
 
-      <Button
+      <button
         type="submit"
         disabled={isSubmitting}
-        className="h-12 w-full gap-2 rounded-xl bg-signal text-base font-medium text-paper hover:bg-signal hover:brightness-105 disabled:opacity-60"
+        className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-signal text-sm font-semibold text-paper shadow-[0_8px_20px_rgba(249,97,13,0.3)] transition hover:brightness-105 disabled:opacity-60"
       >
         {isSubmitting ? (
-          "Envoi en cours…"
+          <><Loader2 className="size-4 animate-spin" /> Envoi en cours…</>
         ) : (
-          <>
-            <MessageSquare className="h-4 w-4" />
-            Recevoir mon code de validation
-          </>
+          <><MessageSquare className="size-4" /> Recevoir mon code de validation</>
         )}
-      </Button>
+      </button>
+
+      <p className="text-center text-xs leading-relaxed text-ink/55">
+        En continuant, vous acceptez les{" "}
+        <Link to="/cgu" target="_blank" className={LEGAL_LINK}>Conditions Générales d'Utilisation</Link>{" "}
+        et la{" "}
+        <Link to="/confidentialite" target="_blank" className={LEGAL_LINK}>Politique de Confidentialité</Link>{" "}
+        de SOS Yoon.
+      </p>
     </form>
   );
 }

@@ -1,69 +1,47 @@
-import { useLocation, Navigate, useNavigate } from "react-router-dom";
-import { motion } from "motion/react";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { Smartphone } from "lucide-react";
-import { AuthShell } from "@/shared/components/AuthShell";
+import { AuthShell, AuthTitle, AuthSubtitle } from "@/shared/components/AuthShell";
 import { OtpVisualPanel } from "@/shared/components/OtpVisualPanel";
 import { OtpForm } from "../components/OtpForm";
 import { formatInternationalPhone } from "../lib/phone";
-import type { TokenResponse } from "../types/types";
-import { getPostLoginRoute } from "@/shared/lib/getPostLoginRoute";
-
-type LocationState = {
-  telephone?: string; // format international : +221771234567
-  type?: "INSCRIPTION" | "CONNEXION";
-};
 
 export function VerifyOtpPage() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { telephone, type = "CONNEXION" } =
-    (location.state as LocationState | null) ?? {};
+  const { telephone } = (useLocation().state as { telephone?: string } | null) ?? {};
 
-  if (!telephone) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const verifiedTelephone: string = telephone;
-
-function handleVerified(response: TokenResponse) {
-  navigate(getPostLoginRoute(response), { replace: true });
-}
+  if (!telephone) return <Navigate to="/register/particulier" replace />;
 
   return (
     <AuthShell
       panel={<OtpVisualPanel />}
-      badge="Validation sécurisée par SMS"
-      backTo={type === "INSCRIPTION" ? "/register/particulier" : "/login"}
+      tagline="Plus qu'une étape avant de commencer."
+      badge="Validation sécurisée"
+      backTo="/register/particulier"
       backLabel="Modifier le numéro"
     >
-      <motion.div
-        initial={{ opacity: 0, y: 16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, ease: [0.21, 0.47, 0.32, 0.98] }}
-        className="mx-auto w-full max-w-sm text-center"
-      >
-        <span className="mx-auto flex size-12 items-center justify-center rounded-full bg-navy/5 text-signal">
-          <Smartphone className="size-5" />
+      <div className="text-center">
+        <span className="mx-auto flex size-14 items-center justify-center rounded-2xl bg-signal/10 text-signal">
+          <Smartphone className="size-6" aria-hidden />
         </span>
-
-        <h1 className="mt-5 font-display text-3xl font-bold leading-tight text-ink">
-          Vérifiez votre numéro
-        </h1>
-        <p className="mt-2 text-sm text-navy/60">
-          Entrez le code de vérification à 6 chiffres envoyé au{" "}
-          <span className="block font-medium text-ink">
-            {formatInternationalPhone(verifiedTelephone)}
+        <AuthTitle className="mt-5">Vérifiez votre numéro</AuthTitle>
+        <AuthSubtitle>
+          Entrez le code de vérification à 6 chiffres envoyé au
+          <span className="mt-1 block font-semibold text-ink">
+            {formatInternationalPhone(telephone)}
           </span>
-        </p>
+        </AuthSubtitle>
+      </div>
 
-        <div className="mt-8">
-          <OtpForm
-  telephone={verifiedTelephone}
-  type={type}
-  onVerified={handleVerified}
+      <div className="mt-8">
+<OtpForm
+  telephone={telephone}
+  type="INSCRIPTION"
+  onVerified={(jetonInscription) => navigate("/inscription/code-secret", {
+    replace: true,
+    state: { telephone, jetonInscription },
+  })}
 />
-        </div>
-      </motion.div>
+      </div>
     </AuthShell>
   );
 }

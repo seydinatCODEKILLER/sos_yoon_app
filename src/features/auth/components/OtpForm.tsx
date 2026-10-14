@@ -1,25 +1,17 @@
 import { useEffect, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { CircleCheck, Lock } from "lucide-react";
-import { Button } from "@/shared/components/ui/button";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/shared/components/ui/input-otp";
-import {
-  verifyOtpSchema,
-  type VerifyOtpValues,
-} from "../schema/verifyOtp.schema";
+import { ArrowRight, CircleCheck, Loader2 } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/shared/components/ui/input-otp";
+import { verifyOtpSchema, type VerifyOtpValues } from "../schema/verifyOtp.schema";
 import { useVerifyOtp } from "../hooks/useVerifyOtp";
-import type { TokenResponse, TypeCode } from "../types/types";
+import type { TypeCode } from "../types/types";
 
 const RESEND_DELAY_SECONDS = 60;
 
 const SLOT_CLASS =
-  "size-11 rounded-lg border border-ink/10 bg-white text-lg font-medium shadow-none first:rounded-lg first:border last:rounded-lg data-[active=true]:border-signal data-[active=true]:ring-3 data-[active=true]:ring-signal/20";
+  "h-13 w-10 rounded-xl border border-ink/10 bg-ink/3 text-lg font-semibold shadow-none first:rounded-xl first:border last:rounded-xl data-[active=true]:border-signal data-[active=true]:bg-white data-[active=true]:ring-3 data-[active=true]:ring-signal/20 min-[380px]:w-11";
 
 function formatCooldown(seconds: number) {
   const m = String(Math.floor(seconds / 60)).padStart(2, "0");
@@ -30,12 +22,14 @@ function formatCooldown(seconds: number) {
 type OtpFormProps = {
   telephone: string;
   type: TypeCode;
-  onVerified: (response: TokenResponse) => void;
+  /** default : inscription · reset : code oublié */
+  variant?: "default" | "reset";
+  onVerified: (jeton: string) => void;
 };
 
-
-export function OtpForm({ telephone, type, onVerified }: OtpFormProps) {
+export function OtpForm({ telephone, type, variant = "default", onVerified }: OtpFormProps) {
   const { submit, resend, isSubmitting } = useVerifyOtp(telephone, type);
+  const reset = variant === "reset";
   // un code vient d'être envoyé : le renvoi est bloqué dès l'arrivée
   const [cooldown, setCooldown] = useState(RESEND_DELAY_SECONDS);
 
@@ -51,8 +45,8 @@ export function OtpForm({ telephone, type, onVerified }: OtpFormProps) {
   }, [cooldown]);
 
   const onSubmit = form.handleSubmit(async (values) => {
-    const response = await submit(values);
-    if (response) onVerified(response);
+    const jeton = await submit(values);
+    if (jeton) onVerified(jeton);
     else form.reset({ code: "" });
   });
 
@@ -85,7 +79,7 @@ export function OtpForm({ telephone, type, onVerified }: OtpFormProps) {
                 onChange={field.onChange}
                 onComplete={() => void onSubmit()}
               >
-                <InputOTPGroup className="gap-2.5">
+                <InputOTPGroup className="gap-2 min-[380px]:gap-2.5">
                   {[0, 1, 2, 3, 4, 5].map((i) => (
                     <InputOTPSlot key={i} index={i} className={SLOT_CLASS} />
                   ))}
@@ -94,47 +88,65 @@ export function OtpForm({ telephone, type, onVerified }: OtpFormProps) {
             )}
           />
         </div>
-        {error && <p className="text-center text-xs text-red-600">{error}</p>}
+        {error && <p role="alert" className="text-center text-xs text-red-600">{error}</p>}
       </div>
 
-      <Button
+      <button
         type="submit"
         disabled={isSubmitting}
-        className="h-10.5 w-full gap-2 rounded-lg bg-signal text-sm font-medium text-white shadow-lg shadow-signal/25 hover:bg-signal/90 disabled:opacity-60"
+        className="inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-signal text-sm font-semibold text-paper shadow-[0_8px_20px_rgba(249,97,13,0.3)] transition hover:brightness-105 disabled:opacity-60"
       >
         {isSubmitting ? (
-          "Vérification…"
+          <><Loader2 className="size-4 animate-spin" /> Vérification…</>
+        ) : reset ? (
+          <>Vérifier le code <ArrowRight className="size-4" /></>
         ) : (
-          <>
-            <CircleCheck className="size-4" />
-            Vérifier le code
-          </>
+          <><CircleCheck className="size-4" /> Vérifier le code</>
         )}
-      </Button>
+      </button>
 
-      <div className="space-y-1 text-center">
-        <p className="text-sm text-navy/60">
-          Vous n'avez rien reçu ?{" "}
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={cooldown > 0}
-            className="font-medium text-signal hover:underline disabled:cursor-not-allowed disabled:text-navy/30 disabled:no-underline"
-          >
-            Renvoyer le code
-          </button>
-        </p>
-        {cooldown > 0 && (
-          <p className="text-[11px] font-medium uppercase tracking-wide text-navy/40">
-            Disponible dans {formatCooldown(cooldown)}
+      {reset ? (
+        <div className="space-y-1.5 text-center">
+          <p className="text-sm text-ink/60">Vous n'avez rien reçu ?</p>
+          <p className="text-sm">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={cooldown > 0}
+              className="font-semibold text-signal hover:underline disabled:cursor-not-allowed disabled:text-ink/30 disabled:no-underline"
+            >
+              Renvoyer le code
+            </button>
+            {cooldown > 0 && (
+              <span className="text-ink/50">
+                {" "}•{" "}
+                <span className="font-semibold text-ink">
+                  Disponible dans {formatCooldown(cooldown)}
+                </span>
+              </span>
+            )}
           </p>
-        )}
-      </div>
-
-      <p className="flex items-center justify-center gap-2 rounded-lg border border-ink/5 bg-navy/5 px-3 py-2.5 text-xs text-navy/60">
-        <Lock className="size-3.5 text-signal" />
-        Session de connexion sécurisée et chiffrée de bout en bout
-      </p>
+        </div>
+      ) : (
+        <div className="space-y-1.5 text-center">
+          <p className="text-sm text-ink/60">
+            Vous n'avez rien reçu ?{" "}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={cooldown > 0}
+              className="font-semibold text-signal hover:underline disabled:cursor-not-allowed disabled:text-ink/30 disabled:no-underline"
+            >
+              Renvoyer le code
+            </button>
+          </p>
+          {cooldown > 0 && (
+            <p className="font-mono text-[11px] font-medium uppercase tracking-wide text-ink/40">
+              Disponible dans {formatCooldown(cooldown)}
+            </p>
+          )}
+        </div>
+      )}
     </form>
   );
 }

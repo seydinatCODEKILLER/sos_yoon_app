@@ -68,11 +68,59 @@ export const mockDemandesApi: DemandesApi = {
   },
 
   async envoyerAudio(id, { fichier, dureeSecondes }) {
-  await wait(700);
-  const existant = brouillons.get(id);
-  if (!existant) throw introuvable();
-  const audio = { url: URL.createObjectURL(fichier), dureeSecondes };
-  brouillons.set(id, { ...existant, audio });
-  return audio;
-},
+    await wait(700);
+    const existant = brouillons.get(id);
+    if (!existant) throw introuvable();
+    const audio = { url: URL.createObjectURL(fichier), dureeSecondes };
+    brouillons.set(id, { ...existant, audio });
+    return audio;
+  },
+
+  async definirLocalisation(id, payload) {
+    await wait();
+    const existant = brouillons.get(id);
+    if (!existant) throw introuvable();
+    const libelle = payload.communeId ? payload.libelle : "Dakar-Plateau, Sénégal";
+    brouillons.set(id, {
+      ...existant,
+      localisation: {
+        libelle,
+        rayonKm: 5,
+        latitudeApprox: payload.latitude,
+        longitudeApprox: payload.longitude,
+      },
+    });
+    return {
+      libelle,
+      rayonKm: 5,
+      secteur: "Présidence / Plateau",
+      professionnelsDisponiblesDansZone: true,
+    };
+  },
+
+  async envoyer(id) {
+    await wait(800);
+    const existant = brouillons.get(id);
+    if (!existant) throw introuvable();
+    const envoyee: DemandeDetail = {
+      ...existant,
+      statut: "EN_ATTENTE_ACCEPTATION",
+      dateEnvoi: new Date().toISOString(),
+    };
+    brouillons.set(id, envoyee);
+    return envoyee;
+  },
+
+  async communes() {
+    await wait();
+    return [
+      { id: 1, nom: "Dakar-Plateau" },
+      { id: 2, nom: "Médina" },
+      { id: 3, nom: "Grand Dakar" },
+      { id: 4, nom: "Parcelles Assainies" },
+      { id: 5, nom: "Guédiawaye" },
+      { id: 6, nom: "Pikine" },
+      { id: 7, nom: "Rufisque" },
+    ];
+  },
 };

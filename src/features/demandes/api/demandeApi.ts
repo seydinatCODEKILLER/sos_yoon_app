@@ -1,11 +1,15 @@
 import { apiClient } from "@/shared/lib/apiClient";
 import type {
+  Commune,
   CreerDemandePayload,
   DemandeAudio,
   DemandeDetail,
   EnvoyerAudioPayload,
+  LocalisationPayload,
+  LocalisationResultat,
   ModifierDemandePayload,
   MotCleFrequent,
+  SuiviDemande,
 } from "../types/demande.types";
 
 export interface DemandesApi {
@@ -13,6 +17,14 @@ export interface DemandesApi {
   modifier(id: string, payload: ModifierDemandePayload): Promise<DemandeDetail>;
   motsClesFrequents(): Promise<MotCleFrequent[]>;
   envoyerAudio(id: string, payload: EnvoyerAudioPayload): Promise<DemandeAudio>;
+  definirLocalisation(
+    id: string,
+    payload: LocalisationPayload,
+  ): Promise<LocalisationResultat>;
+  envoyer(id: string): Promise<DemandeDetail>;
+  communes(): Promise<Commune[]>;
+    suivi(id: string): Promise<SuiviDemande>;
+  annuler(id: string): Promise<void>;
 }
 
 export const demandesApi: DemandesApi = {
@@ -24,14 +36,49 @@ export const demandesApi: DemandesApi = {
 
   // Endpoint public (section 6.8) ; à déplacer dans shared/ quand d'autres features auront besoin des référentiels
   motsClesFrequents: async () =>
-    (await apiClient.get<MotCleFrequent[]>("/referentiels/mots-cles-frequents")).data,
+    (await apiClient.get<MotCleFrequent[]>("/referentiels/mots-cles-frequents"))
+      .data,
 
-    envoyerAudio: async (id, { fichier, dureeSecondes }) => {
+  envoyerAudio: async (id, { fichier, dureeSecondes }) => {
     const form = new FormData();
-    const extension = fichier.type.includes("mp4") ? "m4a" : fichier.type.includes("ogg") ? "ogg" : "webm";
+    const extension = fichier.type.includes("mp4")
+      ? "m4a"
+      : fichier.type.includes("ogg")
+        ? "ogg"
+        : "webm";
     form.append("fichier", fichier, `message.${extension}`);
     form.append("dureeSecondes", String(dureeSecondes));
     // Axios retire lui-même le Content-Type JSON pour un FormData
-    return (await apiClient.post<DemandeAudio>(`/demandes/${id}/audio`, form)).data;
+    return (await apiClient.post<DemandeAudio>(`/demandes/${id}/audio`, form))
+      .data;
+  },
+
+  async definirLocalisation(id, payload) {
+    const { data } = await apiClient.put<LocalisationResultat>(
+      `/demandes/${id}/localisation`,
+      payload,
+    );
+    return data;
+  },
+
+  async envoyer(id) {
+    const { data } = await apiClient.post<DemandeDetail>(
+      `/demandes/${id}/envoyer`,
+    );
+    return data;
+  },
+
+  async communes() {
+    const { data } = await apiClient.get<Commune[]>("/referentiels/communes");
+    return data;
+  },
+
+    async suivi(id) {
+    const { data } = await apiClient.get<SuiviDemande>(`/demandes/${id}/suivi`);
+    return data;
+  },
+
+  async annuler(id) {
+    await apiClient.post(`/demandes/${id}/annuler`);
   },
 };

@@ -3,22 +3,32 @@ import type {
   AdminConnexionResponse,
   ChangerMotDePassePayload,
   CodeEnvoye,
+  DefinirCodeSecretPayload,
   DemanderCodeConnexionPayload,
   DemanderCodeInscriptionPayload,
+  DemanderCodeReinitialisationPayload,
   EmailPayload,
+  LoginParticulierPayload,
   LoginProPayload,
   RegisterProPayload,
+  ReinitialiserCodeSecretPayload,
   ReinitialiserMotDePassePayload,
   RenvoyerCodePayload,
   TokenResponse,
+  VerifierCodeInscriptionResponse,
   VerifierCodePayload,
+  VerifierCodeReinitialisationResponse,
   VerifierEmailPayload,
   VerifierEmailResponse,
   VerifierMfaPayload,
 } from "../types/types";
 
 /** Le back renvoie l'objet directement : on renvoie `data` tel quel. */
-async function post<T>(url: string, body?: object, config?: object): Promise<T> {
+async function post<T>(
+  url: string,
+  body?: object,
+  config?: object,
+): Promise<T> {
   const { data } = await api.post<T>(url, body, config);
   return data;
 }
@@ -35,10 +45,6 @@ export const authApi = {
     demanderCodeInscription: (payload: DemanderCodeInscriptionPayload) =>
       post<CodeEnvoye>("/auth/particulier/inscription/demander-code", payload),
 
-    /** 201 : crée le compte et connecte */
-    verifierCodeInscription: (payload: VerifierCodePayload) =>
-      post<TokenResponse>("/auth/particulier/inscription/verifier-code", payload),
-
     /** 202 */
     demanderCodeConnexion: (payload: DemanderCodeConnexionPayload) =>
       post<CodeEnvoye>("/auth/particulier/connexion/demander-code", payload),
@@ -46,6 +52,41 @@ export const authApi = {
     /** 200 */
     verifierCodeConnexion: (payload: VerifierCodePayload) =>
       post<TokenResponse>("/auth/particulier/connexion/verifier-code", payload),
+
+    /** 200 */
+    connexion: (payload: LoginParticulierPayload) =>
+      post<TokenResponse>("/auth/particulier/connexion", payload),
+
+    /** 200 : le SMS est valide, le compte n'est pas encore créé */
+    verifierCodeInscription: (payload: VerifierCodePayload) =>
+      post<VerifierCodeInscriptionResponse>(
+        "/auth/particulier/inscription/verifier-code",
+        payload,
+      ),
+
+    /** 201 : crée le compte et connecte */
+    definirCodeSecret: (payload: DefinirCodeSecretPayload) =>
+      post<TokenResponse>(
+        "/auth/particulier/inscription/definir-code-secret",
+        payload,
+      ),
+
+    /** 202, répond toujours 202 même si le numéro est inconnu */
+    demanderCodeReinitialisation: (
+      payload: DemanderCodeReinitialisationPayload,
+    ) =>
+      post<CodeEnvoye>("/auth/particulier/code-oublie/demander-code", payload),
+
+    /** 200 */
+    verifierCodeReinitialisation: (payload: VerifierCodePayload) =>
+      post<VerifierCodeReinitialisationResponse>(
+        "/auth/particulier/code-oublie/verifier-code",
+        payload,
+      ),
+
+    /** 204 : l'utilisateur doit ensuite se reconnecter */
+    reinitialiserCodeSecret: (payload: ReinitialiserCodeSecretPayload) =>
+      post<void>("/auth/particulier/code-oublie/reinitialiser", payload),
 
     /** 202 : `type` indique le parcours en cours */
     renvoyerCode: (payload: RenvoyerCodePayload) =>

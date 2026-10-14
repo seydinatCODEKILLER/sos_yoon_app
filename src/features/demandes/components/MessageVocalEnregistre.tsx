@@ -1,21 +1,27 @@
-import { ArrowRight, Lightbulb, Loader2, Mic, RotateCw } from "lucide-react";
+import { Lightbulb, Loader2, Mic, RotateCw, Send } from "lucide-react";
 import { LecteurAudio } from "./LecteurAudio";
+import { LocalisationCard } from "./LocalisationCard";
 import type { AudioEnregistre } from "../hooks/useVoiceRecorder";
+import type { LocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { formatHorloge } from "../lib/formatDuration";
 
 interface MessageVocalEnregistreProps {
   audio: AudioEnregistre;
   onReset: () => void;
-  onContinue: () => void;
+  onSend: () => void;
   isSubmitting: boolean;
+  localisation: LocalisationPartagee;
 }
 
 export function MessageVocalEnregistre({
   audio,
   onReset,
-  onContinue,
+  onSend,
   isSubmitting,
+  localisation,
 }: MessageVocalEnregistreProps) {
+  const pret = localisation.status === "shared" && !!localisation.localisation;
+
   return (
     <div>
       <section
@@ -62,23 +68,33 @@ export function MessageVocalEnregistre({
         </p>
       </section>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-4">
+        <LocalisationCard state={localisation} />
+      </div>
+
+      <div className="mt-5">
         <button
           type="button"
-          onClick={onContinue}
-          disabled={isSubmitting}
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-signal px-6 text-sm font-semibold text-paper shadow-[0_6px_18px_rgba(249,97,13,0.3)] transition hover:brightness-105 disabled:opacity-60 sm:w-auto"
+          onClick={onSend}
+          disabled={!pret || isSubmitting}
+          aria-describedby={pret ? undefined : "envoi-aide"}
+          className={`inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
+            pret
+              ? "bg-signal text-paper shadow-[0_6px_18px_rgba(249,97,13,0.3)] hover:brightness-105 disabled:opacity-60"
+              : "cursor-not-allowed bg-ink/8 text-ink/40"
+          }`}
         >
           {isSubmitting ? (
-            <>
-              <Loader2 className="size-4 animate-spin" /> Envoi…
-            </>
+            <><Loader2 className="size-4 animate-spin" aria-hidden /> Envoi…</>
           ) : (
-            <>
-              Continuer vers la localisation <ArrowRight className="size-4" />
-            </>
+            <><Send className="size-4" aria-hidden /> Envoyer ma demande</>
           )}
         </button>
+
+        {/* Emplacement réservé : pas de décalage quand le message disparaît */}
+        <p id="envoi-aide" className="mt-3 min-h-5 text-center text-sm text-ink/50">
+          {!pret && "Partagez votre position pour envoyer"}
+        </p>
       </div>
     </div>
   );

@@ -2,10 +2,18 @@ import type { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogOut, MoreHorizontal, User } from "lucide-react";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/shared/components/ui/dropdown-menu";
-import { getNavItems, profilPathByRole, type NavBadge, type NavItem } from "@/config/navigation";
+import {
+  getNavItems,
+  profilPathByRole,
+  type NavBadge,
+  type NavItem,
+} from "@/config/navigation";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useNavBadges } from "@/shared/hooks/useNavBadges";
 import { getActiveNavPath } from "@/shared/lib/getActiveNavPath";
@@ -22,10 +30,49 @@ function TabBadge({ badge, value }: { badge?: NavBadge; value?: number }) {
     );
   }
   if (!(badge.key && value)) return null;
-  return <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-signal" />;
+  return (
+    <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-signal" />
+  );
 }
 
-export function MobileLayout({ role, children }: { role: UserRole; children: ReactNode }) {
+function MobileHeader({ role }: { role: UserRole }) {
+  const user = useAuthStore((s) => s.user);
+  const initials =
+    `${user?.prenom?.[0] ?? ""}${user?.nom?.[0] ?? ""}`.toUpperCase();
+
+  return (
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-paper/90 px-5 backdrop-blur">
+      <Link to="/" aria-label="SOS Yoon, accueil" className="flex items-center">
+        <img
+          src="/images/logo_orange.png"
+          alt="SOS Yoon"
+          className="h-6 w-auto"
+        />
+      </Link>
+      <Link
+        to={profilPathByRole[role]}
+        aria-label="Mon profil"
+        className="grid size-9 place-items-center overflow-hidden rounded-full bg-navy text-xs font-semibold text-paper ring-2 ring-white"
+      >
+        {user?.photoUrl ? (
+          <img src={user.photoUrl} alt="" className="size-full object-cover" />
+        ) : initials ? (
+          initials
+        ) : (
+          <User className="size-4" />
+        )}
+      </Link>
+    </header>
+  );
+}
+
+export function MobileLayout({
+  role,
+  children,
+}: {
+  role: UserRole;
+  children: ReactNode;
+}) {
   const { pathname } = useLocation();
   const logout = useAuthStore((s) => s.logout);
   const badges = useNavBadges(role);
@@ -40,9 +87,11 @@ export function MobileLayout({ role, children }: { role: UserRole; children: Rea
 
   const activePath = getActiveNavPath([...items, ...extra], pathname);
   const isOverflowActive = overflow.some((i) => i.path === activePath);
+  const showMore = overflow.length > 0;
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper">
+      <MobileHeader role={role} />
       <main className="flex-1 overflow-y-auto pb-20">{children}</main>
 
       <nav
@@ -69,7 +118,11 @@ export function MobileLayout({ role, children }: { role: UserRole; children: Rea
                   />
                   <TabBadge
                     badge={badge}
-                    value={badge && "key" in badge && badge.key ? badges[badge.key] : undefined}
+                    value={
+                      badge && "key" in badge && badge.key
+                        ? badges[badge.key]
+                        : undefined
+                    }
                   />
                 </span>
               </span>
@@ -83,37 +136,44 @@ export function MobileLayout({ role, children }: { role: UserRole; children: Rea
             </Link>
           );
         })}
-
-        <DropdownMenu>
-          <DropdownMenuTrigger className="group flex flex-1 flex-col items-center gap-0.5 py-1 outline-none">
-            <span
-              className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors group-focus-visible:ring-2 group-focus-visible:ring-signal group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-ink data-popup-open:ring-2 data-popup-open:ring-signal data-popup-open:ring-offset-2 data-popup-open:ring-offset-ink ${
-                isOverflowActive ? "bg-signal/15" : ""
-              }`}
+        {showMore && (
+          <DropdownMenu>
+            <DropdownMenuTrigger className="group flex flex-1 flex-col items-center gap-0.5 py-1 outline-none">
+              <span
+                className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors group-focus-visible:ring-2 group-focus-visible:ring-signal group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-ink data-popup-open:ring-2 data-popup-open:ring-signal data-popup-open:ring-offset-2 data-popup-open:ring-offset-ink ${
+                  isOverflowActive ? "bg-signal/15" : ""
+                }`}
+              >
+                <MoreHorizontal
+                  className={`h-5 w-5 ${isOverflowActive ? "text-signal" : "text-paper/50"}`}
+                  strokeWidth={isOverflowActive ? 2.25 : 1.75}
+                />
+              </span>
+              <span
+                className={`text-[10px] leading-tight ${isOverflowActive ? "font-medium text-signal" : "text-paper/50"}`}
+              >
+                Plus
+              </span>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              side="top"
+              align="end"
+              className="mb-2 min-w-48"
             >
-              <MoreHorizontal
-                className={`h-5 w-5 ${isOverflowActive ? "text-signal" : "text-paper/50"}`}
-                strokeWidth={isOverflowActive ? 2.25 : 1.75}
-              />
-            </span>
-            <span className={`text-[10px] leading-tight ${isOverflowActive ? "font-medium text-signal" : "text-paper/50"}`}>
-              Plus
-            </span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent side="top" align="end" className="mb-2 min-w-48">
-            {overflow.map(({ label, path, icon: Icon }) => (
-              <DropdownMenuItem key={path} render={<Link to={path} />}>
-                <Icon className="h-4 w-4" />
-                {label}
+              {overflow.map(({ label, path, icon: Icon }) => (
+                <DropdownMenuItem key={path} render={<Link to={path} />}>
+                  <Icon className="h-4 w-4" />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem variant="destructive" onClick={() => logout()}>
+                <LogOut className="h-4 w-4" />
+                Déconnexion
               </DropdownMenuItem>
-            ))}
-            <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => logout()}>
-              <LogOut className="h-4 w-4" />
-              Déconnexion
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </nav>
     </div>
   );

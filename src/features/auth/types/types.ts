@@ -17,8 +17,6 @@ export interface CodeEnvoye {
   delaiRenvoiSecondes: number;
 }
 
-export type TypeCode = "INSCRIPTION" | "CONNEXION";
-
 /* ── Particulier (SMS, sans mot de passe) ── */
 
 /** POST /auth/particulier/inscription/demander-code */
@@ -31,6 +29,24 @@ export interface DemanderCodeInscriptionPayload {
 /** POST /auth/particulier/connexion/demander-code */
 export interface DemanderCodeConnexionPayload {
   telephone: string;
+}
+
+export type TypeCode = "INSCRIPTION" | "REINITIALISATION"; // CONNEXION n'existe plus
+
+/** POST /auth/particulier/code-oublie/demander-code */
+export interface DemanderCodeReinitialisationPayload {
+  telephone: string;
+}
+
+/** Réponse de .../code-oublie/verifier-code (200) */
+export interface VerifierCodeReinitialisationResponse {
+  jetonReinitialisation: string; // courte durée de vie
+}
+
+/** POST /auth/particulier/code-oublie/reinitialiser */
+export interface ReinitialiserCodeSecretPayload {
+  jetonReinitialisation: string;
+  nouveauCodeSecret: string; // 4 chiffres
 }
 
 /** POST /auth/particulier/{inscription|connexion}/verifier-code */
@@ -63,6 +79,12 @@ export interface RegisterProPayload {
 export interface LoginProPayload {
   email: string;
   motDePasse: string;
+}
+
+/** POST /auth/particulier/connexion */
+export interface LoginParticulierPayload {
+  telephone: string;
+  codeSecret: string; // 4 chiffres
 }
 
 /** POST /auth/email/verifier */
@@ -112,4 +134,15 @@ export type AdminConnexionResponse = TokenResponse | MfaRequis;
 export interface VerifierMfaPayload {
   jetonMfa: string;
   code: string;
+}
+
+/** Réponse de POST /auth/particulier/inscription/verifier-code (200) */
+export interface VerifierCodeInscriptionResponse {
+  jetonInscription: string; // courte durée de vie
+}
+
+/** POST /auth/particulier/inscription/definir-code-secret */
+export interface DefinirCodeSecretPayload {
+  jetonInscription: string;
+  codeSecret: string; // 4 chiffres
 }

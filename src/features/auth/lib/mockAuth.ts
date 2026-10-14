@@ -1,7 +1,10 @@
 import type { ApiErreur } from "@/types/api.types";
 import type {
   CodeEnvoye,
+  DefinirCodeSecretPayload,
+  LoginParticulierPayload,
   LoginProPayload,
+  ReinitialiserCodeSecretPayload,
   TokenResponse,
   TypeCode,
   VerifierCodePayload,
@@ -13,8 +16,13 @@ import type { User, UserRole } from "@/types/user.types";
 /** Mettez "ADMIN" ici pour tester l'espace admin via la connexion particulier. */
 const DEV_ROLE: UserRole | null = null;
 
+let telephoneInscription = "+221770000000";
+
 /** Un code « 000000 » simule OTP_INVALIDE, tout autre code à 6 chiffres passe. */
 const INVALID_CODE = "000000";
+
+const CODE_SECRET_INVALIDE = "0000"; // simule un mauvais code
+let essaisRestants = 4;
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -76,8 +84,51 @@ export const mockAuthApi = {
     demanderCodeInscription: () => codeEnvoye(),
     demanderCodeConnexion: () => codeEnvoye(),
     renvoyerCode: () => codeEnvoye(),
-    verifierCodeInscription: (p: VerifierCodePayload) => verifier(p, "INSCRIPTION"),
-    verifierCodeConnexion: (p: VerifierCodePayload) => verifier(p, "CONNEXION"),
+    demanderCodeReinitialisation: () => codeEnvoye(),
+verifierCodeReinitialisation: async ({ code }: VerifierCodePayload) => {
+  await wait(500);
+  if (code === INVALID_CODE) throw erreur("OTP_INVALIDE", "Le code saisi est incorrect.");
+  return { jetonReinitialisation: `mock-reset-${Date.now()}` };
+},
+reinitialiserCodeSecret: async (_: ReinitialiserCodeSecretPayload) => {
+  await wait(500);
+},
+
+    // dans mockAuthApi.particulier (supprimez demanderCodeConnexion et verifierCodeConnexion)
+    connexion: async ({ telephone, codeSecret }: LoginParticulierPayload) => {
+      await wait(500);
+      if (codeSecret === CODE_SECRET_INVALIDE) {
+        essaisRestants -= 1;
+        if (essaisRestants < 0) {
+          throw erreur("COMPTE_VERROUILLE", "Trop de tentatives.");
+        }
+        throw {
+          ...erreur("CODE_SECRET_INCORRECT", "Code incorrect."),
+          details: { essaisRestants },
+        };
+      }
+      essaisRestants = 4;
+      return buildSession(DEV_ROLE ?? "PARTICULIER", { telephone });
+    },
+    verifierCodeInscription: async ({
+      telephone,
+      code,
+    }: VerifierCodePayload) => {
+      await wait(500);
+      if (code === INVALID_CODE)
+        throw erreur("OTP_INVALIDE", "Le code saisi est incorrect.");
+      telephoneInscription = telephone;
+      return { jetonInscription: `mock-jeton-${Date.now()}` };
+    },
+    definirCodeSecret: async (_: DefinirCodeSecretPayload) => {
+      await wait(500);
+      return buildSession(DEV_ROLE ?? "PARTICULIER", {
+        telephone: telephoneInscription,
+        prenom: null,
+        nom: null,
+        profilComplete: false,
+      });
+    },
   },
   pro: {
     connexion: async (p: LoginProPayload) => {
