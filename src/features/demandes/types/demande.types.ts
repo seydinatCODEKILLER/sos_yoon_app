@@ -77,7 +77,13 @@ export interface Commune {
   nom: string;
 }
 
-export type EtapeSuivi = "ENREGISTREE" | "ANALYSEE" | "NOTIFIES" | "ACCEPTEE";
+export type EtapeSuivi =
+  | "ENREGISTREE"
+  | "ANALYSEE"
+  | "NOTIFIES"
+  | "ACCEPTEE"
+  /** Délai écoulé sans qu'aucun professionnel n'accepte */
+  | "AUCUN_PROFESSIONNEL";
 
 export interface ProfessionnelAccepte {
   id: string;
@@ -104,10 +110,16 @@ export interface SuiviDemande {
   etape: EtapeSuivi;
   /** "constat d'huissier" */
   matiereLibelle: string | null;
+    /** "huissiers", "avocats"… ; null si plusieurs métiers ou inconnu */
+  metierPluriel: string | null;
   nbProfessionnelsNotifies: number;
   /** true quand la recherche s'est étendue aux secteurs mitoyens */
   zoneElargie: boolean;
   dateEnvoi: string;
   dateAcceptation: string | null;
   professionnel: ProfessionnelAccepte | null;
+    /** "SY-00249", sert au message WhatsApp pré-rempli */
+  reference: string;
+    /** false une fois la recherche déjà élargie au maximum */
+  elargissementPossible: boolean;
 }

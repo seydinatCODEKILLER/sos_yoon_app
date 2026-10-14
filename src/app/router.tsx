@@ -13,6 +13,7 @@ import { VerifyOtpPage } from "@/features/auth/pages/VerifyOtpPage";
 import { DemanderAidePage } from "@/features/demandes/pages/DemanderAidePage";
 import { CodeSecretInscriptionPage } from "@/features/auth/pages/CodeSecretInscriptionPage";
 import { CodeOubliePage } from "@/features/auth/pages/CodeOubliePage";
+import { SuiviDemandePage } from "@/features/demandes/pages/SuiviDemandePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -30,9 +31,18 @@ export const router = createBrowserRouter([
   },
 
   { path: "/inscription/code-secret", element: <CodeSecretInscriptionPage /> },
-{ path: "/cgu", element: <PagePlaceholder title="Conditions Générales d'Utilisation" /> },
-{ path: "/confidentialite", element: <PagePlaceholder title="Politique de Confidentialité" /> },
-  { path: "/code-oublie", element: <PagePlaceholder title="Code secret oublié" /> },
+  {
+    path: "/cgu",
+    element: <PagePlaceholder title="Conditions Générales d'Utilisation" />,
+  },
+  {
+    path: "/confidentialite",
+    element: <PagePlaceholder title="Politique de Confidentialité" />,
+  },
+  {
+    path: "/code-oublie",
+    element: <PagePlaceholder title="Code secret oublié" />,
+  },
   {
     path: "/mot-de-passe-oublie",
     element: <PagePlaceholder title="Mot de passe oublié" />,
@@ -55,6 +65,10 @@ export const router = createBrowserRouter([
             handle: { title: "Urgence Juridique" },
           },
           {
+            path: "/app/assistant",
+            element: <PagePlaceholder title="Soxna Yoon" />,
+          },
+          {
             path: "/app/demandes/nouvelle",
             element: <DemanderAidePage />,
             handle: { section: "Demandes d'aide", title: "Urgence Juridique" },
@@ -65,7 +79,11 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/demandes/:id",
-            element: <PagePlaceholder title="Détail de la demande" />,
+            element: <SuiviDemandePage />,
+            handle: {
+              section: "Demandes d'aide",
+              title: "Suivi de la demande",
+            },
           },
           {
             path: "/app/notifications",

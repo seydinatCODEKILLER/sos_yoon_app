@@ -25,6 +25,7 @@ export interface DemandesApi {
   communes(): Promise<Commune[]>;
     suivi(id: string): Promise<SuiviDemande>;
   annuler(id: string): Promise<void>;
+    elargir(id: string): Promise<void>;
 }
 
 export const demandesApi: DemandesApi = {
@@ -80,5 +81,9 @@ export const demandesApi: DemandesApi = {
 
   async annuler(id) {
     await apiClient.post(`/demandes/${id}/annuler`);
+  },
+
+    async elargir(id) {
+    await apiClient.post(`/demandes/${id}/elargir`);
   },
 };
