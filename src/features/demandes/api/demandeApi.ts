@@ -4,6 +4,7 @@ import type {
   CreerDemandePayload,
   DemandeAudio,
   DemandeDetail,
+  DemandeResume,
   EnvoyerAudioPayload,
   LocalisationPayload,
   LocalisationResultat,
@@ -14,6 +15,7 @@ import type {
 
 export interface DemandesApi {
   creer(payload: CreerDemandePayload): Promise<DemandeDetail>;
+  lister(): Promise<DemandeResume[]>;
   modifier(id: string, payload: ModifierDemandePayload): Promise<DemandeDetail>;
   motsClesFrequents(): Promise<MotCleFrequent[]>;
   envoyerAudio(id: string, payload: EnvoyerAudioPayload): Promise<DemandeAudio>;
@@ -23,9 +25,10 @@ export interface DemandesApi {
   ): Promise<LocalisationResultat>;
   envoyer(id: string): Promise<DemandeDetail>;
   communes(): Promise<Commune[]>;
-    suivi(id: string): Promise<SuiviDemande>;
+  suivi(id: string): Promise<SuiviDemande>;
   annuler(id: string): Promise<void>;
-    elargir(id: string): Promise<void>;
+  elargir(id: string): Promise<void>;
+  lister(): Promise<DemandeResume[]>;
 }
 
 export const demandesApi: DemandesApi = {
@@ -74,7 +77,7 @@ export const demandesApi: DemandesApi = {
     return data;
   },
 
-    async suivi(id) {
+  async suivi(id) {
     const { data } = await apiClient.get<SuiviDemande>(`/demandes/${id}/suivi`);
     return data;
   },
@@ -83,7 +86,12 @@ export const demandesApi: DemandesApi = {
     await apiClient.post(`/demandes/${id}/annuler`);
   },
 
-    async elargir(id) {
+  async elargir(id) {
     await apiClient.post(`/demandes/${id}/elargir`);
+  },
+
+  async lister() {
+    const { data } = await apiClient.get<DemandeResume[]>("/demandes");
+    return data;
   },
 };

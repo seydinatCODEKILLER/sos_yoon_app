@@ -23,3 +23,12 @@ export function initiales(nomComplet: string) {
   const dernier = mots.length > 1 ? mots[mots.length - 1][0] : "";
   return (premier + dernier).toUpperCase();
 }
+
+/** "Me Mamadou Diallo" → "Me Diallo" */
+export function nomCourt(nomComplet: string) {
+  const mots = nomComplet.split(/\s+/).filter(Boolean);
+  if (mots.length >= 3 && TITRES.has(mots[0].toLowerCase())) {
+    return `${mots[0]} ${mots[mots.length - 1]}`;
+  }
+  return nomComplet;
+}

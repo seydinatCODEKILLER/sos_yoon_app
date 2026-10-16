@@ -5,7 +5,7 @@ export type EtapeStatus = "done" | "current" | "pending";
 export interface TimelineItem {
   id: string;
   titre: string;
-  description: string;
+  description?: string;
   status: EtapeStatus;
   /** Petite pastille à droite du titre (ex. « 6 huissiers ») */
   badge?: string;
@@ -13,6 +13,8 @@ export interface TimelineItem {
   badgeTone?: "info" | "success";
   /** Description en vert (étape confirmée) */
   descriptionTone?: "success";
+  /** Heure affichée à droite du titre (ex. « 14:32 ») */
+  heure?: string;
 }
 
 function Marker({ status }: { status: EtapeStatus }) {
@@ -37,7 +39,13 @@ function Marker({ status }: { status: EtapeStatus }) {
   );
 }
 
-export function SuiviTimeline({ items }: { items: TimelineItem[] }) {
+export function SuiviTimeline({
+  items,
+  surlignerCourant = true,
+}: {
+  items: TimelineItem[];
+  surlignerCourant?: boolean;
+}) {
   return (
     <ol className="text-left">
       {items.map((item, i) => {
@@ -48,7 +56,7 @@ export function SuiviTimeline({ items }: { items: TimelineItem[] }) {
             key={item.id}
             aria-current={item.status === "current" ? "step" : undefined}
             className={`relative flex items-start gap-3 rounded-xl px-3 py-2 ${
-              item.status === "current" ? "bg-ink/4" : ""
+              item.status === "current" && surlignerCourant ? "bg-ink/4" : ""
             }`}
           >
             {/* Trait vertical vers l'étape suivante */}
@@ -70,7 +78,7 @@ export function SuiviTimeline({ items }: { items: TimelineItem[] }) {
                 >
                   {item.titre}
                 </p>
-                {item.badge && (
+                {item.badge ? (
                   <span
                     className={`shrink-0 rounded-md px-2 py-0.5 text-xs font-semibold ${
                       item.badgeTone === "success"
@@ -80,19 +88,33 @@ export function SuiviTimeline({ items }: { items: TimelineItem[] }) {
                   >
                     {item.badge}
                   </span>
+                ) : (
+                  item.heure && (
+                    <span
+                      className={`shrink-0 text-xs tabular-nums ${
+                        item.status === "current"
+                          ? "font-semibold text-ink"
+                          : "text-ink/50"
+                      }`}
+                    >
+                      {item.heure}
+                    </span>
+                  )
                 )}
               </div>
-              <p
-                className={`text-[13px] leading-snug ${
-                  pending
-                    ? "text-ink/35"
-                    : item.descriptionTone === "success"
-                      ? "font-medium text-emerald-700"
-                      : "text-ink/60"
-                }`}
-              >
-                {item.description}
-              </p>
+              {item.description && (
+                <p
+                  className={`text-[13px] leading-snug ${
+                    pending
+                      ? "text-ink/35"
+                      : item.descriptionTone === "success"
+                        ? "font-medium text-emerald-700"
+                        : "text-ink/60"
+                  }`}
+                >
+                  {item.description}
+                </p>
+              )}
             </div>
           </li>
         );

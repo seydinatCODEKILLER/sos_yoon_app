@@ -5,6 +5,8 @@ import { demandeErrorMessage } from "../lib/demandeErrors";
 import { SuiviRecherche } from "../components/SuiviRecherche";
 import { SuiviAccepte } from "../components/SuiviAccepte";
 import { SuiviAucunProfessionnel } from "../components/SuiviAucunProfessionnel";
+import { DemandeDetailTerminee } from "../components/DemandeDetailTerminee";
+import { SuiviElargissement } from "../components/SuiviElargissement";
 
 export function SuiviDemandePage() {
   const { id } = useParams<{ id: string }>();
@@ -15,7 +17,10 @@ export function SuiviDemandePage() {
   if (isPending) {
     contenu = (
       <div className="flex flex-1 items-center justify-center py-24">
-        <Loader2 className="size-6 animate-spin text-ink/40" aria-label="Chargement" />
+        <Loader2
+          className="size-6 animate-spin text-ink/40"
+          aria-label="Chargement"
+        />
       </div>
     );
   } else if (error || !suivi) {
@@ -24,10 +29,16 @@ export function SuiviDemandePage() {
         {demandeErrorMessage(error)}
       </p>
     );
+  } else if (suivi.statut === "TERMINEE" || suivi.statut === "ANNULEE") {
+    contenu = <DemandeDetailTerminee suivi={suivi} />;
   } else if (suivi.etape === "ACCEPTEE" && suivi.professionnel) {
     contenu = <SuiviAccepte suivi={suivi} pro={suivi.professionnel} />;
   } else if (suivi.etape === "AUCUN_PROFESSIONNEL") {
     contenu = <SuiviAucunProfessionnel suivi={suivi} />;
+  } else if (suivi.perimetreElargi) {
+    contenu = (
+      <SuiviElargissement suivi={suivi} perimetre={suivi.perimetreElargi} />
+    );
   } else {
     contenu = <SuiviRecherche suivi={suivi} />;
   }

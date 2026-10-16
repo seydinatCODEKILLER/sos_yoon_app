@@ -14,6 +14,7 @@ import { DemanderAidePage } from "@/features/demandes/pages/DemanderAidePage";
 import { CodeSecretInscriptionPage } from "@/features/auth/pages/CodeSecretInscriptionPage";
 import { CodeOubliePage } from "@/features/auth/pages/CodeOubliePage";
 import { SuiviDemandePage } from "@/features/demandes/pages/SuiviDemandePage";
+import { MesDemandesPage } from "@/features/demandes/pages/MesDemandesPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -75,7 +76,8 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/demandes",
-            element: <PagePlaceholder title="Mes demandes" />,
+            element: <MesDemandesPage />,
+            handle: { section: "Demandes d'aide", title: "Mes demandes" },
           },
           {
             path: "/app/demandes/:id",

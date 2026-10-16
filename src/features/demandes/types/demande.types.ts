@@ -102,6 +102,8 @@ export interface ProfessionnelAccepte {
   photoUrl: string | null;
   /** Format international, chiffres seulement : "221771234567" (sert à tel: et wa.me) */
   telephone: string;
+    /** "Ordre des Huissiers du Sénégal" ; null si le métier n'a pas d'ordre */
+  ordre: string | null;
 }
 
 export interface SuiviDemande {
@@ -118,8 +120,56 @@ export interface SuiviDemande {
   dateEnvoi: string;
   dateAcceptation: string | null;
   professionnel: ProfessionnelAccepte | null;
+    /** Étapes franchies, avec leur heure (sert au détail de la demande) */
+  jalons: JalonDemande[];
+
+    /** Renseigné dès que la recherche a été élargie, sinon null */
+  perimetreElargi: PerimetreElargi | null;
+  professionnelsContactes: ProfessionnelContacte[];
     /** "SY-00249", sert au message WhatsApp pré-rempli */
   reference: string;
     /** false une fois la recherche déjà élargie au maximum */
   elargissementPossible: boolean;
+}
+
+/** Où en est la demande, pour la mini-progression de la liste */
+export type PhaseDemande =
+  | "ENVOYEE"
+  | "PROS_NOTIFIES"
+  | "ACCEPTEE"
+  | "CONTACT_ETABLI";
+
+/** Statut simplifié pour l'affichage de la liste */
+export type StatutListe = "EN_COURS" | "TERMINEE" | "SANS_REPONSE" | "ANNULEE";
+
+export interface DemandeResume {
+  id: string;
+  reference: string;
+  /** "Constat d'huissier" */
+  titre: string;
+  dateCreation: string;
+  statut: StatutListe;
+  phase: PhaseDemande;
+  /** "Me Mamadou Diallo" une fois un professionnel assigné */
+  professionnelNom: string | null;
+}
+
+/** Date à laquelle une étape du parcours a été franchie */
+export interface JalonDemande {
+  phase: PhaseDemande;
+  date: string;
+}
+
+export interface PerimetreElargi {
+  /** "Grand Dakar" */
+  zone: string;
+  /** ["Médina", "Fann", "Almadies"] */
+  secteurs: string[];
+}
+
+export interface ProfessionnelContacte {
+  id: string;
+  /** Nom abrégé par le backend : "Me Birane T." */
+  nom: string;
+  statut: "NOTIFIE" | "VU";
 }

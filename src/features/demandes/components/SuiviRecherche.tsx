@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Clock, Search } from "lucide-react";
@@ -6,8 +5,8 @@ import type { SuiviDemande } from "../types/demande.types";
 import { formatDuree } from "../lib/formatDuration";
 import { demandeRoutes } from "../lib/demandeRoutes";
 import { useSecondesEcoulees } from "../hooks/useSecondesEcoulees";
-import { useAnnulerDemande } from "../hooks/useAnnulerDemande";
 import { SuiviTimeline, type TimelineItem } from "./SuiviTimeline";
+import { AnnulerDemandeLien } from "./AnnulerDemandeLien";
 
 function SearchOrb() {
   const reduce = useReducedMotion();
@@ -37,8 +36,6 @@ function SearchOrb() {
 
 export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
   const secondes = useSecondesEcoulees(suivi.dateEnvoi);
-  const { annuler, isCancelling } = useAnnulerDemande(suivi.demandeId);
-  const [confirmation, setConfirmation] = useState(false);
 
   const metier = suivi.metierPluriel ?? "professionnels";
 
@@ -123,35 +120,8 @@ export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
         </Link>
 
         {/* Zone de hauteur fixe : pas de décalage entre lien et confirmation */}
-        <div className="mt-3 flex min-h-10 items-center justify-center gap-4 text-sm">
-          {confirmation ? (
-            <>
-              <button
-                type="button"
-                onClick={annuler}
-                disabled={isCancelling}
-                className="font-semibold text-red-600 hover:underline disabled:opacity-60"
-              >
-                {isCancelling ? "Annulation…" : "Oui, annuler"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setConfirmation(false)}
-                disabled={isCancelling}
-                className="font-medium text-ink/60 hover:underline"
-              >
-                Non, continuer
-              </button>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmation(true)}
-              className="text-ink/60 underline underline-offset-4 hover:text-ink"
-            >
-              Annuler ma demande
-            </button>
-          )}
+        <div className="mt-3">
+          <AnnulerDemandeLien demandeId={suivi.demandeId} />
         </div>
       </div>
     </div>
