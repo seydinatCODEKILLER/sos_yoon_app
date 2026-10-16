@@ -16,6 +16,11 @@ import { CodeOubliePage } from "@/features/auth/pages/CodeOubliePage";
 import { SuiviDemandePage } from "@/features/demandes/pages/SuiviDemandePage";
 import { MesDemandesPage } from "@/features/demandes/pages/MesDemandesPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
+import { ProfilPage } from "@/features/profil/pages/ProfilPage";
+import { CodeSecretPage } from "@/features/profil/pages/CodeSecretPage";
+import { MesInformationsPage } from "@/features/profil/pages/MesInformationsPage";
+import PreferencesNotificationsPage from "@/features/profil/pages/PreferencesNotificationsPage";
+import { SupprimerComptePage } from "@/features/profil/pages/SupprimerComptePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -95,7 +100,28 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/profil",
-            element: <PagePlaceholder title="Mon profil" />,
+            element: <ProfilPage />,
+            handle: { title: "Profil" },
+          },
+          {
+            path: "/app/profil/informations",
+            element: <MesInformationsPage />,
+          },
+          {
+            path: "/app/profil/zone",
+            element: <PagePlaceholder title="Zone habituelle" />,
+          },
+          {
+            path: "/app/profil/code-secret",
+            element: <CodeSecretPage />,
+          },
+          {
+            path: "/app/profil/supprimer",
+            element: <SupprimerComptePage />,
+          },
+          {
+            path: "/app/profil/notifications",
+            element: <PreferencesNotificationsPage />,
           },
         ],
       },
