@@ -15,6 +15,7 @@ import { CodeSecretInscriptionPage } from "@/features/auth/pages/CodeSecretInscr
 import { CodeOubliePage } from "@/features/auth/pages/CodeOubliePage";
 import { SuiviDemandePage } from "@/features/demandes/pages/SuiviDemandePage";
 import { MesDemandesPage } from "@/features/demandes/pages/MesDemandesPage";
+import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -89,7 +90,8 @@ export const router = createBrowserRouter([
           },
           {
             path: "/app/notifications",
-            element: <PagePlaceholder title="Notifications" />,
+            element: <NotificationsPage />,
+            handle: { title: "Notifications" },
           },
           {
             path: "/app/profil",
