@@ -1,18 +1,20 @@
 import { Navigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store";
-import { getSpaceRoute } from "@/shared/lib/getSpaceRoute";
+import { getRouteForSession } from "@/shared/lib/getPostLoginRoute";
 import { FullScreenLoader } from "./FullScreenLoader";
+import { AccueilVisiteurPage } from "@/features/onboarding/pages/AccueilVisiteurPage";
 
 export function RootGate() {
-  const { isAuthenticated, user, isLoading } = useAuthStore();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const isLoading = useAuthStore((s) => s.isLoading);
+  const user = useAuthStore((s) => s.user);
+  const portee = useAuthStore((s) => s.portee);
 
-  if (isLoading) {
-    return <FullScreenLoader />;
+  if (isLoading) return <FullScreenLoader />;
+
+  if (isAuthenticated && user && portee) {
+    return <Navigate to={getRouteForSession(user.role, portee)} replace />;
   }
 
-  if (isAuthenticated && user) {
-    return <Navigate to={getSpaceRoute(user.role)} replace />;
-  }
-
-  return <Navigate to="/login" replace />;
+  return <AccueilVisiteurPage />;
 }

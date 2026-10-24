@@ -7,7 +7,7 @@ export function AssistantCard() {
 
   return (
     <Link
-      to="/app/assistant"
+      to="/assistant"
       className="group relative flex w-full items-center gap-3.5 overflow-hidden rounded-xl bg-navy p-3.5 pr-4 text-left text-paper shadow-[0_10px_30px_-12px_rgba(23,22,48,0.6)] transition active:scale-[0.99]"
     >
       <span

@@ -21,6 +21,7 @@ import { CodeSecretPage } from "@/features/profil/pages/CodeSecretPage";
 import { MesInformationsPage } from "@/features/profil/pages/MesInformationsPage";
 import PreferencesNotificationsPage from "@/features/profil/pages/PreferencesNotificationsPage";
 import { SupprimerComptePage } from "@/features/profil/pages/SupprimerComptePage";
+import { VisiteurLayout } from "@/layouts/VisiteurLayout";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -59,6 +60,23 @@ export const router = createBrowserRouter([
     element: <PagePlaceholder title="Nouveau mot de passe" />,
   },
 
+  {
+    path: "/assistant",
+    element: <PagePlaceholder title="Soxna Yoon" />,
+  },
+
+  // ─── Visiteur (sans compte) ─────────────────────────────────────
+  {
+    element: <VisiteurLayout />,
+    children: [
+      {
+        path: "/demandes/nouvelle",
+        element: <DemanderAidePage />,
+        handle: { title: "Urgence Juridique" },
+      },
+    ],
+  },
+
   // ─── Particulier ────────────────────────────────────────────────
   {
     element: <ProtectedRoute allowedRoles={["PARTICULIER"]} />,
@@ -70,10 +88,6 @@ export const router = createBrowserRouter([
             path: "/app",
             element: <UserHomePage />,
             handle: { title: "Urgence Juridique" },
-          },
-          {
-            path: "/app/assistant",
-            element: <PagePlaceholder title="Soxna Yoon" />,
           },
           {
             path: "/app/demandes/nouvelle",
