@@ -1,7 +1,11 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { CircleAlert, Eye, EyeOff, Loader2 } from "lucide-react";
-import { AuthShell, AuthTitle, AuthSubtitle } from "@/shared/components/AuthShell";
+import {
+  AuthShell,
+  AuthTitle,
+  AuthSubtitle,
+} from "@/shared/components/AuthShell";
 import { getPostLoginRoute } from "@/shared/lib/getPostLoginRoute";
 import { CodeSecretInput } from "../components/CodeSecretInput";
 import { useDefinirCodeSecret } from "../hooks/useDefinirCodeSecret";
@@ -21,7 +25,8 @@ export function CodeSecretInscriptionPage() {
   const [visible, setVisible] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 
-  if (!state?.jetonInscription) return <Navigate to="/register/particulier" replace />;
+  if (!state?.jetonInscription)
+    return <Navigate to="/register/particulier" replace />;
   const jeton = state.jetonInscription;
 
   function handleCreation(v: string) {
@@ -30,7 +35,10 @@ export function CodeSecretInscriptionPage() {
     if (v.length < 4) return;
     if (isCodeTrivial(v)) {
       setErreur("Choisissez un code moins évident (pas 0000, 1234…).");
-      setTimeout(() => { setCode(""); setEssai((n) => n + 1); }, 300);
+      setTimeout(() => {
+        setCode("");
+        setEssai((n) => n + 1);
+      }, 300);
       return;
     }
     setTimeout(() => setEtape("confirmation"), 250);
@@ -42,7 +50,10 @@ export function CodeSecretInscriptionPage() {
     if (v.length < 4) return;
     if (v !== code) {
       setErreur("Les codes ne correspondent pas. Réessayez.");
-      setTimeout(() => { setConfirmation(""); setEssai((n) => n + 1); }, 300);
+      setTimeout(() => {
+        setConfirmation("");
+        setEssai((n) => n + 1);
+      }, 300);
       return;
     }
     const session = await submit(jeton, code);
@@ -50,8 +61,11 @@ export function CodeSecretInscriptionPage() {
   }
 
   function recommencer() {
-    setCode(""); setConfirmation(""); setErreur(null);
-    setEtape("creation"); setEssai((n) => n + 1);
+    setCode("");
+    setConfirmation("");
+    setErreur(null);
+    setEtape("creation");
+    setEssai((n) => n + 1);
   }
 
   const enCreation = etape === "creation";
@@ -64,7 +78,11 @@ export function CodeSecretInscriptionPage() {
       sheetHandle
     >
       <div className="text-center">
-        <AuthTitle>{enCreation ? "Créez votre code secret" : "Confirmez votre code secret"}</AuthTitle>
+        <AuthTitle>
+          {enCreation
+            ? "Créez votre code secret"
+            : "Confirmez votre code secret"}
+        </AuthTitle>
         <AuthSubtitle>Code confidentiel à 4 chiffres</AuthSubtitle>
       </div>
 
@@ -74,24 +92,29 @@ export function CodeSecretInscriptionPage() {
           variant="tiles"
           autoFocus
           value={enCreation ? code : confirmation}
-          onChange={enCreation ? handleCreation : (v) => void handleConfirmation(v)}
+          onChange={
+            enCreation ? handleCreation : (v) => void handleConfirmation(v)
+          }
           visible={visible}
           invalid={!!erreur}
           disabled={isSubmitting}
         />
-<button
-  type="button"
-  onClick={() => setVisible((v) => !v)}
-  aria-label={visible ? "Masquer le code" : "Afficher le code"}
-  className="grid size-10 place-items-center rounded-full text-ink/50 transition-colors hover:bg-ink/5 hover:text-ink"
->
-  {visible ? <Eye className="size-5" /> : <EyeOff className="size-5" />}
-</button>
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          aria-label={visible ? "Masquer le code" : "Afficher le code"}
+          className="grid size-10 place-items-center rounded-full text-ink/50 transition-colors hover:bg-ink/5 hover:text-ink"
+        >
+          {visible ? <Eye className="size-5" /> : <EyeOff className="size-5" />}
+        </button>
       </div>
 
       <div className="mt-4 min-h-10 text-center">
         {erreur && (
-          <p role="alert" className="flex items-center justify-center gap-1.5 text-sm text-red-700">
+          <p
+            role="alert"
+            className="flex items-center justify-center gap-1.5 text-sm text-red-700"
+          >
             <CircleAlert className="size-4 shrink-0" aria-hidden /> {erreur}
           </p>
         )}
@@ -101,7 +124,11 @@ export function CodeSecretInscriptionPage() {
           </p>
         )}
         {!enCreation && !isSubmitting && (
-          <button type="button" onClick={recommencer} className="text-sm font-semibold text-signal hover:underline">
+          <button
+            type="button"
+            onClick={recommencer}
+            className="text-sm font-semibold text-signal hover:underline"
+          >
             Modifier mon code
           </button>
         )}

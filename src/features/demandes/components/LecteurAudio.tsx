@@ -79,7 +79,7 @@ export function LecteurAudio({ src, blob, dureeSecondes }: LecteurAudioProps) {
   };
 
   return (
-    <div className="rounded-2xl bg-navy p-5 text-paper">
+    <div className="rounded-xl bg-navy p-5 text-paper">
       <audio
         ref={audioRef}
         src={src}

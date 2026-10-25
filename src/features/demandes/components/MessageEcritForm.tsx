@@ -13,6 +13,8 @@ import { useLocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
 import { LocalisationCard } from "./LocalisationCard";
 import { MotsClesPicker } from "./MotsClesPicker";
+import { useDemandeEnAttente } from "../store/demandeEnAttente.store";
+import { useDemandeVisiteur } from "../hooks/useDemandeVisiteur";
 
 /** Seuil purement visuel pour afficher « Message clair et précis » */
 const MESSAGE_CLAIR_MIN = 30;
@@ -23,12 +25,20 @@ export function MessageEcritForm() {
   const { submit, isSubmitting } = useSauvegarderBrouillon();
   const { envoyer, isSending } = useEnvoyerDemande();
   const localisation = useLocalisationPartagee();
+  const { estVisiteur, garderEcrite } = useDemandeVisiteur();
+  const enAttente = useDemandeEnAttente((s) => s.demande);
+  // Un visiteur qui revient depuis « Modifier ma demande » retrouve son texte
+  const restaure =
+    estVisiteur && enAttente?.type === "ECRITE" ? enAttente.values : null;
   const { data: motsClesFrequents, isLoading: loadingMotsCles } =
     useMotsClesFrequents();
 
   const form = useForm<DemandeEcriteValues>({
     resolver: zodResolver(demandeEcriteSchema),
-    defaultValues: { description: draftDescription, motsCles: draftMotsCles },
+    defaultValues: {
+      description: restaure?.description ?? draftDescription,
+      motsCles: restaure?.motsCles ?? draftMotsCles,
+    },
   });
 
   const description = form.watch("description");
@@ -37,8 +47,7 @@ export function MessageEcritForm() {
 
   const busy = isSubmitting || isSending;
   const positionPartagee = localisation.status === "shared";
-  const messageClair =
-    !error && description.trim().length >= MESSAGE_CLAIR_MIN;
+  const messageClair = !error && description.trim().length >= MESSAGE_CLAIR_MIN;
 
   const toggleMotCle = (motCle: string) => {
     const next = motsCles.includes(motCle)
@@ -49,6 +58,10 @@ export function MessageEcritForm() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!localisation.localisation) return;
+    if (estVisiteur) {
+      garderEcrite(values, localisation.localisation);
+      return;
+    }
     const draft = await submit(values);
     if (draft) await envoyer(draft.id, localisation.localisation);
   });

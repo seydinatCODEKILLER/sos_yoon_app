@@ -2,9 +2,15 @@ import { USE_MOCK_API } from "@/shared/lib/featureFlags";
 import { authApi } from "../api/authApi";
 import { mockAuthApi } from "../lib/mockAuth";
 
-/** Ce que les hooks utilisent aujourd'hui. À étendre au fur et à mesure. */
+/**
+ * Ce que les hooks utilisent aujourd'hui. À étendre au fur et à mesure.
+ * La connexion par code SMS n'existe plus : seule la connexion par code secret reste.
+ */
 type AuthService = {
-  particulier: typeof authApi.particulier;
+  particulier: Omit<
+    typeof authApi.particulier,
+    "demanderCodeConnexion" | "verifierCodeConnexion"
+  >;
   pro: Pick<typeof authApi.pro, "connexion">;
 };
 

@@ -1,4 +1,4 @@
-import { Lightbulb, Loader2, Mic, RotateCw, Send } from "lucide-react";
+import { Loader2, Mic, RotateCw, Send } from "lucide-react";
 import { LecteurAudio } from "./LecteurAudio";
 import { LocalisationCard } from "./LocalisationCard";
 import type { AudioEnregistre } from "../hooks/useVoiceRecorder";
@@ -60,12 +60,6 @@ export function MessageVocalEnregistre({
         <div className="mt-4">
           <LecteurAudio src={audio.url} blob={audio.blob} dureeSecondes={audio.dureeSecondes} />
         </div>
-
-        <p className="mt-4 flex items-center gap-2 rounded-xl border border-signal/10 bg-signal/5 px-4 py-3 text-xs text-ink/70">
-          <Lightbulb className="size-3.5 shrink-0 text-signal" aria-hidden />
-          Écoutez votre enregistrement avant de valider pour vous assurer que tous les détails
-          importants y figurent.
-        </p>
       </section>
 
       <div className="mt-4">

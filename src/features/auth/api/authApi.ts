@@ -8,6 +8,7 @@ import type {
   DemanderCodeInscriptionPayload,
   DemanderCodeReinitialisationPayload,
   EmailPayload,
+  FinaliserInscriptionPayload,
   LoginParticulierPayload,
   LoginProPayload,
   RegisterProPayload,
@@ -70,6 +71,10 @@ export const authApi = {
         "/auth/particulier/inscription/definir-code-secret",
         payload,
       ),
+
+    /** 201 : crée le compte sans code secret et connecte (parcours « demande d'abord ») */
+    finaliserInscription: (payload: FinaliserInscriptionPayload) =>
+      post<TokenResponse>("/auth/particulier/inscription/finaliser", payload),
 
     /** 202, répond toujours 202 même si le numéro est inconnu */
     demanderCodeReinitialisation: (

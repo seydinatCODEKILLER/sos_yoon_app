@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { VisiteurHeader } from "@/layouts/VisiteurHeader";
 import { SosHero } from "@/features/demandes/components/SosHero";
-import { Reassurance } from "@/features/demandes/components/Reassurance";
 import { AssistantCard } from "@/shared/components/AssistantCard";
+import { LienInscription, LienConnexion } from "@/shared/components/LienConnexion";
 
 export function AccueilVisiteurPage() {
   const navigate = useNavigate();
@@ -28,17 +28,13 @@ export function AccueilVisiteurPage() {
         </div>
 
         {/* Mobile : le lien de connexion est ici (sur desktop, il est dans l'en-tête) */}
-        <p className="mt-2 text-center text-[15px] text-ink/60 md:hidden">
-          Vous avez déjà un compte ?{" "}
-          <Link
-            to="/login"
-            className="inline-flex min-h-11 items-center font-semibold text-signal underline-offset-4 hover:underline"
-          >
-            Se connecter
-          </Link>
-        </p>
+        {/* Compte : inscription et connexion (mobile ; sur web, ils sont dans l'en-tête) */}
+        <div className="mt-6 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 md:hidden">
+          <LienInscription variant="bloc" />
+          <LienConnexion variant="bloc" />
+        </div>
 
-        <Reassurance className="mt-6 hidden md:flex" />
+        {/* <Reassurance className="mt-6 hidden md:flex" /> */}
       </main>
     </>
   );

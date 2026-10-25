@@ -8,7 +8,7 @@ export function LocalisationCard({ state }: { state: LocalisationPartagee }) {
   return (
     <section
       aria-labelledby="localisation-titre"
-      className="rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"
+      className="rounded-xl border border-ink/10 bg-white p-4 shadow-sm"
     >
       <div className="flex items-center gap-2">
         <MapPin className="size-4 text-ink/70" aria-hidden />

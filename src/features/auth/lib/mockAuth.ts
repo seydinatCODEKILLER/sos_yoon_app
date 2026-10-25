@@ -3,10 +3,10 @@ import type {
   CodeEnvoye,
   DefinirCodeSecretPayload,
   LoginParticulierPayload,
+  FinaliserInscriptionPayload,
   LoginProPayload,
   ReinitialiserCodeSecretPayload,
   TokenResponse,
-  TypeCode,
   VerifierCodePayload,
 } from "../types/types";
 import type { User, UserRole } from "@/types/user.types";
@@ -61,38 +61,24 @@ function buildSession(role: UserRole, overrides: Partial<User>): TokenResponse {
   };
 }
 
-async function verifier(
-  { telephone, code }: VerifierCodePayload,
-  type: TypeCode,
-): Promise<TokenResponse> {
-  await wait(500);
-  if (code === INVALID_CODE) {
-    throw erreur("OTP_INVALIDE", "Le code saisi est incorrect.");
-  }
-  const nouveau = type === "INSCRIPTION";
-  return buildSession(DEV_ROLE ?? "PARTICULIER", {
-    telephone,
-    // un compte fraîchement créé n'a pas encore de nom
-    prenom: nouveau ? null : "Seydina",
-    nom: nouveau ? null : "Thiam",
-    profilComplete: !nouveau,
-  });
-}
-
 export const mockAuthApi = {
   particulier: {
     demanderCodeInscription: () => codeEnvoye(),
-    demanderCodeConnexion: () => codeEnvoye(),
+
     renvoyerCode: () => codeEnvoye(),
+
     demanderCodeReinitialisation: () => codeEnvoye(),
-verifierCodeReinitialisation: async ({ code }: VerifierCodePayload) => {
-  await wait(500);
-  if (code === INVALID_CODE) throw erreur("OTP_INVALIDE", "Le code saisi est incorrect.");
-  return { jetonReinitialisation: `mock-reset-${Date.now()}` };
-},
-reinitialiserCodeSecret: async (_: ReinitialiserCodeSecretPayload) => {
-  await wait(500);
-},
+
+    verifierCodeReinitialisation: async ({ code }: VerifierCodePayload) => {
+      await wait(500);
+      if (code === INVALID_CODE)
+        throw erreur("OTP_INVALIDE", "Le code saisi est incorrect.");
+      return { jetonReinitialisation: `mock-reset-${Date.now()}` };
+    },
+
+    reinitialiserCodeSecret: async (_: ReinitialiserCodeSecretPayload) => {
+      await wait(500);
+    },
 
     // dans mockAuthApi.particulier (supprimez demanderCodeConnexion et verifierCodeConnexion)
     connexion: async ({ telephone, codeSecret }: LoginParticulierPayload) => {
@@ -110,6 +96,7 @@ reinitialiserCodeSecret: async (_: ReinitialiserCodeSecretPayload) => {
       essaisRestants = 4;
       return buildSession(DEV_ROLE ?? "PARTICULIER", { telephone });
     },
+
     verifierCodeInscription: async ({
       telephone,
       code,
@@ -120,7 +107,18 @@ reinitialiserCodeSecret: async (_: ReinitialiserCodeSecretPayload) => {
       telephoneInscription = telephone;
       return { jetonInscription: `mock-jeton-${Date.now()}` };
     },
+
     definirCodeSecret: async (_: DefinirCodeSecretPayload) => {
+      await wait(500);
+      return buildSession(DEV_ROLE ?? "PARTICULIER", {
+        telephone: telephoneInscription,
+        prenom: null,
+        nom: null,
+        profilComplete: false,
+      });
+    },
+    
+    finaliserInscription: async (_: FinaliserInscriptionPayload) => {
       await wait(500);
       return buildSession(DEV_ROLE ?? "PARTICULIER", {
         telephone: telephoneInscription,

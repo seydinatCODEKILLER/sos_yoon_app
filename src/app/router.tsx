@@ -22,6 +22,8 @@ import { MesInformationsPage } from "@/features/profil/pages/MesInformationsPage
 import PreferencesNotificationsPage from "@/features/profil/pages/PreferencesNotificationsPage";
 import { SupprimerComptePage } from "@/features/profil/pages/SupprimerComptePage";
 import { VisiteurLayout } from "@/layouts/VisiteurLayout";
+import { EnvoiDemandeEnAttentePage } from "@/features/demandes/pages/EnvoiDemandeEnAttentePage";
+import { AssistantPage } from "@/features/assistant/pages/AssistantPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -60,10 +62,8 @@ export const router = createBrowserRouter([
     element: <PagePlaceholder title="Nouveau mot de passe" />,
   },
 
-  {
-    path: "/assistant",
-    element: <PagePlaceholder title="Soxna Yoon" />,
-  },
+  // ─── Soxna Yoon : avec ou sans compte ───────────────────────────
+  { path: "/assistant", element: <AssistantPage /> },
 
   // ─── Visiteur (sans compte) ─────────────────────────────────────
   {
@@ -93,6 +93,14 @@ export const router = createBrowserRouter([
             path: "/app/demandes/nouvelle",
             element: <DemanderAidePage />,
             handle: { section: "Demandes d'aide", title: "Urgence Juridique" },
+          },
+          {
+            path: "/app/demandes/envoi",
+            element: <EnvoiDemandeEnAttentePage />,
+            handle: {
+              section: "Demandes d'aide",
+              title: "Envoi de la demande",
+            },
           },
           {
             path: "/app/demandes",

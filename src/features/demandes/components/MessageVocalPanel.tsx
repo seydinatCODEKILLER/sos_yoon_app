@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion, useReducedMotion } from "motion/react";
-import { Loader2, Mic, Square, SquarePen } from "lucide-react";
+import { ChevronRight, Loader2, Mic, Square, SquarePen } from "lucide-react";
 import {
   DUREE_MAX_SECONDES,
   useAudioRecorder,
@@ -10,6 +10,7 @@ import { useEnvoyerMessageVocal } from "../hooks/useEnvoyerMessageVocal";
 import { MessageVocalEnregistre } from "./MessageVocalEnregistre";
 import { useLocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
+import { useDemandeVisiteur } from "../hooks/useDemandeVisiteur";
 
 const BARS = [10, 18, 28, 20, 12, 22, 8];
 
@@ -51,6 +52,35 @@ function PulseRing({ delay }: { delay: number }) {
   );
 }
 
+function BoutonEcrire({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="group flex h-16 w-full items-center gap-3 rounded-xl border border-ink/10 bg-white px-4 text-left shadow-sm outline-none transition hover:border-signal/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-signal/40 active:scale-[0.99]"
+    >
+      <span
+        aria-hidden
+        className="grid size-10 shrink-0 place-items-center rounded-full bg-signal/10 text-signal"
+      >
+        <SquarePen className="size-5" />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold text-navy">
+          Écrire mon message
+        </span>
+        <span className="block text-xs text-ink/55">
+          Si vous ne pouvez pas parler
+        </span>
+      </span>
+      <ChevronRight
+        aria-hidden
+        className="size-5 shrink-0 text-ink/30 transition group-hover:translate-x-0.5 group-hover:text-signal"
+      />
+    </button>
+  );
+}
+
 interface MessageVocalPanelProps {
   /** false quand l'onglet est masqué : un enregistrement en cours est alors annulé */
   active: boolean;
@@ -64,6 +94,7 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
   const { supported, status, elapsed, audio, error, start, stop, reset } =
     useAudioRecorder();
   const { submit, isSubmitting } = useEnvoyerMessageVocal();
+  const { estVisiteur, garderVocale, isSaving } = useDemandeVisiteur();
 
   useEffect(() => {
     if (!active && status === "recording") reset();
@@ -74,6 +105,10 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
 
   const handleSend = async () => {
     if (!audio || !localisation.localisation) return;
+    if (estVisiteur) {
+      await garderVocale(audio, localisation.localisation);
+      return;
+    }
     const id = await submit({
       fichier: audio.blob,
       dureeSecondes: audio.dureeSecondes,
@@ -83,33 +118,29 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
 
   if (!supported) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink/15 px-6 py-14 text-center">
+      <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-ink/15 px-6 py-10 text-center">
         <p className="text-sm font-medium text-ink">
           Votre navigateur ne permet pas l'enregistrement vocal.
         </p>
-        <button
-          type="button"
-          onClick={onWrite}
-          className="text-sm font-medium text-signal hover:underline"
-        >
-          Écrire mon message
-        </button>
+        <div className="w-full max-w-xs">
+          <BoutonEcrire onClick={onWrite} />
+        </div>
       </div>
     );
   }
 
   // ── Enregistrement terminé : écoute, réenregistrement, suite ──
-if (status === "recorded" && audio) {
-  return (
-    <MessageVocalEnregistre
-      audio={audio}
-      onReset={reset}
-      onSend={handleSend}
-      isSubmitting={isSubmitting || isSending}
-      localisation={localisation}
-    />
-  );
-}
+  if (status === "recorded" && audio) {
+    return (
+      <MessageVocalEnregistre
+        audio={audio}
+        onReset={reset}
+        onSend={handleSend}
+        isSubmitting={isSubmitting || isSending || isSaving}
+        localisation={localisation}
+      />
+    );
+  }
 
   // ── Prêt à enregistrer / en cours ──
   return (
@@ -211,20 +242,20 @@ if (status === "recorded" && audio) {
         </p>
       </div>
 
-      {/* Basculer vers l'écrit (masqué pendant l'enregistrement) */}
-      {!recording && (
-        <div className="mx-auto mt-4 flex w-full max-w-md flex-col items-center gap-3 md:hidden">
-          <span className="text-sm text-ink/50">ou</span>
-          <button
-            type="button"
-            onClick={onWrite}
-            className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-ink/80 bg-white text-sm font-semibold text-navy transition-colors hover:bg-ink/3"
-          >
-            <SquarePen className="size-4" aria-hidden />
-            Écrire mon message
-          </button>
+      {/* Basculer vers l'écrit : l'espace reste réservé pendant l'enregistrement */}
+      <div
+        inert={recording}
+        className={`mx-auto mt-4 w-full max-w-md space-y-3 md:hidden ${
+          recording ? "invisible" : ""
+        }`}
+      >
+        <div aria-hidden className="flex items-center gap-3">
+          <span className="h-px flex-1 bg-ink/10" />
+          <span className="text-xs font-medium text-ink/40">ou</span>
+          <span className="h-px flex-1 bg-ink/10" />
         </div>
-      )}
+        <BoutonEcrire onClick={onWrite} />
+      </div>
     </div>
   );
 }

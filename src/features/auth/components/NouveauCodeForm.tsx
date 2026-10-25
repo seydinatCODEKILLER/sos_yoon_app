@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CircleAlert, Eye, EyeOff, Loader2, ShieldAlert } from "lucide-react";
+import { CircleAlert, Eye, EyeOff, Loader2 } from "lucide-react";
 import { AuthSubtitle, AuthTitle } from "@/shared/components/AuthShell";
 import { CodeSecretInput } from "./CodeSecretInput";
 import { useReinitialiserCodeSecret } from "../hooks/useReinitialiserCodeSecret";
@@ -129,18 +129,18 @@ export function NouveauCodeForm({ jeton, onDone }: Props) {
           />
         </div>
 
-{/* Emplacement réservé : l'apparition de l'erreur ne déplace plus rien */}
-<div className="min-h-5">
-  {erreur && (
-    <p
-      role="alert"
-      className="flex items-center gap-1.5 text-sm text-red-700"
-    >
-      <CircleAlert className="size-4 shrink-0" aria-hidden />
-      {erreur.message}
-    </p>
-  )}
-</div>
+        {/* Emplacement réservé : l'apparition de l'erreur ne déplace plus rien */}
+        <div className="min-h-5">
+          {erreur && (
+            <p
+              role="alert"
+              className="flex items-center gap-1.5 text-sm text-red-700"
+            >
+              <CircleAlert className="size-4 shrink-0" aria-hidden />
+              {erreur.message}
+            </p>
+          )}
+        </div>
 
         <button
           type="submit"

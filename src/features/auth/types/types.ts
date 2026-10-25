@@ -146,3 +146,12 @@ export interface DefinirCodeSecretPayload {
   jetonInscription: string;
   codeSecret: string; // 4 chiffres
 }
+
+/**
+ * POST /auth/particulier/inscription/finaliser
+ * Parcours « demande d'abord » : crée le compte sans code secret.
+ * Réponse : TokenResponse (comme definir-code-secret).
+ */
+export interface FinaliserInscriptionPayload {
+  jetonInscription: string;
+}
