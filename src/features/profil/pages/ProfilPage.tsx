@@ -1,6 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { Bell, KeyRound, Loader2, LogOut, Phone, User } from "lucide-react";
+import {
+  Bell,
+  ChevronRight,
+  KeyRound,
+  Loader2,
+  LogOut,
+  Trash2,
+  User,
+} from "lucide-react";
 import { usePreferencesNotifications } from "../hooks/usePreferencesNotifications";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { initiales } from "@/features/demandes/lib/contactProfessionnel";
@@ -14,6 +22,7 @@ import { profilRoutes } from "../lib/profilRoutes";
 import { AvatarProfil } from "../components/AvatarProfil";
 import { ProfilLigne } from "../components/ProfilLigne";
 import { ProfilSection } from "../components/ProfilSection";
+import { Button } from "@/shared/components/ui/button";
 
 const ICONE = "size-5";
 
@@ -133,31 +142,49 @@ export function ProfilPage() {
               libelle="Code secret"
               valeur="••••"
             />
-            <ProfilLigne
-              to={profilRoutes.telephone}
-              icone={<Phone className={ICONE} />}
-              libelle="Numéro de téléphone"
-              valeur={masquerTelephone(profil.telephone)}
-            />
           </ProfilSection>
 
-          <button
-            type="button"
-            onClick={seDeconnecter}
-            className="flex h-13 w-full items-center justify-center gap-2 rounded-xl border border-ink/8 bg-white text-[15px] font-semibold text-navy shadow-sm transition-colors hover:bg-ink/2"
-          >
-            <LogOut className="size-5" aria-hidden />
-            Se déconnecter
-          </button>
-
-          <div className="flex flex-col items-center gap-3 pb-2">
-            <button
+          <div className="space-y-3 pt-2">
+            <Button
               type="button"
-              onClick={() => navigate(profilRoutes.supprimer)}
-              className="text-sm font-medium text-signal underline underline-offset-4"
+              variant="outline"
+              onClick={seDeconnecter}
+              className="group h-14 w-full gap-3 rounded-xl border-navy/15 bg-white text-[15px] font-semibold text-navy shadow-sm hover:bg-navy/5"
             >
-              Supprimer mon compte
-            </button>
+              <span
+                aria-hidden
+                className="grid size-8 place-items-center rounded-full bg-navy/8 transition-colors group-hover:bg-navy group-hover:text-paper"
+              >
+                <LogOut className="size-4" />
+              </span>
+              Se déconnecter
+            </Button>
+
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => navigate(profilRoutes.supprimer)}
+              className="group h-auto w-full justify-start gap-3 rounded-xl px-4 py-3.5 text-left whitespace-normal"
+            >
+              <span
+                aria-hidden
+                className="grid size-10 shrink-0 place-items-center rounded-full bg-red-100 text-red-600"
+              >
+                <Trash2 className="size-5" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-[15px] font-semibold">
+                  Supprimer mon compte
+                </span>
+                <span className="mt-0.5 block text-[13px] leading-snug font-normal opacity-70">
+                  Action définitive : vos données seront effacées.
+                </span>
+              </span>
+              <ChevronRight
+                aria-hidden
+                className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5"
+              />
+            </Button>
           </div>
         </div>
       )}

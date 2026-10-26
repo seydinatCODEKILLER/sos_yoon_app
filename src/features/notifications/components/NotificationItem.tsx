@@ -1,5 +1,6 @@
 import { Check, ClipboardCheck, SearchX } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/shared/components/ui/button";
 import type {
   Notification,
   TypeNotification,
@@ -7,6 +8,7 @@ import type {
 import { demandeRoutes } from "@/features/demandes/lib/demandeRoutes";
 import { formatHeure } from "@/features/demandes/lib/formatDateDemande";
 import { useMarquerLue } from "../hooks/useNotifications";
+import { CARTE_BOUTON } from "@/shared/lib/styleCarte";
 
 const STYLES: Record<
   TypeNotification,
@@ -43,11 +45,11 @@ export function NotificationItem({
   };
 
   return (
-    <button
+    <Button
       type="button"
+      variant="outline"
       onClick={ouvrir}
-      className="flex w-full items-start gap-3 rounded-2xl border border-ink/8 bg-white p-4 text-left shadow-sm transition-colors hover:bg-ink/2"
-    >
+      className={`h-auto w-full items-start justify-start gap-3 rounded-xl border p-4 text-left font-normal whitespace-normal ${CARTE_BOUTON}`}    >
       <span
         aria-hidden
         className={`grid size-11 shrink-0 place-items-center rounded-xl border ${style.fond}`}
@@ -55,15 +57,15 @@ export function NotificationItem({
         {style.icone}
       </span>
 
-      <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p
-            className={`text-[15px] leading-snug text-navy ${
+      <span className="block min-w-0 flex-1">
+        <span className="flex items-start justify-between gap-2">
+          <span
+            className={`block text-[15px] leading-snug text-navy ${
               notification.lue ? "font-medium" : "font-bold"
             }`}
           >
             {notification.titre}
-          </p>
+          </span>
           <span className="flex shrink-0 items-center gap-1.5 text-xs tabular-nums text-ink/50">
             {formatHeure(notification.date)}
             {!notification.lue && (
@@ -74,11 +76,11 @@ export function NotificationItem({
               />
             )}
           </span>
-        </div>
-        <p className="mt-1 text-[13px] leading-snug text-ink/60">
+        </span>
+        <span className="mt-1 block text-[13px] leading-snug text-ink/60">
           {notification.message}
-        </p>
-      </div>
-    </button>
+        </span>
+      </span>
+    </Button>
   );
 }

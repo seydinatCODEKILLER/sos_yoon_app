@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { Button } from "@/shared/components/ui/button";
 import { demandeErrorMessage } from "@/features/demandes/lib/demandeErrors";
 import { useNotifications, useToutMarquerLu } from "../hooks/useNotifications";
 import { groupeParJour } from "../lib/groupeParJour";
@@ -15,12 +16,14 @@ export function NotificationsPage() {
   const { data: notifications, isPending, error } = useNotifications();
   const { mutate: toutLire, isPending: enCours } = useToutMarquerLu();
 
-  const nonLues = notifications?.filter((n) => !n.lue).length ?? 0;
-  // Tous les types actuels concernent des demandes ; l'onglet filtrera plus tard
+  const toutes = notifications ?? [];
+  const nonLues = toutes.filter((n) => !n.lue).length;
   const visibles =
     filtre === "NON_LUES"
-      ? (notifications ?? []).filter((n) => !n.lue)
-      : (notifications ?? []);
+      ? toutes.filter((n) => !n.lue)
+      : filtre === "LUES"
+        ? toutes.filter((n) => n.lue)
+        : toutes;
   const groupes = groupeParJour(visibles);
 
   let contenu: React.ReactNode;
@@ -28,7 +31,10 @@ export function NotificationsPage() {
   if (isPending) {
     contenu = (
       <div className="flex flex-1 items-center justify-center py-24">
-        <Loader2 className="size-6 animate-spin text-ink/40" aria-label="Chargement" />
+        <Loader2
+          className="size-6 animate-spin text-ink/40"
+          aria-label="Chargement"
+        />
       </div>
     );
   } else if (error || !notifications) {
@@ -40,12 +46,18 @@ export function NotificationsPage() {
   } else if (notifications.length === 0) {
     contenu = <NotificationsVide />;
   } else if (visibles.length === 0) {
-    contenu = (
-      <NotificationsVide
-        titre="Tout est à jour."
-        message="Vous n'avez aucune notification non lue."
-      />
-    );
+    contenu =
+      filtre === "LUES" ? (
+        <NotificationsVide
+          titre="Rien à relire pour l'instant."
+          message="Les notifications que vous avez ouvertes apparaîtront ici."
+        />
+      ) : (
+        <NotificationsVide
+          titre="Tout est à jour."
+          message="Vous n'avez aucune notification non lue."
+        />
+      );
   } else {
     contenu = (
       <div className="space-y-6">
@@ -75,14 +87,16 @@ export function NotificationsPage() {
             Notifications
           </h2>
           {nonLues > 0 && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => toutLire()}
               disabled={enCours}
-              className="shrink-0 text-sm font-semibold text-signal hover:underline disabled:opacity-60"
+              className="shrink-0 font-semibold text-signal hover:bg-signal/10 hover:text-signal"
             >
               Tout marquer comme lu
-            </button>
+            </Button>
           )}
         </div>
         <p className="mt-1.5 text-[14px] leading-snug text-ink/60">

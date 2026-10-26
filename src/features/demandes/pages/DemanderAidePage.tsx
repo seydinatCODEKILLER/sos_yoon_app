@@ -4,6 +4,7 @@ import type { TypeSaisie } from "../types/demande.types";
 import { MessageEcritForm } from "../components/MessageEcritForm";
 import { MessageVocalPanel } from "../components/MessageVocalPanel";
 import { TypeSaisieTabs } from "../components/TypeSaisieTabs";
+import { Button } from "@/shared/components/ui/button";
 
 export function DemanderAidePage() {
   const [type, setType] = useState<TypeSaisie>("VOCAL");
@@ -55,14 +56,15 @@ export function DemanderAidePage() {
         hidden={type !== "TEXTE"}
         className="mt-2 text-left md:mt-8"
       >
-        <button
+        <Button
           type="button"
+          variant="outline"
           onClick={() => setType("VOCAL")}
-          className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-signal md:hidden"
+          className="mb-4 h-11 gap-2 rounded-full border-signal/30 bg-signal/10 px-4 text-sm font-semibold text-signal shadow-sm hover:bg-signal/15 hover:text-signal md:hidden"
         >
           <Mic className="size-4" aria-hidden />
           Parler plutôt qu'écrire
-        </button>
+        </Button>
         <MessageEcritForm />
       </div>
     </div>

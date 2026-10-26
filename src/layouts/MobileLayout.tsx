@@ -24,14 +24,14 @@ function TabBadge({ badge, value }: { badge?: NavBadge; value?: number }) {
   if (badge.kind === "count") {
     if (!value) return null;
     return (
-      <span className="absolute -right-2 -top-1 min-w-4 rounded-full bg-signal px-1 text-center text-[9px] font-semibold leading-4 text-paper">
-        {value}
+      <span className="absolute -top-2 -right-3 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-signal px-1 text-[10px] leading-none font-bold text-paper">
+        {value > 99 ? "99+" : value}
       </span>
     );
   }
   if (!(badge.key && value)) return null;
   return (
-    <span className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-signal" />
+    <span className="absolute -top-0.5 -right-1 size-2.5 rounded-full bg-signal" />
   );
 }
 
@@ -92,11 +92,14 @@ export function MobileLayout({
   return (
     <div className="flex min-h-dvh flex-col bg-paper">
       <MobileHeader role={role} />
-      <main className="flex-1 overflow-y-auto pb-20">{children}</main>
+      <main className="flex-1 overflow-y-auto pb-[calc(5rem+env(safe-area-inset-bottom))]">
+        {children}
+      </main>
 
       <nav
-        className="fixed inset-x-0 bottom-0 flex border-t border-paper/10 bg-ink px-2 pt-1.5"
-        style={{ paddingBottom: "max(0.375rem, env(safe-area-inset-bottom))" }}
+        aria-label="Navigation principale"
+        className="fixed inset-x-0 bottom-0 flex bg-navy"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         {tabs.map(({ label, shortLabel, path, icon: Icon, badge }) => {
           const isActive = path === activePath;
@@ -104,31 +107,35 @@ export function MobileLayout({
             <Link
               key={path}
               to={path}
-              className="group flex flex-1 flex-col items-center gap-0.5 py-1 outline-none"
+              aria-current={isActive ? "page" : undefined}
+              className="group relative flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1.5 outline-none focus-visible:bg-white/10"
             >
+              {/* Trait orange de l'onglet actif (espace toujours réservé) */}
               <span
-                className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors group-focus-visible:ring-2 group-focus-visible:ring-signal group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-ink ${
-                  isActive ? "bg-signal/15" : ""
+                aria-hidden
+                className={`absolute inset-x-0 top-0 h-1 transition-colors ${
+                  isActive ? "bg-signal" : "bg-transparent"
                 }`}
-              >
-                <span className="relative">
-                  <Icon
-                    className={`h-5 w-5 transition-colors ${isActive ? "text-signal" : "text-paper/50"}`}
-                    strokeWidth={isActive ? 2.25 : 1.75}
-                  />
-                  <TabBadge
-                    badge={badge}
-                    value={
-                      badge && "key" in badge && badge.key
-                        ? badges[badge.key]
-                        : undefined
-                    }
-                  />
-                </span>
+              />
+              <span className="relative">
+                <Icon
+                  className={`size-6 transition-colors ${
+                    isActive ? "text-paper" : "text-paper/65"
+                  }`}
+                  strokeWidth={isActive ? 2.25 : 2}
+                />
+                <TabBadge
+                  badge={badge}
+                  value={
+                    badge && "key" in badge && badge.key
+                      ? badges[badge.key]
+                      : undefined
+                  }
+                />
               </span>
               <span
-                className={`max-w-18 truncate text-[10px] leading-tight transition-colors ${
-                  isActive ? "font-medium text-signal" : "text-paper/50"
+                className={`text-xs leading-none font-semibold whitespace-nowrap transition-colors ${
+                  isActive ? "text-paper" : "text-paper/65"
                 }`}
               >
                 {shortLabel ?? label}
@@ -136,21 +143,26 @@ export function MobileLayout({
             </Link>
           );
         })}
+
         {showMore && (
           <DropdownMenu>
-            <DropdownMenuTrigger className="group flex flex-1 flex-col items-center gap-0.5 py-1 outline-none">
+            <DropdownMenuTrigger className="group relative flex min-h-16 min-w-0 flex-1 flex-col items-center justify-center gap-1 pt-1.5 outline-none focus-visible:bg-white/10 data-popup-open:bg-white/10">
               <span
-                className={`flex h-8 w-11 items-center justify-center rounded-full transition-colors group-focus-visible:ring-2 group-focus-visible:ring-signal group-focus-visible:ring-offset-2 group-focus-visible:ring-offset-ink data-popup-open:ring-2 data-popup-open:ring-signal data-popup-open:ring-offset-2 data-popup-open:ring-offset-ink ${
-                  isOverflowActive ? "bg-signal/15" : ""
+                aria-hidden
+                className={`absolute inset-x-0 top-0 h-1 transition-colors ${
+                  isOverflowActive ? "bg-signal" : "bg-transparent"
                 }`}
-              >
-                <MoreHorizontal
-                  className={`h-5 w-5 ${isOverflowActive ? "text-signal" : "text-paper/50"}`}
-                  strokeWidth={isOverflowActive ? 2.25 : 1.75}
-                />
-              </span>
+              />
+              <MoreHorizontal
+                className={`size-6 transition-colors ${
+                  isOverflowActive ? "text-paper" : "text-paper/65"
+                }`}
+                strokeWidth={isOverflowActive ? 2.25 : 2}
+              />
               <span
-                className={`text-[10px] leading-tight ${isOverflowActive ? "font-medium text-signal" : "text-paper/50"}`}
+                className={`text-xs leading-none font-semibold ${
+                  isOverflowActive ? "text-paper" : "text-paper/65"
+                }`}
               >
                 Plus
               </span>

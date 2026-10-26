@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { ClipboardCheck, ClipboardList, Loader2 } from "lucide-react";
 import { useMesDemandes } from "../hooks/useMesDemandes";
 import { demandeErrorMessage } from "../lib/demandeErrors";
 import {
@@ -9,6 +9,9 @@ import {
 import { MesDemandesVide } from "../components/MesDemandesVide";
 import { DemandeEnCoursCard } from "../components/DemandeEnCoursCard";
 import { DemandeHistoriqueItem } from "../components/DemandeHistoriqueItem";
+import { EtatVide } from "../components/EtatVide";
+
+
 
 /** Nombre de demandes passées montrées dans l'onglet « En cours » */
 const HISTORIQUE_RECENT = 3;
@@ -56,9 +59,10 @@ export function MesDemandesPage() {
             </ul>
           ) : (
             filtre === "EN_COURS" && (
-              <p className="py-6 text-center text-sm text-ink/60">
-                Aucune demande en cours.
-              </p>
+              <EtatVide
+                icone={<ClipboardList className="size-6" strokeWidth={1.75} />}
+                message="Aucune demande en cours."
+              />
             )
           ))}
 
@@ -81,9 +85,11 @@ export function MesDemandesPage() {
         )}
 
         {filtre === "TERMINEES" && terminees.length === 0 && (
-          <p className="py-16 text-center text-sm text-ink/60">
-            Aucune demande terminée.
-          </p>
+          <EtatVide
+            icone={<ClipboardCheck className="size-6" strokeWidth={1.75} />}
+            message="Aucune demande terminée."
+            className="py-16"
+          />
         )}
       </div>
     );

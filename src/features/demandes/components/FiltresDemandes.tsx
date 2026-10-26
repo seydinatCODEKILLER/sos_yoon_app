@@ -1,3 +1,6 @@
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+
 export type FiltreDemandes = "EN_COURS" | "TERMINEES" | "TOUTES";
 
 interface FiltresDemandesProps {
@@ -19,32 +22,37 @@ export function FiltresDemandes({
   enCours,
 }: FiltresDemandesProps) {
   return (
-    <div role="group" aria-label="Filtrer les demandes" className="flex gap-2">
+    <div
+      role="group"
+      aria-label="Filtrer les demandes"
+      className="flex flex-wrap gap-2"
+    >
       {ONGLETS.map(({ id, libelle }) => {
         const actif = value === id;
         return (
-          <button
+          <Button
             key={id}
             type="button"
+            variant={actif ? "default" : "outline"}
             aria-pressed={actif}
             onClick={() => onChange(id)}
-            className={`inline-flex h-10 items-center gap-2 rounded-full px-4 text-sm font-semibold shadow-sm transition-colors ${
+            className={`h-10 gap-2 rounded-full px-4 text-sm font-semibold shadow-sm ${
               actif
-                ? "bg-navy text-paper"
-                : "border border-ink/8 bg-white text-ink/80 hover:bg-ink/3"
+                ? "bg-navy text-paper hover:bg-navy/90"
+                : "border-ink/8 bg-white text-ink/80 hover:bg-ink/3"
             }`}
           >
             {libelle}
             {id === "EN_COURS" && (
-              <span
-                className={`grid min-w-5 place-items-center rounded-full px-1.5 text-xs tabular-nums ${
+              <Badge
+                className={`h-5 min-w-5 justify-center rounded-full px-1.5 text-xs font-medium tabular-nums ${
                   actif ? "bg-white/20 text-paper" : "bg-ink/8 text-ink/70"
                 }`}
               >
                 {enCours}
-              </span>
+              </Badge>
             )}
-          </button>
+          </Button>
         );
       })}
     </div>

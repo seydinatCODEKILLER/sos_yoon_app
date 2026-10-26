@@ -9,10 +9,11 @@ import {
   PhoneCall,
   X,
 } from "lucide-react";
-import type {
-  PhaseDemande,
-  SuiviDemande,
-} from "../types/demande.types";
+import { Badge } from "@/shared/components/ui/badge";
+import { Button } from "@/shared/components/ui/button";
+import { Card, CardContent } from "@/shared/components/ui/card";
+import { CARTE } from "@/shared/lib/styleCarte";
+import type { PhaseDemande, SuiviDemande } from "../types/demande.types";
 import { demandeRoutes } from "../lib/demandeRoutes";
 import { formatDateDemande, formatHeure } from "../lib/formatDateDemande";
 import {
@@ -30,6 +31,8 @@ const PHASES: PhaseDemande[] = [
   "ACCEPTEE",
   "CONTACT_ETABLI",
 ];
+
+const CARTE_CLASSE = `gap-0 rounded-xl border py-0 ${CARTE}`;
 
 export function DemandeDetailTerminee({ suivi }: { suivi: SuiviDemande }) {
   const pro = suivi.professionnel;
@@ -75,60 +78,73 @@ export function DemandeDetailTerminee({ suivi }: { suivi: SuiviDemande }) {
 
   return (
     <div className="flex flex-1 flex-col">
-      <Link
-        to={demandeRoutes.liste}
+      <Button
+        variant="ghost"
+        size="icon"
+        nativeButton={false}
+        render={<Link to={demandeRoutes.liste} />}
         aria-label="Retour à mes demandes"
-        className="-ml-2 inline-flex size-10 items-center justify-center rounded-full text-navy transition-colors hover:bg-ink/5"
+        className="-ml-2 size-10 rounded-full text-navy hover:bg-ink/5"
       >
         <ArrowLeft className="size-5" />
-      </Link>
+      </Button>
 
       {/* En-tête */}
-      <section className="mt-2 rounded-xl border border-ink/8 bg-white p-4 shadow-sm">
-        <div className="flex items-start justify-between gap-3">
-          <h2 className="text-lg leading-snug font-bold text-navy">{titre}</h2>
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-ink/6 px-2.5 py-1 text-xs font-semibold text-ink/70">
-            {annulee ? (
-              <X className="size-3.5" aria-hidden />
-            ) : (
-              <Check className="size-3.5" aria-hidden />
-            )}
-            {annulee ? "Annulée" : "Terminée"}
-          </span>
-        </div>
-        <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-ink/60">
-          <Clock className="size-3.5" aria-hidden />
-          {formatDateDemande(suivi.dateEnvoi)}
-        </p>
-      </section>
+      <Card className={`mt-2 ${CARTE_CLASSE}`}>
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-3">
+            <h2 className="text-lg leading-snug font-bold text-navy">
+              {titre}
+            </h2>
+            <Badge
+              variant="secondary"
+              className="h-auto shrink-0 gap-1 rounded-lg bg-ink/6 px-2.5 py-1 text-xs font-semibold text-ink/70 [&>svg]:size-3.5"
+            >
+              {annulee ? <X aria-hidden /> : <Check aria-hidden />}
+              {annulee ? "Annulée" : "Terminée"}
+            </Badge>
+          </div>
+          <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-ink/60">
+            <Clock className="size-3.5" aria-hidden />
+            {formatDateDemande(suivi.dateEnvoi)}
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Parcours */}
-      <section
+      <Card
+        role="region"
         aria-label="Parcours de prise en charge"
-        className="mt-4 rounded-xl border border-ink/8 bg-white p-3 shadow-sm"
+        className={`mt-4 ${CARTE_CLASSE}`}
       >
-        <div className="flex items-center justify-between rounded-lg bg-ink/4 px-3 py-2">
-          <h3 className="text-[13px] font-semibold text-ink">
-            Parcours de prise en charge
-          </h3>
-          <span className="rounded-md bg-ink/8 px-2 py-0.5 text-xs font-medium text-ink/60">
-            {nbEtapes === PHASES.length
-              ? "Complet"
-              : `${nbEtapes}/${PHASES.length} étapes`}
-          </span>
-        </div>
-        <div className="mt-2">
-          <SuiviTimeline items={items} />
-        </div>
-      </section>
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between rounded-lg bg-ink/5 px-3 py-2">
+            <h3 className="text-[13px] font-semibold text-ink">
+              Parcours de prise en charge
+            </h3>
+            <Badge
+              variant="secondary"
+              className="h-auto rounded-md bg-ink/8 px-2 py-0.5 text-xs font-medium text-ink/60"
+            >
+              {nbEtapes === PHASES.length
+                ? "Complet"
+                : `${nbEtapes}/${PHASES.length} étapes`}
+            </Badge>
+          </div>
+          <div className="mt-2">
+            <SuiviTimeline items={items} />
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Professionnel */}
       {pro && (
-        <section
+        <Card
+          role="region"
           aria-label="Professionnel"
-          className="mt-4 rounded-xl border border-ink/8 bg-white p-4 shadow-sm"
+          className={`mt-4 ${CARTE_CLASSE}`}
         >
-          <div className="flex items-start gap-3">
+          <CardContent className="flex items-start gap-3 p-4">
             <span
               aria-hidden
               className="grid size-10 shrink-0 place-items-center text-navy"
@@ -141,45 +157,61 @@ export function DemandeDetailTerminee({ suivi }: { suivi: SuiviDemande }) {
                   {pro.nomComplet}
                 </p>
                 {!annulee && (
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-ink/6 px-2 py-0.5 text-xs font-medium text-ink/70">
-                    <span className="size-1.5 rounded-full bg-ink/40" />
+                  <Badge
+                    variant="secondary"
+                    className="h-auto shrink-0 gap-1.5 rounded-lg bg-ink/6 px-2 py-0.5 text-xs font-medium text-ink/70"
+                  >
+                    <span
+                      aria-hidden
+                      className="size-1.5 rounded-full bg-ink/40"
+                    />
                     Contact terminé
-                  </span>
+                  </Badge>
                 )}
               </div>
               <p className="text-[13px] text-ink/60">
                 {capitalise(pro.metier)} · {pro.communeLibelle}
               </p>
               {pro.ordre && (
-                <span className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-ink/10 bg-ink/3 px-2.5 py-1 text-xs font-medium text-ink/70">
-                  <BadgeCheck className="size-3.5" aria-hidden />
+                <Badge
+                  variant="outline"
+                  className="mt-2 h-auto gap-1.5 rounded-lg border-ink/10 bg-ink/3 px-2.5 py-1 text-xs font-medium text-ink/70 [&>svg]:size-3.5"
+                >
+                  <BadgeCheck aria-hidden />
                   {pro.ordre}
-                </span>
+                </Badge>
               )}
             </div>
-          </div>
-        </section>
+          </CardContent>
+        </Card>
       )}
 
       {/* Contact */}
       {pro && (
         <div className="mt-auto grid grid-cols-2 gap-3 pt-6">
-          <a
-            href={lienAppel(pro.telephone)}
-            className="inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-navy text-sm font-semibold text-paper transition hover:brightness-110"
+          <Button
+            nativeButton={false}
+            render={<a href={lienAppel(pro.telephone)} />}
+            className="h-13 rounded-xl bg-navy text-sm font-semibold text-paper hover:bg-navy/90"
           >
             <PhoneCall className="size-4" aria-hidden />
             Appeler
-          </a>
-          <a
-            href={lienWhatsApp(pro.telephone, pro.nomComplet, suivi.reference)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex h-13 items-center justify-center gap-2 rounded-xl bg-ink/8 text-sm font-semibold text-ink/80 transition-colors hover:bg-ink/12"
+          </Button>
+          <Button
+            variant="secondary"
+            nativeButton={false}
+            render={
+              <a
+                href={lienWhatsApp(pro.telephone, pro.nomComplet, suivi.reference)}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+            className="h-13 rounded-xl bg-ink/8 text-sm font-semibold text-ink/80 hover:bg-ink/12"
           >
             <MessageCircle className="size-4" aria-hidden />
             Message
-          </a>
+          </Button>
         </div>
       )}
     </div>
