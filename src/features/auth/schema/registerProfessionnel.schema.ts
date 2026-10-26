@@ -55,27 +55,17 @@ const metierField = z.enum(METIER_VALUES, {
 const step2Object = z.object({
   metier: metierField,
   numeroOrdre: z.string().max(30, "Numéro trop long"),
-  organisme: z.string(),
-  anneeInscription: z.string().min(1, "Sélectionnez une année"),
-  anneesExperience: z.string().min(1, "Sélectionnez une tranche"),
   specialites: z.array(z.string()).min(1, "Sélectionnez au moins une spécialité"),
 });
 
 export const step2Schema = step2Object.superRefine((d, ctx) => {
-  // Le juriste-conseil n'a pas d'ordre : numéro et organisme facultatifs
+  // Le juriste-conseil n'a pas d'ordre : numéro facultatif
   if (d.metier === "JURISTE_CONSEIL") return;
   if (d.numeroOrdre.trim().length < 3) {
     ctx.addIssue({
       code: "custom",
       path: ["numeroOrdre"],
       message: "Numéro professionnel invalide",
-    });
-  }
-  if (!d.organisme) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["organisme"],
-      message: "Sélectionnez votre organisme",
     });
   }
 });
@@ -137,8 +127,6 @@ export const step3Schema = step3Object.superRefine((d, ctx) => {
 
 const step4Schema = z.object({
   region: z.string().min(1, "Sélectionnez une région"),
-  ville: z.string().min(2, "Renseignez la ville ou le département"),
-  commune: z.string().min(2, "Renseignez la commune ou la zone"),
   adresse: z.string().min(5, "Renseignez l'adresse professionnelle"),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
@@ -154,14 +142,6 @@ const step5Schema = z.object({
     .min(50, "Présentez-vous en au moins 50 caractères")
     .max(BIO_MAX_LENGTH, `${BIO_MAX_LENGTH} caractères maximum`),
   langues: z.array(z.string()).min(1, "Sélectionnez au moins une langue"),
-  tarifConsultation: z
-    .string()
-    .optional()
-    .refine(
-      (v) => !v || /^\d+$/.test(v.replace(/\s/g, "")),
-      "Montant invalide",
-    ),
-  modaliteFacturation: z.string().optional(),
 });
 
 /* ── Export ─────────────────────────────────────────────────── */
@@ -171,7 +151,6 @@ const fullObject = z.object({
   ...step2Object.shape,
   ...step3Object.shape,
   ...step4Schema.shape,
-  ...step5Schema.shape,
 });
 
 export type RegisterProfessionnelValues = z.infer<typeof fullObject>;
@@ -181,7 +160,6 @@ export const STEP_SCHEMAS = [
   step2Schema,
   step3Schema,
   step4Schema,
-  step5Schema,
 ] as const;
 
 export const REGISTER_PROFESSIONNEL_STEPS = [
@@ -189,5 +167,4 @@ export const REGISTER_PROFESSIONNEL_STEPS = [
   { id: "profil", title: "Votre profil professionnel" },
   { id: "verification", title: "Vérification professionnelle" },
   { id: "localisation", title: "Localisation et disponibilité" },
-  { id: "presentation", title: "Présentation et confirmation" },
 ] as const;

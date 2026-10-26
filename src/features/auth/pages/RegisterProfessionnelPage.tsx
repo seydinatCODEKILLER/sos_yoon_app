@@ -18,11 +18,23 @@ export function RegisterProfessionnelPage() {
       <div className="flex min-h-dvh flex-col px-6 py-6 md:px-10">
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/login" className="font-display text-base text-ink md:hidden">
-              SOS Yoon
+            <Link
+              to="/login"
+              aria-label="SOS Yoon, connexion"
+              className="inline-flex items-center md:hidden"
+            >
+              <img
+                src="/images/logo_orange.png"
+                alt="SOS Yoon"
+                draggable={false}
+                className="h-5 w-auto select-none"
+              />
             </Link>
             <span className="hidden items-center gap-1.5 rounded-full border border-ink/10 bg-white px-3 py-1.5 text-[11px] font-medium text-navy/70 sm:flex">
-              <ShieldCheck className="size-3.5 text-emerald-600" strokeWidth={1.75} />
+              <ShieldCheck
+                className="size-3.5 text-emerald-600"
+                strokeWidth={1.75}
+              />
               Données chiffrées &amp; confidentielles
             </span>
           </div>

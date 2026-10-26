@@ -1,10 +1,11 @@
 export function BrandLogo({ className = "" }: { className?: string }) {
-  // TODO : remplacer par le logo SVG officiel
   return (
-    <span
-      className={`text-lg font-bold tracking-[0.18em] text-paper ${className}`}
-    >
-      SOSYOON
-    </span>
+    <img
+      src="/images/logo_blanc.png"
+      alt="SOS Yoon"
+      draggable={false}
+      fetchPriority="high"
+      className={`h-7 w-auto select-none ${className}`}
+    />
   );
 }

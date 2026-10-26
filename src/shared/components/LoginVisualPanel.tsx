@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Fingerprint, ShieldCheck } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 const SIGNAL = "var(--color-signal)";
 
@@ -72,9 +73,7 @@ export function LoginVisualPanel({
         className="relative z-10 flex items-center justify-between px-12 pt-12"
       >
         {/* TODO : remplacer par le logo SVG officiel */}
-        <span className="text-lg font-bold tracking-[0.18em] text-paper">
-          SOSYOON
-        </span>
+        <BrandLogo />
 
         <div className="flex items-center gap-1.5 rounded-full border border-paper/10 bg-paper/5 px-3 py-1.5 backdrop-blur-sm">
           <ShieldCheck className="h-3.5 w-3.5 text-signal" strokeWidth={1.75} />

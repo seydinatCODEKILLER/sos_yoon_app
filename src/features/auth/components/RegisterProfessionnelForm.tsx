@@ -15,29 +15,28 @@ import {
   StepAccount,
   StepDocuments,
   StepLocation,
-  StepPresentation,
   StepProfile,
 } from "./RegisterProfessionnelSteps";
+import { useNavigate } from "react-router-dom";
 
 const CTA = [
   "Étape suivante",
   "Continuer vers l'étape 3",
   "Continuer vers l'étape 4",
-  "Continuer vers la finalisation (Étape 5)",
-  "Confirmer et soumettre mon inscription",
+  "Envoyer ma demande d'inscription",
 ];
 
 const NOTES = [
   null,
   "En continuant, vous confirmez l'exactitude des informations ordinales et acceptez les Conditions Générales Déontologiques de SOS Yoon.",
   "En continuant, vous certifiez sur l'honneur l'exactitude et l'authenticité des pièces justificatives téléversées conformément aux Conditions Générales Déontologiques de SOS Yoon.",
-  "En validant votre zone d'exercice, vous attestez être habilité à exercer dans ce ressort juridique conformément aux règles de votre ordre professionnel.",
-  "Votre demande fera l'objet d'une vérification de conformité auprès de l'ordre professionnel sous un délai de 24 à 48 heures.",
+  "En envoyant votre demande, vous attestez être habilité à exercer dans ce ressort juridique. Votre dossier fera l'objet d'une vérification de conformité auprès de l'ordre professionnel sous un délai de 24 à 48 heures.",
 ];
 
 export function RegisterProfessionnelForm() {
   const [step, setStep] = useState(0);
   const stepRef = useRef(0);
+    const navigate = useNavigate();
   const { submit, isSubmitting } = useRegisterProfessionnel();
 
   useEffect(() => {
@@ -66,24 +65,15 @@ export function RegisterProfessionnelForm() {
       password: "",
       confirmPassword: "",
       numeroOrdre: "",
-      organisme: "",
-      anneeInscription: "",
-      anneesExperience: "",
       specialites: [],
       declarationHonneur: false,
       region: "",
-      ville: "",
-      commune: "",
       adresse: "",
-      biographie: "",
-      langues: [],
-      tarifConsultation: "",
-      modaliteFacturation: "",
     },
   });
 
-  const isLastStep = step === REGISTER_PROFESSIONNEL_STEPS.length - 1;
   const total = REGISTER_PROFESSIONNEL_STEPS.length;
+  const isLastStep = step === total - 1;
   const metier = form.watch("metier");
 
   const subtitles = [
@@ -92,17 +82,20 @@ export function RegisterProfessionnelForm() {
     `Étape 3 sur ${total} — Téléversez vos justificatifs officiels pour certifier votre statut de ${
       metier ? DOCUMENTS_BY_METIER[metier].statut : "professionnel du droit"
     }.`,
-    `Étape 4 sur ${total} — Définissez votre zone d'exercice principal et vos modalités de réception pour être mis en relation avec les justiciables de votre ressort.`,
-    `Étape 5 sur ${total} — Présentez votre profil aux justiciables et confirmez vos engagements déontologiques pour soumettre votre dossier de certification.`,
+    `Étape 4 sur ${total} — Définissez votre zone d'exercice principal pour être mis en relation avec les justiciables de votre ressort, puis envoyez votre dossier.`,
   ];
+
+  function allerA(etape: number) {
+    setStep(etape);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   async function handleNext() {
     const valid = await form.trigger();
     if (!valid) return;
 
     if (!isLastStep) {
-      setStep((s) => s + 1);
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      allerA(step + 1);
       return;
     }
 
@@ -112,27 +105,25 @@ export function RegisterProfessionnelForm() {
       (s) => !s.safeParse(values).success,
     );
     if (firstInvalid !== -1) {
-      setStep(firstInvalid);
+      allerA(firstInvalid);
       return;
     }
 
     const ok = await submit(values);
     if (ok) {
       // TODO: rediriger vers un écran de confirmation
-      // (compte en attente de vérification sous 24-48 h, pas d'accès à /pro immédiat)
+     navigate("/pro/validation", { replace: true });
     }
   }
 
   function handleBack() {
-    setStep((s) => Math.max(0, s - 1));
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    allerA(Math.max(0, step - 1));
   }
 
   return (
     <div
       className={`mx-auto w-full transition-[max-width] ${step === 0 ? "max-w-md" : "max-w-xl"}`}
     >
-      {" "}
       <div>
         <h1 className="font-display text-3xl font-bold leading-tight text-ink">
           {REGISTER_PROFESSIONNEL_STEPS[step].title}
@@ -159,7 +150,6 @@ export function RegisterProfessionnelForm() {
             {step === 1 && <StepProfile form={form} />}
             {step === 2 && <StepDocuments form={form} />}
             {step === 3 && <StepLocation form={form} />}
-            {step === 4 && <StepPresentation form={form} />}
           </motion.div>
         </AnimatePresence>
 
@@ -172,7 +162,7 @@ export function RegisterProfessionnelForm() {
               className="h-10.5 shrink-0 gap-1.5 rounded-lg border-ink/10 px-4 text-sm font-medium text-ink hover:bg-ink/5"
             >
               <ArrowLeft className="size-4" />
-              {isLastStep ? "Retour à l'étape 4" : "Retour"}
+              Retour
             </Button>
           )}
           <Button

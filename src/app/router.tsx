@@ -24,6 +24,9 @@ import { SupprimerComptePage } from "@/features/profil/pages/SupprimerComptePage
 import { VisiteurLayout } from "@/layouts/VisiteurLayout";
 import { EnvoiDemandeEnAttentePage } from "@/features/demandes/pages/EnvoiDemandeEnAttentePage";
 import { AssistantPage } from "@/features/assistant/pages/AssistantPage";
+import { ValidationDossierPage } from "@/features/professionnel/pages/ValidationDossierPage";
+import { DemandeRefuseePage } from "@/features/professionnel/pages/DemandeRefuseePage";
+import { ProfilValidePage } from "@/features/professionnel/pages/ProfilValidePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -76,6 +79,10 @@ export const router = createBrowserRouter([
       },
     ],
   },
+
+  { path: "/pro/validation", element: <ValidationDossierPage /> },
+  { path: "/pro/profil-valide", element: <ProfilValidePage /> },
+{ path: "/pro/demande-refusee", element: <DemandeRefuseePage /> },
 
   // ─── Particulier ────────────────────────────────────────────────
   {
@@ -186,10 +193,6 @@ export const router = createBrowserRouter([
             element: <PagePlaceholder title="Clients" />,
           },
           { path: "/pro/agenda", element: <PagePlaceholder title="Agenda" /> },
-          {
-            path: "/pro/messages",
-            element: <PagePlaceholder title="Messages" />,
-          },
           {
             path: "/pro/notifications",
             element: <PagePlaceholder title="Notifications" />,
