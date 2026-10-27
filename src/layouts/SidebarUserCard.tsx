@@ -36,19 +36,6 @@ export function SidebarUserCard({ role }: { role: UserRole }) {
 
   return (
     <SidebarMenu>
-      {role === "PRO" && (
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => logout()}
-            tooltip="Déconnexion"
-            className="text-(--nav-muted) hover:bg-sidebar-accent hover:text-sidebar-foreground"
-          >
-            <LogOut />
-            <span>Déconnexion</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      )}
-
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger

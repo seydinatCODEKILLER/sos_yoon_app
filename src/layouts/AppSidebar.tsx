@@ -17,6 +17,8 @@ import { getActiveNavPath } from "@/shared/lib/getActiveNavPath";
 import type { UserRole } from "@/types/user.types";
 import { NavBadgeView } from "./NavBadgeView";
 import { SidebarUserCard } from "./SidebarUserCard";
+import { BrandLogo } from "@/shared/components/BrandLogo";
+import { getSpaceRoute } from "@/shared/lib/getSpaceRoute";
 
 export function AppSidebar({ role }: { role: UserRole }) {
   const { pathname } = useLocation();
@@ -28,11 +30,17 @@ export function AppSidebar({ role }: { role: UserRole }) {
     <Sidebar collapsible="icon">
       <SidebarHeader>
         <div className="flex h-12 items-center px-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          {/* TODO : remplacer par <BrandLogo /> quand le SVG sera prêt */}
-          <span className="font-display text-xl font-extrabold tracking-wide text-(--nav-brand) group-data-[collapsible=icon]:hidden">
-            SOSYOON
-          </span>
-          <span className="hidden size-8 shrink-0 items-center justify-center rounded-md bg-signal font-display text-sm font-semibold text-paper group-data-[collapsible=icon]:flex">
+          <Link
+            to={getSpaceRoute(role)}
+            aria-label="SOS Yoon"
+            className="group-data-[collapsible=icon]:hidden"
+          >
+            <BrandLogo className="h-5" />
+          </Link>
+          <span
+            aria-hidden
+            className="hidden size-8 shrink-0 items-center justify-center rounded-md bg-signal font-display text-sm font-semibold text-paper group-data-[collapsible=icon]:flex"
+          >
             SY
           </span>
         </div>

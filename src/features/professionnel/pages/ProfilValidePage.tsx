@@ -19,7 +19,7 @@ import { CARTE } from "@/shared/lib/styleCarte";
 import { apparition, conteneur, pastille } from "@/shared/lib/animationsPage";
 
 // À adapter à ta route réelle du tableau de bord pro
-const ROUTE_TABLEAU_DE_BORD = "/pro/tableau-de-bord";
+const ROUTE_TABLEAU_DE_BORD = "/pro";
 
 // TODO : lire abonnement.joursRestants depuis le profil quand l'API sera branchée
 const DUREE_ESSAI_JOURS = 30;

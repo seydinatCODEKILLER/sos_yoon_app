@@ -1,3 +1,5 @@
+import { cn } from "@/shared/lib/utils";
+
 export function BrandLogo({ className = "" }: { className?: string }) {
   return (
     <img
@@ -5,7 +7,7 @@ export function BrandLogo({ className = "" }: { className?: string }) {
       alt="SOS Yoon"
       draggable={false}
       fetchPriority="high"
-      className={`h-7 w-auto select-none ${className}`}
+      className={cn("h-7 w-auto select-none", className)}
     />
   );
 }

@@ -27,6 +27,11 @@ import { AssistantPage } from "@/features/assistant/pages/AssistantPage";
 import { ValidationDossierPage } from "@/features/professionnel/pages/ValidationDossierPage";
 import { DemandeRefuseePage } from "@/features/professionnel/pages/DemandeRefuseePage";
 import { ProfilValidePage } from "@/features/professionnel/pages/ProfilValidePage";
+import { TableauDeBordPage } from "@/features/professionnel/pages/TableauDeBordPage";
+import { DemandesPage } from "@/features/professionnel/pages/DemandesPage";
+import { DossiersPage } from "@/features/professionnel/pages/DossiersPage";
+import { AgendaPage } from "@/features/professionnel/pages/AgendaPage";
+import { NotificationsProfessionnelPage } from "@/features/professionnel/pages/NotificationsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -53,10 +58,6 @@ export const router = createBrowserRouter([
     element: <PagePlaceholder title="Politique de Confidentialité" />,
   },
   {
-    path: "/code-oublie",
-    element: <PagePlaceholder title="Code secret oublié" />,
-  },
-  {
     path: "/mot-de-passe-oublie",
     element: <PagePlaceholder title="Mot de passe oublié" />,
   },
@@ -79,10 +80,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-
-  { path: "/pro/validation", element: <ValidationDossierPage /> },
-  { path: "/pro/profil-valide", element: <ProfilValidePage /> },
-{ path: "/pro/demande-refusee", element: <DemandeRefuseePage /> },
 
   // ─── Particulier ────────────────────────────────────────────────
   {
@@ -161,6 +158,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={["PRO"]} />,
     children: [
+      { path: "/pro/profil-valide", element: <ProfilValidePage /> },
+
       {
         path: "/pro/changer-mot-de-passe",
         element: <PagePlaceholder title="Changer le mot de passe" />,
@@ -170,32 +169,30 @@ export const router = createBrowserRouter([
         children: [
           {
             path: "/pro",
-            element: <PagePlaceholder title="Tableau de bord" />,
+            element: <TableauDeBordPage />,
+            handle: { title: "Tableau de bord" },
           },
           {
-            path: "/pro/demandes",
-            element: <PagePlaceholder title="Demandes" />,
+            path: "/pro/demandes/:id?",
+            element: <DemandesPage />,
+            handle: { title: "Demandes" },
+          },
+
+          {
+            path: "/pro/dossiers/:id?",
+            element: <DossiersPage />,
+            handle: { title: "Dossiers" },
           },
           {
-            path: "/pro/demandes/:id",
-            element: <PagePlaceholder title="Détail de la demande" />,
+            path: "/pro/agenda",
+            element: <AgendaPage />,
+            handle: { title: "Agenda" },
           },
-          {
-            path: "/pro/dossiers",
-            element: <PagePlaceholder title="Dossiers" />,
-          },
-          {
-            path: "/pro/dossiers/:id",
-            element: <PagePlaceholder title="Détail du dossier" />,
-          },
-          {
-            path: "/pro/clients",
-            element: <PagePlaceholder title="Clients" />,
-          },
-          { path: "/pro/agenda", element: <PagePlaceholder title="Agenda" /> },
+
           {
             path: "/pro/notifications",
-            element: <PagePlaceholder title="Notifications" />,
+            element: <NotificationsProfessionnelPage />,
+            handle: { title: "Notifications" },
           },
           {
             path: "/pro/profil",
@@ -210,10 +207,8 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute allowedRoles={["PRO"]} requiredPortee="DOSSIER" />,
     children: [
-      {
-        path: "/pro/validation",
-        element: <PagePlaceholder title="Validation de votre dossier" />,
-      },
+      { path: "/pro/validation", element: <ValidationDossierPage /> },
+      { path: "/pro/demande-refusee", element: <DemandeRefuseePage /> },
     ],
   },
   {
