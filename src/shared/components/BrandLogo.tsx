@@ -1,9 +1,22 @@
 import { cn } from "@/shared/lib/utils";
 
-export function BrandLogo({ className = "" }: { className?: string }) {
+const LOGOS = {
+  /** Pour les fonds sombres (sidebar bleu nuit) */
+  blanc: "/images/logo_blanc.png",
+  /** Pour les fonds clairs (sidebar de l'admin) */
+  orange: "/images/logo_orange.png",
+} as const;
+
+export function BrandLogo({
+  className = "",
+  variant = "blanc",
+}: {
+  className?: string;
+  variant?: keyof typeof LOGOS;
+}) {
   return (
     <img
-      src="/images/logo_blanc.png"
+      src={LOGOS[variant]}
       alt="SOS Yoon"
       draggable={false}
       fetchPriority="high"

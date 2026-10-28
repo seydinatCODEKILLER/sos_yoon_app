@@ -35,7 +35,10 @@ export function AppSidebar({ role }: { role: UserRole }) {
             aria-label="SOS Yoon"
             className="group-data-[collapsible=icon]:hidden"
           >
-            <BrandLogo className="h-5" />
+            <BrandLogo
+              variant={role === "ADMIN" ? "orange" : "blanc"}
+              className="h-5"
+            />
           </Link>
           <span
             aria-hidden

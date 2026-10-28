@@ -4,6 +4,7 @@ import type { NavBadgeKey } from "@/config/navigation";
 import { useCompteursDossiers } from "@/features/professionnel/hooks/useDossiers";
 import { useTableauDeBord } from "@/features/professionnel/hooks/useTableauDeBord";
 import { useCompteursNotifications } from "@/features/professionnel/hooks/useNotifications";
+import { useTableauDeBordAdmin } from "@/features/admin/hooks/useDashboardAdmin";
 
 type Badges = Partial<Record<NavBadgeKey, number>>;
 
@@ -17,14 +18,16 @@ export function useNavBadges(role: UserRole): Badges {
   const pro = role === "PRO";
   const { data: tableau } = useTableauDeBord("7j", pro);
   const { data: compteurs } = useCompteursDossiers(pro);
-const { data: compteursNotifs } = useCompteursNotifications(pro);
+  const { data: compteursNotifs } = useCompteursNotifications(pro);
+  const { data: tableauAdmin } = useTableauDeBordAdmin(role === "ADMIN");
 
   if (role === "PRO") {
     return {
       demandes: tableau?.sollicitationsEnAttente,
       dossiers: compteurs?.enCours,
       notifications: compteursNotifs?.nonLues || undefined,
-      // TODO : GET /notifications/compteurs quand l'écran sera branché
+      professionnelsEnAttente:
+        tableauAdmin?.professionnels.enAttente || undefined,
       ...(USE_MOCK_API ? { notifications: 1 } : {}),
     };
   }
