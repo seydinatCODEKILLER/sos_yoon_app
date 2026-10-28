@@ -10,6 +10,7 @@ import type {
   VerifierCodePayload,
 } from "../types/types";
 import type { User, UserRole } from "@/types/user.types";
+import type { LoginAdminPayload } from "../api/adminAuthApi";
 
 /** TODO : à supprimer une fois le back-end connecté. */
 
@@ -117,7 +118,7 @@ export const mockAuthApi = {
         profilComplete: false,
       });
     },
-    
+
     finaliserInscription: async (_: FinaliserInscriptionPayload) => {
       await wait(500);
       return buildSession(DEV_ROLE ?? "PARTICULIER", {
@@ -134,6 +135,20 @@ export const mockAuthApi = {
       return buildSession("PRO", {
         prenom: "Abdou",
         nom: "Ndiaye",
+        email: p.email,
+        emailVerifie: true,
+      });
+    },
+  },
+  admin: {
+    connexion: async (p: LoginAdminPayload) => {
+      await wait(500);
+      if (p.motDePasse === "invalide") {
+        throw erreur("IDENTIFIANTS_INVALIDES", "Identifiants invalides.");
+      }
+      return buildSession("ADMIN", {
+        prenom: "Amadou",
+        nom: "Diallo",
         email: p.email,
         emailVerifie: true,
       });

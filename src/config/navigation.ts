@@ -10,7 +10,6 @@ import {
   Settings,
   User,
   Users,
-  Zap,
 } from "lucide-react";
 import type { UserRole } from "@/types/user.types";
 
@@ -165,13 +164,6 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
           path: "/admin/demandes",
           icon: FileText,
           mobile: true,
-        },
-        {
-          label: "Moteur IA / Triage",
-          shortLabel: "IA",
-          path: "/admin/moteur-ia",
-          icon: Zap,
-          badge: { kind: "dot", color: "neutral" },
         },
         { label: "Paramètres", path: "/admin/parametres", icon: Settings },
       ],

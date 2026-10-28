@@ -38,12 +38,14 @@ import { LoginParticulierPage } from "@/features/auth/pages/LoginParticulierPage
 import { LoginProfessionnelPage } from "@/features/auth/pages/LoginProfessionnelPage";
 import { MotDePasseOubliePage } from "@/features/auth/pages/MotDePasseOubliePage";
 import { ReinitialiserMotDePassePage } from "@/features/auth/pages/ReinitialiserMotDePassePage";
+import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
 
   // ─── Auth (publiques) ───────────────────────────────────────────
   { path: "/login", element: <LoginPage /> },
+  { path: "/admin/login", element: <AdminLoginPage /> },
   { path: "/login/particulier", element: <LoginParticulierPage /> },
   { path: "/login/professionnel", element: <LoginProfessionnelPage /> },
   { path: "/register", element: <RegisterChoicePage /> },
