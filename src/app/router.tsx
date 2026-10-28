@@ -32,12 +32,20 @@ import { DemandesPage } from "@/features/professionnel/pages/DemandesPage";
 import { DossiersPage } from "@/features/professionnel/pages/DossiersPage";
 import { AgendaPage } from "@/features/professionnel/pages/AgendaPage";
 import { NotificationsProfessionnelPage } from "@/features/professionnel/pages/NotificationsPage";
+import { AbonnementPage } from "@/features/professionnel/pages/AbonnementPage";
+import { ProfilProPage } from "@/features/professionnel/pages/ProfilPage";
+import { LoginParticulierPage } from "@/features/auth/pages/LoginParticulierPage";
+import { LoginProfessionnelPage } from "@/features/auth/pages/LoginProfessionnelPage";
+import { MotDePasseOubliePage } from "@/features/auth/pages/MotDePasseOubliePage";
+import { ReinitialiserMotDePassePage } from "@/features/auth/pages/ReinitialiserMotDePassePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
 
   // ─── Auth (publiques) ───────────────────────────────────────────
   { path: "/login", element: <LoginPage /> },
+  { path: "/login/particulier", element: <LoginParticulierPage /> },
+  { path: "/login/professionnel", element: <LoginProfessionnelPage /> },
   { path: "/register", element: <RegisterChoicePage /> },
   { path: "/register/particulier", element: <RegisterParticulierPage /> },
   { path: "/register/professionnel", element: <RegisterProfessionnelPage /> },
@@ -57,13 +65,10 @@ export const router = createBrowserRouter([
     path: "/confidentialite",
     element: <PagePlaceholder title="Politique de Confidentialité" />,
   },
+  { path: "/mot-de-passe-oublie", element: <MotDePasseOubliePage /> },
   {
-    path: "/mot-de-passe-oublie",
-    element: <PagePlaceholder title="Mot de passe oublié" />,
-  },
-  {
-    path: "/mot-de-passe/reinitialiser",
-    element: <PagePlaceholder title="Nouveau mot de passe" />,
+    path: "/reinitialiser-mot-de-passe",
+    element: <ReinitialiserMotDePassePage />,
   },
 
   // ─── Soxna Yoon : avec ou sans compte ───────────────────────────
@@ -196,7 +201,13 @@ export const router = createBrowserRouter([
           },
           {
             path: "/pro/profil",
-            element: <PagePlaceholder title="Mon profil" />,
+            element: <ProfilProPage />,
+            handle: { title: "Mon profil" },
+          },
+          {
+            path: "/pro/abonnement",
+            element: <AbonnementPage />,
+            handle: { title: "Abonnement" },
           },
         ],
       },
@@ -217,8 +228,9 @@ export const router = createBrowserRouter([
     ),
     children: [
       {
-        path: "/pro/abonnement",
-        element: <PagePlaceholder title="Abonnement" />,
+        path: "/pro/paiement",
+        element: <AbonnementPage />,
+        handle: { title: "Abonnement" },
       },
     ],
   },

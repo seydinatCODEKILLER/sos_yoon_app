@@ -1,13 +1,13 @@
 import type { ApiErreur } from "@/types/api.types";
 import type { DashboardApi } from "../api/dashboardApi";
 import type {
-  AbonnementPro,
   NiveauUrgence,
   Periode,
   SollicitationResume,
   TableauDeBord,
 } from "../types/dashboard.types";
 import { creerDossierMock } from "./mockDossiers";
+import { mockAbonnementApi } from "./mockAbonnement";
 
 const wait = (ms = 400) => new Promise((r) => setTimeout(r, ms));
 
@@ -135,19 +135,7 @@ export const mockDashboardApi: DashboardApi = {
   },
 
   async abonnement() {
-    await wait(300);
-    const a: AbonnementPro = {
-      statut: "ESSAI",
-      debutEssai: "2026-10-26",
-      finEssai: "2026-11-25",
-      debutPeriode: null,
-      finPeriode: null,
-      joursRestants: 23,
-      montantMensuel: 50000,
-      devise: "XOF",
-      suspendu: false,
-    };
-    return a;
+    return mockAbonnementApi.detail();
   },
 
   async accepterSollicitation(id) {

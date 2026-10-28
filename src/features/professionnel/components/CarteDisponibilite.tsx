@@ -13,8 +13,8 @@ export function CarteDisponibilite() {
     : data?.disponible;
 
   return (
-    <div className="flex min-h-14 shrink-0 items-center gap-4 rounded-xl border border-ink/10 bg-white px-4 py-2 shadow-sm">
-      <div>
+    <div className="flex min-h-14 w-full items-center justify-between gap-4 rounded-xl border border-ink/10 bg-white px-4 py-2 shadow-sm sm:w-auto sm:shrink-0 sm:justify-start">
+      <div className="min-w-0">
         <Label htmlFor="disponibilite" className="text-sm font-semibold text-ink">
           Disponibilité immédiate
         </Label>
@@ -25,7 +25,7 @@ export function CarteDisponibilite() {
         checked={!!disponible}
         disabled={!data}
         onCheckedChange={(valeur) => disponibilite.mutate(valeur)}
-        className="data-checked:bg-signal"
+        className="shrink-0 data-checked:bg-signal"
       />
     </div>
   );
