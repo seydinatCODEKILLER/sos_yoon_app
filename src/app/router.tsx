@@ -41,6 +41,7 @@ import { ReinitialiserMotDePassePage } from "@/features/auth/pages/Reinitialiser
 import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
+import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -257,20 +258,8 @@ export const router = createBrowserRouter([
             handle: { title: "Utilisateurs" },
           },
           {
-            path: "/admin/professionnels",
-            element: <PagePlaceholder title="Professionnels" />,
-          },
-          {
-            path: "/admin/professionnels/:id",
-            element: <PagePlaceholder title="Dossier du professionnel" />,
-          },
-          {
-            path: "/admin/demandes",
-            element: <PagePlaceholder title="Demandes" />,
-          },
-          {
-            path: "/admin/moteur-ia",
-            element: <PagePlaceholder title="Moteur IA / Triage" />,
+            path: "/admin/professionnels/:id?",
+            element: <ProfessionnelsAdminPage  />,
           },
           {
             path: "/admin/parametres",
