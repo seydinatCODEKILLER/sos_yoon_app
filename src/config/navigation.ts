@@ -159,12 +159,6 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
             tone: "pill",
           },
         },
-        {
-          label: "Demandes",
-          path: "/admin/demandes",
-          icon: FileText,
-          mobile: true,
-        },
         { label: "Paramètres", path: "/admin/parametres", icon: Settings },
       ],
     },

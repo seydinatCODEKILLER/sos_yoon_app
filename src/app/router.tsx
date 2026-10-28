@@ -42,6 +42,7 @@ import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
+import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -263,7 +264,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/admin/parametres",
-            element: <PagePlaceholder title="Paramètres" />,
+            element: <ParametresAdminPage  />,
           },
         ],
       },
