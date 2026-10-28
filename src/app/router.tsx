@@ -40,6 +40,7 @@ import { MotDePasseOubliePage } from "@/features/auth/pages/MotDePasseOubliePage
 import { ReinitialiserMotDePassePage } from "@/features/auth/pages/ReinitialiserMotDePassePage";
 import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
+import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -252,7 +253,8 @@ export const router = createBrowserRouter([
           },
           {
             path: "/admin/utilisateurs",
-            element: <PagePlaceholder title="Utilisateurs" />,
+            element: <UtilisateursAdminPage />,
+            handle: { title: "Utilisateurs" },
           },
           {
             path: "/admin/professionnels",
