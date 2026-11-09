@@ -25,6 +25,7 @@ export function useDemandeVisiteur() {
   async function garderVocale(
     audio: { blob: Blob; dureeSecondes: number },
     localisation: LocalisationPayload,
+    motsCles: string[] = [],
   ) {
     setIsSaving(true);
     const ok = await sauverAudio(audio.blob);
@@ -36,7 +37,12 @@ export function useDemandeVisiteur() {
       );
       return;
     }
-    garder({ type: "VOCALE", dureeSecondes: audio.dureeSecondes, localisation });
+    garder({
+      type: "VOCALE",
+      dureeSecondes: audio.dureeSecondes,
+      motsCles,
+      localisation,
+    });
     navigate(visiteurRoutes.inscription);
   }
 

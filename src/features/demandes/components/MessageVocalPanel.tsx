@@ -108,7 +108,7 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
   const handleSend = async () => {
     if (!audio || !localisation.localisation) return;
     if (estVisiteur) {
-      await garderVocale(audio, localisation.localisation);
+      await garderVocale(audio, localisation.localisation, motsCles);
       return;
     }
     // Une seule requête : audio + position + mots-clés (POST /demandes, spec 8.1)

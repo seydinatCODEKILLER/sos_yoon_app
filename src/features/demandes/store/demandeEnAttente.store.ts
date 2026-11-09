@@ -15,6 +15,8 @@ interface DonneesEcrite {
 interface DonneesVocale {
   type: "VOCALE";
   dureeSecondes: number;
+  /** Mots-clés choisis avec l'enregistrement (l'audio lui-même est dans IndexedDB) */
+  motsCles: string[];
   localisation: LocalisationPayload;
 }
 
@@ -54,10 +56,14 @@ export const useDemandeEnAttente = create<Etat>()(
       }),
       merge: (persiste, courant) => {
         const p = persiste as Partial<Persiste> | undefined;
-        const valide =
+        let valide =
           p?.demande && Date.now() - p.demande.creeLe < VALIDITE_MS
             ? p.demande
             : null;
+        // Demande vocale gardée avant l'ajout des mots-clés : on les complète
+        if (valide?.type === "VOCALE" && !Array.isArray(valide.motsCles)) {
+          valide = { ...valide, motsCles: [] };
+        }
         return {
           ...courant,
           demande: valide,

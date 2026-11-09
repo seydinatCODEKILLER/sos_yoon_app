@@ -2,56 +2,53 @@ import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { CircleAlert, Loader2, Mic, RotateCw } from "lucide-react";
-import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
-import { useEnvoyerMessageVocal } from "../hooks/useEnvoyerMessageVocal";
-import { useSauvegarderBrouillon } from "../hooks/useSauvegarderBrouillon";
+import { demandeErrorMessage } from "../lib/demandeErrors";
 import { viderDemandeEnAttente } from "../lib/demandeEnAttente";
 import { lireAudio } from "../lib/stockageAudio";
+import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
 import {
   useDemandeEnAttente,
   type DemandeEnAttente,
 } from "../store/demandeEnAttente.store";
 
-const ENVOI_ECHOUE = "ENVOI_ECHOUE";
-const AUDIO_INTROUVABLE = "AUDIO_INTROUVABLE";
+class AudioIntrouvable extends Error {}
 
+/**
+ * Dernière étape du parcours visiteur : le compte vient d'être créé, la demande
+ * conservée part en UNE requête (POST /demandes). Pas de brouillon serveur :
+ * si l'envoi échoue, rien n'a été créé et « Réessayer » ne peut pas faire de doublon.
+ */
 export function EnvoiDemandeEnAttentePage() {
   const navigate = useNavigate();
   // Instantané pris à l'arrivée : vider le store pendant l'envoi ne redirige pas la page
   const [demande] = useState(() => useDemandeEnAttente.getState().demande);
 
-  const { submit: sauvegarder } = useSauvegarderBrouillon();
-  const { submit: soumettreVocal } = useEnvoyerMessageVocal();
-  const { envoyer } = useEnvoyerDemande();
-
-  // Brouillon déjà créé côté serveur : évite d'en créer un second au « Réessayer »
-  const idCree = useRef<string | null>(null);
+  // En cas de succès, useEnvoyerDemande ouvre l'écran de suivi
+  const { envoyer, envoyerVocale } = useEnvoyerDemande();
   const demarre = useRef(false);
 
   const { mutate, isError, error } = useMutation({
     mutationFn: async (d: DemandeEnAttente) => {
-      let id = idCree.current;
-
-      if (!id) {
-        if (d.type === "ECRITE") {
-          id = (await sauvegarder(d.values))?.id ?? null;
-        } else {
-          const blob = await lireAudio();
-          if (!blob) throw new Error(AUDIO_INTROUVABLE);
-          id =
-            (await soumettreVocal({
-              fichier: blob,
-              dureeSecondes: d.dureeSecondes,
-            })) ?? null;
-        }
-        if (!id) throw new Error(ENVOI_ECHOUE);
-        idCree.current = id;
+      let resultat;
+      if (d.type === "ECRITE") {
+        resultat = await envoyer({
+          description: d.values.description.trim(),
+          motsCles: d.values.motsCles,
+          localisation: d.localisation,
+        });
+      } else {
+        const fichier = await lireAudio();
+        if (!fichier) throw new AudioIntrouvable();
+        resultat = await envoyerVocale({
+          fichier,
+          dureeSecondes: d.dureeSecondes,
+          motsCles: d.motsCles ?? [],
+          localisation: d.localisation,
+        });
       }
-
-      // useEnvoyerDemande ouvre le suivi en cas de succès
-      if (!(await envoyer(id, d.localisation))) throw new Error(ENVOI_ECHOUE);
+      if (!resultat.ok) throw resultat.error;
+      await viderDemandeEnAttente();
     },
-    onSuccess: () => void viderDemandeEnAttente(),
   });
 
   // Une seule fois, même en mode développement (StrictMode)
@@ -64,8 +61,7 @@ export function EnvoiDemandeEnAttentePage() {
   // Rien à envoyer (page ouverte directement, ou demande expirée)
   if (!demande) return <Navigate to="/app" replace />;
 
-  const audioPerdu =
-    isError && error instanceof Error && error.message === AUDIO_INTROUVABLE;
+  const audioPerdu = isError && error instanceof AudioIntrouvable;
 
   async function abandonner() {
     await viderDemandeEnAttente();
@@ -85,7 +81,10 @@ export function EnvoiDemandeEnAttentePage() {
           <h2 className="mt-6 text-[22px] font-bold text-navy">
             Envoi de votre demande…
           </h2>
-          <p aria-live="polite" className="mt-2 min-h-12 text-[15px] leading-snug text-ink/60">
+          <p
+            aria-live="polite"
+            className="mt-2 min-h-12 text-[15px] leading-snug text-ink/60"
+          >
             Un instant, nous la transmettons aux professionnels près de vous.
           </p>
         </>
@@ -100,7 +99,10 @@ export function EnvoiDemandeEnAttentePage() {
             L'envoi n'a pas abouti
           </h2>
           <p className="mt-2 text-[15px] leading-snug text-ink/60">
-            Votre demande est conservée. Vérifiez votre connexion, puis réessayez.
+            {demandeErrorMessage(error)}
+            <span className="mt-1 block">
+              Votre demande est conservée : vous pouvez réessayer.
+            </span>
           </p>
           <button
             type="button"
