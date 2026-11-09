@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, LogOut, MoreHorizontal, User } from "lucide-react";
 import {
   Sheet,
@@ -15,6 +16,7 @@ import {
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { useNavBadges } from "@/shared/hooks/useNavBadges";
 import { getActiveNavPath } from "@/shared/lib/getActiveNavPath";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import type { UserRole } from "@/types/user.types";
 
 const LIBELLE_ESPACE: Partial<Record<string, string>> = {
@@ -56,6 +58,7 @@ function MobileHeader({ role }: { role: UserRole }) {
   const user = useAuthStore((s) => s.user);
   const initials =
     `${user?.prenom?.[0] ?? ""}${user?.nom?.[0] ?? ""}`.toUpperCase();
+  const photo = mediaUrl(user?.photoUrl);
 
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-paper/90 px-5 backdrop-blur">
@@ -71,8 +74,8 @@ function MobileHeader({ role }: { role: UserRole }) {
         aria-label="Mon profil"
         className="grid size-9 place-items-center overflow-hidden rounded-full bg-navy text-xs font-semibold text-paper ring-2 ring-white"
       >
-        {user?.photoUrl ? (
-          <img src={user.photoUrl} alt="" className="size-full object-cover" />
+        {photo ? (
+          <img src={photo} alt="" className="size-full object-cover" />
         ) : initials ? (
           initials
         ) : (
@@ -93,6 +96,7 @@ export function MobileLayout({
   const { pathname } = useLocation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const queryClient = useQueryClient();
   const badges = useNavBadges(role);
   const [plusOuvert, setPlusOuvert] = useState(false);
 
@@ -111,6 +115,7 @@ export function MobileLayout({
   const initials =
     `${user?.prenom?.[0] ?? ""}${user?.nom?.[0] ?? ""}`.toUpperCase();
   const nomComplet = [user?.prenom, user?.nom].filter(Boolean).join(" ");
+  const photo = mediaUrl(user?.photoUrl);
 
   return (
     <div className="flex min-h-dvh flex-col bg-paper">
@@ -215,9 +220,9 @@ export function MobileLayout({
             {/* Carte utilisateur */}
             <div className="flex items-center gap-3 px-5 pt-4 pb-3">
               <span className="grid size-12 shrink-0 place-items-center overflow-hidden rounded-full bg-navy text-sm font-semibold text-paper">
-                {user?.photoUrl ? (
+                {photo ? (
                   <img
-                    src={user.photoUrl}
+                    src={photo}
                     alt=""
                     className="size-full object-cover"
                   />
@@ -296,9 +301,11 @@ export function MobileLayout({
             >
               <button
                 type="button"
-                onClick={() => {
+                onClick={async () => {
                   setPlusOuvert(false);
-                  logout();
+                  await logout();
+                  // On ne laisse rien des données de cet utilisateur au suivant
+                  queryClient.clear();
                 }}
                 className="flex min-h-14 w-full items-center gap-3 rounded-2xl px-3 text-left outline-none transition-colors hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-red-400 active:bg-red-100"
               >

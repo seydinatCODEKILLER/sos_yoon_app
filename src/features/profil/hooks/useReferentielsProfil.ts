@@ -1,7 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { profilService } from "../services/profilService";
 
-// Les référentiels bougent très rarement : on les garde pour la session
+// Les régions bougent très rarement : on les garde pour la session
 export function useRegions() {
   return useQuery({
     queryKey: ["referentiels", "regions"],
@@ -10,11 +10,17 @@ export function useRegions() {
   });
 }
 
-export function useCommunesDeRegion(regionId: number | null) {
+/**
+ * Zones d'une région, avec recherche côté serveur (2 caractères minimum).
+ * Sans recherche : les 50 premières zones de la région.
+ */
+export function useZones(regionId: string | null, recherche: string) {
+  const q = recherche.trim().length >= 2 ? recherche.trim() : "";
   return useQuery({
-    queryKey: ["referentiels", "communes", regionId],
-    queryFn: () => profilService.communesDeRegion(regionId!),
+    queryKey: ["referentiels", "zones", regionId, q],
+    queryFn: () => profilService.zones(regionId!, q || undefined),
     enabled: regionId !== null,
-    staleTime: Infinity,
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 }

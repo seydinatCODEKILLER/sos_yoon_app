@@ -5,21 +5,16 @@ export const modifierProfilSchema = z.object({
     .string()
     .trim()
     .min(2, "Saisissez votre prénom.")
-    .max(60, "Prénom trop long."),
+    .max(80, "Prénom trop long."),
   nom: z
     .string()
     .trim()
     .min(2, "Saisissez votre nom.")
-    .max(60, "Nom trop long."),
-  email: z
-    .string()
-    .trim()
-    .refine(
-      (v) => v === "" || z.email().safeParse(v).success,
-      "Adresse e-mail invalide.",
-    ),
-  regionId: z.number().nullable(),
-  communeId: z.number().nullable(),
+    .max(80, "Nom trop long."),
+  /** Facultatif : vide = pas d'e-mail */
+  email: z.string().trim().email("Adresse e-mail invalide.").or(z.literal("")),
+  regionId: z.string().nullable(),
+  zoneId: z.string().nullable(),
 });
 
 export type ModifierProfilValues = z.infer<typeof modifierProfilSchema>;

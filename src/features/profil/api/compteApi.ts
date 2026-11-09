@@ -7,6 +7,6 @@ export interface CompteApi {
 
 export const compteApi: CompteApi = {
   async supprimer(payload) {
-    await apiClient.post("/profil/supprimer", payload);
+    await apiClient.delete("/particulier/compte", { data: payload });
   },
 };

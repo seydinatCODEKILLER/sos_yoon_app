@@ -1,4 +1,4 @@
-import { useId, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
@@ -7,7 +7,7 @@ import { toast } from "@/shared/lib/toast";
 import { toApiErreur } from "@/shared/lib/apiError";
 import { CodeSecretInput } from "@/features/auth/components/CodeSecretInput";
 import {
-  changerCodeSecretSchema,
+  makeChangerCodeSecretSchema,
   type ChangerCodeSecretValues,
 } from "../schema/changerCodeSecret.schema";
 import { useChangerCodeSecret } from "../hooks/useChangerCodeSecret";
@@ -72,12 +72,22 @@ function ChampCode({
   );
 }
 
-export function ChangerCodeSecretForm() {
+interface Props {
+  /** false : compte sans code secret, il n'y a pas d'ancien code à saisir */
+  codeSecretDefini: boolean;
+}
+
+export function ChangerCodeSecretForm({ codeSecretDefini }: Props) {
   const navigate = useNavigate();
   const { changer, isPending } = useChangerCodeSecret();
 
+  const schema = useMemo(
+    () => makeChangerCodeSecretSchema(codeSecretDefini),
+    [codeSecretDefini],
+  );
+
   const form = useForm<ChangerCodeSecretValues>({
-    resolver: zodResolver(changerCodeSecretSchema),
+    resolver: zodResolver(schema),
     defaultValues: { codeActuel: "", nouveauCode: "", confirmation: "" },
   });
   const { errors } = form.formState;
@@ -85,16 +95,21 @@ export function ChangerCodeSecretForm() {
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await changer({
-        codeActuel: values.codeActuel,
+        ...(codeSecretDefini ? { codeActuel: values.codeActuel } : {}),
         nouveauCode: values.nouveauCode,
       });
-      toast.success("Code secret modifié.");
+      toast.success(codeSecretDefini ? "Code secret modifié." : "Code secret défini.");
       navigate(profilRoutes.accueil, { replace: true });
     } catch (e) {
+      const code = toApiErreur(e).code;
       const message = codeSecretErrorMessage(e);
-      if (toApiErreur(e).code === "CODE_SECRET_INCORRECT") {
+      if (code === "CODE_SECRET_INCORRECT") {
         form.setValue("codeActuel", "");
         form.setError("codeActuel", { message });
+      } else if (code === "CODE_SECRET_TROP_SIMPLE") {
+        form.setValue("nouveauCode", "");
+        form.setValue("confirmation", "");
+        form.setError("nouveauCode", { message });
       } else {
         toast.error(message);
       }
@@ -103,30 +118,33 @@ export function ChangerCodeSecretForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-1 flex-col gap-1">
-      <Controller
-        control={form.control}
-        name="codeActuel"
-        render={({ field }) => (
-          <ChampCode
-            label="Code actuel"
-            value={field.value}
-            onChange={field.onChange}
-            erreur={errors.codeActuel?.message}
-            disabled={isPending}
-            autoFocus
-          />
-        )}
-      />
+      {codeSecretDefini && (
+        <Controller
+          control={form.control}
+          name="codeActuel"
+          render={({ field }) => (
+            <ChampCode
+              label="Code actuel"
+              value={field.value ?? ""}
+              onChange={field.onChange}
+              erreur={errors.codeActuel?.message}
+              disabled={isPending}
+              autoFocus
+            />
+          )}
+        />
+      )}
       <Controller
         control={form.control}
         name="nouveauCode"
         render={({ field }) => (
           <ChampCode
-            label="Nouveau code"
+            label={codeSecretDefini ? "Nouveau code" : "Code secret"}
             value={field.value}
             onChange={field.onChange}
             erreur={errors.nouveauCode?.message}
             disabled={isPending}
+            autoFocus={!codeSecretDefini}
           />
         )}
       />
@@ -135,7 +153,7 @@ export function ChangerCodeSecretForm() {
         name="confirmation"
         render={({ field }) => (
           <ChampCode
-            label="Confirmer le nouveau code"
+            label={codeSecretDefini ? "Confirmer le nouveau code" : "Confirmer le code"}
             value={field.value}
             onChange={field.onChange}
             erreur={errors.confirmation?.message}
@@ -154,8 +172,10 @@ export function ChangerCodeSecretForm() {
             <Loader2 className="size-4 animate-spin" aria-hidden />
             Enregistrement…
           </>
-        ) : (
+        ) : codeSecretDefini ? (
           "Enregistrer mon nouveau code"
+        ) : (
+          "Définir mon code secret"
         )}
       </button>
     </form>

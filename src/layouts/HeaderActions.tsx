@@ -5,12 +5,14 @@ import { useAuthStore } from "@/features/auth/store/auth.store";
 import { notificationsPathByRole, profilPathByRole } from "@/config/navigation";
 import { useNavBadges } from "@/shared/hooks/useNavBadges";
 import { getDisplayName, getInitials } from "@/shared/lib/userDisplay";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import type { UserRole } from "@/types/user.types";
 
 export function HeaderActions({ role }: { role: UserRole }) {
   const user = useAuthStore((s) => s.user);
   const unread = useNavBadges(role).notifications ?? 0;
   const notifPath = notificationsPathByRole[role];
+  const photo = mediaUrl(user?.photoUrl);
 
   return (
     <div className="ml-auto flex items-center gap-1 self-stretch border-l border-border/60 pl-3">
@@ -28,7 +30,7 @@ export function HeaderActions({ role }: { role: UserRole }) {
       )}
       <Link to={profilPathByRole[role]} aria-label="Mon profil" className="rounded-full">
         <Avatar className="size-8">
-          {user?.photoUrl && <AvatarImage src={user.photoUrl} alt={getDisplayName(user)} />}
+          {photo && <AvatarImage src={photo} alt={getDisplayName(user)} />}
           <AvatarFallback className="bg-navy text-xs font-semibold text-paper">
             {getInitials(user)}
           </AvatarFallback>

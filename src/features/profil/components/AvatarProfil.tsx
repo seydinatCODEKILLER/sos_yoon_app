@@ -1,9 +1,12 @@
 import { useRef } from "react";
 import { Camera, Loader2 } from "lucide-react";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import { toast } from "@/shared/lib/toast";
 
+// Le backend accepte JPG et PNG (3 Mo max). Le WebP est converti en JPEG
+// par redimensionnerEnCarre() avant l'envoi, donc il reste accepté ici.
 const TYPES_ACCEPTES = ["image/jpeg", "image/png", "image/webp"];
-const TAILLE_MAX = 10 * 1024 * 1024; // 10 Mo avant réduction
+const TAILLE_MAX = 10 * 1024 * 1024;
 
 interface AvatarProfilProps {
   photoUrl: string | null;
@@ -19,6 +22,7 @@ export function AvatarProfil({
   onFichier,
 }: AvatarProfilProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const src = mediaUrl(photoUrl);
 
   const choisi = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fichier = e.target.files?.[0];
@@ -39,9 +43,9 @@ export function AvatarProfil({
 
   return (
     <div className="relative shrink-0">
-      {photoUrl ? (
+      {src ? (
         <img
-          src={photoUrl}
+          src={src}
           alt="Votre photo de profil"
           className="size-20 rounded-full object-cover"
         />

@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, LogOut, Settings, ShieldCheck, User } from "lucide-react";
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/shared/components/ui/sidebar";
 import {
@@ -9,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/components/ui/avat
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { profilPathByRole } from "@/config/navigation";
 import { getDisplayName, getInitials } from "@/shared/lib/userDisplay";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import type { UserRole } from "@/types/user.types";
 
 function Subtitle({ role, verified }: { role: UserRole; verified: boolean }) {
@@ -32,7 +34,15 @@ function Subtitle({ role, verified }: { role: UserRole; verified: boolean }) {
 export function SidebarUserCard({ role }: { role: UserRole }) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
+  const queryClient = useQueryClient();
   const name = getDisplayName(user);
+  const photo = mediaUrl(user?.photoUrl);
+
+  const seDeconnecter = async () => {
+    await logout();
+    // On ne laisse rien des données de cet utilisateur au suivant
+    queryClient.clear();
+  };
 
   return (
     <SidebarMenu>
@@ -48,7 +58,7 @@ export function SidebarUserCard({ role }: { role: UserRole }) {
           >
             <div className="relative">
               <Avatar className="size-8">
-                {user?.photoUrl && <AvatarImage src={user.photoUrl} alt={name} />}
+                {photo && <AvatarImage src={photo} alt={name} />}
                 <AvatarFallback className="bg-signal text-xs font-semibold text-paper">
                   {getInitials(user)}
                 </AvatarFallback>
@@ -81,7 +91,7 @@ export function SidebarUserCard({ role }: { role: UserRole }) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem variant="destructive" onClick={() => logout()}>
+            <DropdownMenuItem variant="destructive" onClick={() => void seDeconnecter()}>
               <LogOut />
               Déconnexion
             </DropdownMenuItem>

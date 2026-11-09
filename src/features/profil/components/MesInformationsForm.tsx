@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
@@ -13,16 +13,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/shared/components/ui/select";
+import { toApiErreur } from "@/shared/lib/apiError";
 import { toast } from "@/shared/lib/toast";
 import {
   modifierProfilSchema,
   type ModifierProfilValues,
 } from "../schema/modifierProfil.schema";
 import { useModifierProfil } from "../hooks/useProfil";
-import {
-  useCommunesDeRegion,
-  useRegions,
-} from "../hooks/useReferentielsProfil";
+import { useRegions, useZones } from "../hooks/useReferentielsProfil";
 import { profilRoutes } from "../lib/profilRoutes";
 import type { ProfilParticulier } from "../types/profil.types";
 import { ZoneAutocomplete } from "./ZoneAutocomplete";
@@ -75,6 +73,8 @@ function IconeDroite({ children }: { children: React.ReactNode }) {
   );
 }
 
+const CHAMPS_FORMULAIRE = ["prenom", "nom", "email"] as const;
+
 export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
   const navigate = useNavigate();
   const { mutateAsync: modifier, isPending } = useModifierProfil();
@@ -83,25 +83,33 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
   const form = useForm<ModifierProfilValues>({
     resolver: zodResolver(modifierProfilSchema),
     defaultValues: {
-      prenom: profil.prenom,
-      nom: profil.nom,
+      prenom: profil.prenom ?? "",
+      nom: profil.nom ?? "",
       email: profil.email ?? "",
-      regionId: profil.regionId,
-      communeId: profil.communeId,
+      regionId: profil.region?.id ?? null,
+      zoneId: profil.zone?.id ?? null,
     },
   });
   const { errors, isDirty } = form.formState;
 
   const regionId = useWatch({ control: form.control, name: "regionId" });
+
+  // Recherche de zone : on attend 300 ms après la dernière frappe
+  const [recherche, setRecherche] = useState("");
+  const [rechercheDifferee, setRechercheDifferee] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setRechercheDifferee(recherche), 300);
+    return () => clearTimeout(id);
+  }, [recherche]);
+
   const { data: regions = [] } = useRegions();
-  const { data: communes = [], isLoading: chargementCommunes } =
-    useCommunesDeRegion(regionId);
+  const { data: zones = [], isFetching: chargementZones } = useZones(
+    regionId,
+    rechercheDifferee,
+  );
 
   // Select travaille avec des chaînes : on associe valeur et libellé
-  const optionsRegions = regions.map((r) => ({
-    value: String(r.id),
-    label: r.nom,
-  }));
+  const optionsRegions = regions.map((r) => ({ value: r.id, label: r.nom }));
 
   const onSubmit = form.handleSubmit(async (values) => {
     // Rien n'a changé : pas d'appel inutile
@@ -110,17 +118,34 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
       return;
     }
     try {
+      // Côté serveur : champ absent = inchangé, chaîne vide = effacé
       await modifier({
         prenom: values.prenom.trim(),
         nom: values.nom.trim(),
-        email: values.email.trim() === "" ? null : values.email.trim(),
-        regionId: values.regionId,
-        communeId: values.communeId,
+        email: values.email.trim(),
+        regionId: values.regionId ?? "",
+        zoneId: values.zoneId ?? "",
       });
       toast.success("Informations enregistrées.");
       navigate(profilRoutes.accueil, { replace: true });
-    } catch {
-      toast.error("Impossible d'enregistrer. Réessayez.");
+    } catch (e) {
+      const erreur = toApiErreur(e);
+
+      if (erreur.code === "EMAIL_DEJA_UTILISE") {
+        form.setError("email", { message: erreur.message });
+        return;
+      }
+      // Erreurs de validation du serveur : on les affiche sous les bons champs
+      let affichee = false;
+      for (const d of erreur.details ?? []) {
+        if ((CHAMPS_FORMULAIRE as readonly string[]).includes(d.champ)) {
+          form.setError(d.champ as (typeof CHAMPS_FORMULAIRE)[number], {
+            message: d.message,
+          });
+          affichee = true;
+        }
+      }
+      if (!affichee) toast.error(erreur.message || "Impossible d'enregistrer. Réessayez.");
     }
   });
 
@@ -193,12 +218,13 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
           render={({ field }) => (
             <Select
               items={optionsRegions}
-              value={field.value === null ? null : String(field.value)}
+              value={field.value}
               disabled={isPending}
               onValueChange={(v) => {
-                field.onChange(v === null ? null : Number(v));
+                field.onChange(v);
                 // Une autre région : la zone choisie n'a plus de sens
-                form.setValue("communeId", null, { shouldDirty: true });
+                form.setValue("zoneId", null, { shouldDirty: true });
+                setRecherche("");
               }}
             >
               <SelectTrigger
@@ -226,15 +252,23 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
       >
         <Controller
           control={form.control}
-          name="communeId"
+          name="zoneId"
           render={({ field }) => (
             <ZoneAutocomplete
+              // la liste repart de zéro quand la région change
+              key={regionId ?? "aucune"}
               id={`${idBase}-zone`}
-              communes={communes}
               value={field.value}
-              onChange={(id) => field.onChange(id)}
+              libelleInitial={
+                profil.zone && regionId === (profil.region?.id ?? null)
+                  ? profil.zone.libelle
+                  : null
+              }
+              zones={zones}
+              onChange={(zone) => field.onChange(zone ? zone.id : null)}
+              onRecherche={setRecherche}
               disabled={isPending || regionId === null}
-              chargement={chargementCommunes}
+              chargement={chargementZones}
             />
           )}
         />

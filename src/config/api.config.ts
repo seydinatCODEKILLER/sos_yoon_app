@@ -9,9 +9,15 @@ if (!API_CONFIG.BASE_URL) {
   throw new Error("VITE_API_URL non définie ! Vérifie ton fichier .env");
 }
 
+/**
+ * Pas de "Content-Type" ici, volontairement. Axios le pose tout seul :
+ *  - objet JSON      → application/json
+ *  - FormData        → multipart/form-data avec le bon « boundary » (posé par le navigateur)
+ * Si on l'impose globalement à application/json, axios transforme chaque FormData en JSON :
+ * le backend reçoit alors « Current request is not a multipart request ».
+ */
 export const DEFAULT_HEADERS = {
   Accept: "application/json",
-  "Content-Type": "application/json",
 } as const;
 
 /**

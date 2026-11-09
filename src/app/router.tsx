@@ -43,6 +43,7 @@ import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPag
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
+import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -160,6 +161,7 @@ export const router = createBrowserRouter([
             path: "/app/profil/notifications",
             element: <PreferencesNotificationsPage />,
           },
+          { path: "/app/profil/telephone", element: <ChangerTelephonePage /> },
         ],
       },
     ],
@@ -260,11 +262,11 @@ export const router = createBrowserRouter([
           },
           {
             path: "/admin/professionnels/:id?",
-            element: <ProfessionnelsAdminPage  />,
+            element: <ProfessionnelsAdminPage />,
           },
           {
             path: "/admin/parametres",
-            element: <ParametresAdminPage  />,
+            element: <ParametresAdminPage />,
           },
         ],
       },

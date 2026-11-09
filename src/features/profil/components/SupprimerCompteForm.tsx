@@ -4,30 +4,37 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, TriangleAlert } from "lucide-react";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { CodeSecretInput } from "@/features/auth/components/CodeSecretInput";
-import { toApiErreur } from "@/shared/lib/apiError";
+import { detailValue, toApiErreur } from "@/shared/lib/apiError";
 import { toast } from "@/shared/lib/toast";
 import { useSupprimerCompte } from "../hooks/useSupprimerCompte";
 
 const ELEMENTS_SUPPRIMES = [
   "Historique de vos demandes et dossiers",
-  "Messages et pièces jointes échangés",
-  "Enregistrements vocaux et coordonnées",
+  "Enregistrements vocaux et pièces jointes",
+  "Vos coordonnées et votre photo",
 ];
 
+/**
+ * DELETE /particulier/compte :
+ *  400 CODE_SECRET_INCORRECT  (details : essaisRestants)
+ *  423 CODE_SECRET_BLOQUE
+ *  422 CODE_SECRET_NON_DEFINI (compte créé sans code secret)
+ */
 function messageErreur(e: unknown): string {
   const err = toApiErreur(e);
-  const details = (err.details ?? {}) as unknown as Record<string, unknown>;
 
-  switch (String(err.code)) {
+  switch (err.code) {
     case "CODE_SECRET_INCORRECT": {
-      const restants = details.essaisRestants;
-      if (typeof restants === "number") {
+      const restants = Number(detailValue(err, "essaisRestants"));
+      if (Number.isFinite(restants) && restants > 0) {
         return `Code secret incorrect. Il vous reste ${restants} essai${restants > 1 ? "s" : ""}.`;
       }
       return "Code secret incorrect.";
     }
-    case "COMPTE_VERROUILLE":
+    case "CODE_SECRET_BLOQUE":
       return "Trop de tentatives. Réessayez plus tard.";
+    case "CODE_SECRET_NON_DEFINI":
+      return "Définissez d'abord un code secret dans votre profil pour supprimer le compte.";
     default:
       return "Impossible de supprimer le compte. Réessayez.";
   }
@@ -42,7 +49,7 @@ export function SupprimerCompteForm() {
   const [confirme, setConfirme] = useState(false);
   const [code, setCode] = useState("");
   const [erreur, setErreur] = useState<string | null>(null);
-    const [essai, setEssai] = useState(0);
+  const [essai, setEssai] = useState(0);
 
   const checkboxId = useId();
   const codeId = useId();
@@ -55,16 +62,17 @@ export function SupprimerCompteForm() {
     setErreur(null);
     try {
       await supprimer({ codeSecret: code });
-      // On ne garde rien des données de cet utilisateur
-      queryClient.clear();
-      logout();
-      toast.success("Votre compte a été supprimé.");
-      navigate("/login", { replace: true });
     } catch (err) {
       setErreur(messageErreur(err));
       setCode("");
       setEssai((n) => n + 1);
+      return;
     }
+    // Le compte n'existe plus : on ne garde rien de cet utilisateur
+    await logout();
+    queryClient.clear();
+    toast.success("Votre compte a été supprimé.");
+    navigate("/login", { replace: true });
   }
 
   return (

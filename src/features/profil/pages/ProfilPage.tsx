@@ -6,6 +6,7 @@ import {
   KeyRound,
   Loader2,
   LogOut,
+  Smartphone,
   Trash2,
   User,
 } from "lucide-react";
@@ -36,10 +37,10 @@ export function ProfilPage() {
   const supprimerPhoto = useSupprimerPhoto();
   const { data: preferences } = usePreferencesNotifications();
 
-  const seDeconnecter = () => {
-    // On vide le cache pour ne rien laisser des données de cet utilisateur
+  const seDeconnecter = async () => {
+    // On attend la révocation de la session côté serveur, puis on vide le cache
+    await logout();
     queryClient.clear();
-    logout();
     navigate("/login", { replace: true });
   };
 
@@ -61,7 +62,9 @@ export function ProfilPage() {
       </p>
     );
   } else {
-    const nomComplet = `${profil.prenom} ${profil.nom}`;
+    // Prénom et nom sont vides tant que le profil n'est pas complété
+    const nomComplet =
+      [profil.prenom, profil.nom].filter(Boolean).join(" ") || "Mon compte";
     identite = (
       <div className="flex items-center gap-4">
         <AvatarProfil
@@ -116,7 +119,17 @@ export function ProfilPage() {
               to={profilRoutes.informations}
               icone={<User className={ICONE} />}
               libelle="Nom, e-mail"
-              valeur={profil.email ?? "Non renseigné"}
+              valeur={
+                profil.profilComplete
+                  ? (profil.email ?? "Non renseigné")
+                  : "À compléter"
+              }
+            />
+            <ProfilLigne
+              to={profilRoutes.telephone}
+              icone={<Smartphone className={ICONE} />}
+              libelle="Téléphone"
+              valeur={masquerTelephone(profil.telephone)}
             />
           </ProfilSection>
 
@@ -140,7 +153,7 @@ export function ProfilPage() {
               to={profilRoutes.codeSecret}
               icone={<KeyRound className={ICONE} />}
               libelle="Code secret"
-              valeur="••••"
+              valeur={profil.codeSecretDefini ? "••••" : "À définir"}
             />
           </ProfilSection>
 
@@ -148,7 +161,7 @@ export function ProfilPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={seDeconnecter}
+              onClick={() => void seDeconnecter()}
               className="group h-14 w-full gap-3 rounded-xl border-navy/15 bg-white text-[15px] font-semibold text-navy shadow-sm hover:bg-navy/5"
             >
               <span

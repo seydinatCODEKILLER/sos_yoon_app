@@ -5,7 +5,6 @@ const MESSAGES: Record<string, string> = {
   COMPTE_INEXISTANT: "Aucun compte avec ce numéro. Inscrivez-vous.",
   COMPTE_SUSPENDU: "Ce compte est suspendu. Contactez le support.",
   CGU_NON_ACCEPTEES: "Vous devez accepter les conditions d'utilisation.",
-  TROP_DE_REQUETES: "Trop de tentatives. Patientez un instant.",
   RENVOI_TROP_TOT: "Patientez un instant avant de demander un nouveau code.",
   OTP_INVALIDE: "Code invalide, réessayez.",
   OTP_EXPIRE: "Ce code a expiré. Demandez-en un nouveau.",
