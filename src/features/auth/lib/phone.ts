@@ -2,6 +2,12 @@ export function normalizeSnPhone(value: string): string {
   return value.replace(/[\s.-]/g, "").replace(/^(\+221|00221)/, "");
 }
 
+/** Numéro sénégalais : 9 chiffres commençant par 7 (mobile) ou 3 (fixe). */
+export function isValidSnPhone(value: string): boolean {
+  return /^[73]\d{8}$/.test(normalizeSnPhone(value));
+}
+
+/** 77 123 45 67 → +221771234567 (format exigé par le backend : ^\+[1-9]\d{6,14}$) */
 export function toInternationalPhone(value: string): string {
   return `+221${normalizeSnPhone(value)}`;
 }

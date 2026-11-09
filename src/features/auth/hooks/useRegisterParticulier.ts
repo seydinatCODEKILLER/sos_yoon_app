@@ -18,7 +18,7 @@ export function useRegisterParticulier() {
       const telephone = toInternationalPhone(values.telephone);
       await authService.particulier.demanderCodeInscription({
         telephone,
-        cguAcceptees: true, // acceptation par « En continuant » (maquette)
+        cguAcceptees: true,
         versionCgu: CGU_VERSION,
       });
       toast.success(

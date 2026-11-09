@@ -73,34 +73,26 @@ apiClient.interceptors.response.use(
     return response;
   },
   async (error: AxiosError) => {
-    const originalConfig = error.config as ConfigWithRetry;
+    const originalConfig = error.config as ConfigWithRetry | undefined;
     const url = originalConfig?.url ?? "";
     const status = error.response?.status;
 
-    if (!error.response) {
+    if (!error.response || !originalConfig) {
       console.error("🔌 Erreur réseau:", error.message);
       return Promise.reject(error);
     }
 
+    // 401 « normal » : mauvais identifiants, ou route publique (aucun jeton
+    // n'a été envoyé, donc rien à rafraîchir). On laisse l'erreur remonter
+    // telle quelle pour que le formulaire affiche le message du serveur.
     const isExpected401 = EXPECTED_401_ENDPOINTS.some((ep) => url.includes(ep));
-    if (status === 401 && isExpected401) {
+    if (status === 401 && (isExpected401 || tokenManager.isPublicEndpoint(url))) {
       return Promise.reject(error);
     }
 
+    // 401 sur une route protégée : jeton expiré → on rafraîchit une fois, puis on rejoue.
     if (status === 401 && !originalConfig._retry) {
       originalConfig._retry = true;
-
-      if (status === 401 && !originalConfig._retry) {
-        originalConfig._retry = true;
-        try {
-          const newAccessToken = await refreshAccessToken();
-          originalConfig.headers.Authorization = `Bearer ${newAccessToken}`;
-          return apiClient(originalConfig);
-        } catch (refreshError) {
-          return Promise.reject(refreshError);
-        }
-      }
-
       try {
         const newAccessToken = await refreshAccessToken();
         originalConfig.headers.Authorization = `Bearer ${newAccessToken}`;

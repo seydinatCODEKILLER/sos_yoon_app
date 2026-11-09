@@ -21,7 +21,7 @@ export function CodeSecretInscriptionPage() {
   const [etape, setEtape] = useState<"creation" | "confirmation">("creation");
   const [code, setCode] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [essai, setEssai] = useState(0); // force le remontage des cases
+  const [essai, setEssai] = useState(0);
   const [visible, setVisible] = useState(false);
   const [erreur, setErreur] = useState<string | null>(null);
 

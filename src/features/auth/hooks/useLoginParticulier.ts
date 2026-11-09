@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAuthStore } from "../store/auth.store"; // adaptez le chemin
+import { useAuthStore } from "../store/auth.store";
 import type { LoginParticulierValues } from "../schema/loginParticulier.schema";
 import { connexionParticulierMessage } from "../lib/connexionErrors";
 import { toInternationalPhone } from "../lib/phone";

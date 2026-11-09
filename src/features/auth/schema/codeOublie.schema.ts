@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { isValidSnPhone } from "../lib/phone";
 
 export const codeOublieSchema = z.object({
   telephone: z
     .string()
-    .min(9, "Numéro de téléphone invalide")
-    .regex(/^[0-9+\s]+$/, "Numéro de téléphone invalide"),
+    .min(1, "Saisissez votre numéro de téléphone")
+    .refine(isValidSnPhone, "Numéro de téléphone invalide (9 chiffres, ex. 77 123 45 67)"),
 });
 
 export type CodeOublieValues = z.infer<typeof codeOublieSchema>;

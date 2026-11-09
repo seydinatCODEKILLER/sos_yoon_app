@@ -1,4 +1,3 @@
-// shared/lib/apiError.ts
 import axios from "axios";
 import type { ApiErreur } from "@/types/api.types";
 
@@ -25,7 +24,7 @@ export function toApiErreur(error: unknown): ApiErreur {
     return {
       code: data?.code ?? `HTTP_${status}`,
       message: data?.message ?? error.message,
-      details: data?.details,
+      details: Array.isArray(data?.details) ? data.details : undefined,
       horodatage: data?.horodatage ?? horodatage,
     };
   }
@@ -40,4 +39,9 @@ export function toApiErreur(error: unknown): ApiErreur {
     message: error instanceof Error ? error.message : "Une erreur est survenue.",
     horodatage,
   };
+}
+
+/** Lit la valeur d'un champ dans `details` (ex. "tentativesRestantes"). */
+export function detailValue(e: ApiErreur, champ: string): string | undefined {
+  return e.details?.find((d) => d.champ === champ)?.message;
 }
