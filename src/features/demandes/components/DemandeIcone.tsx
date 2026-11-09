@@ -1,21 +1,23 @@
-import { FileText, LifeBuoy, MessageSquare } from "lucide-react";
+import { FileText, Mic } from "lucide-react";
+import type { TypeSaisie } from "../types/demande.types";
 
-const PROPS = { className: "size-5", strokeWidth: 1.75 } as const;
-
-function IconePour({ titre }: { titre: string }) {
-  const t = titre.toLowerCase();
-  if (t.includes("garde")) return <LifeBuoy {...PROPS} />;
-  if (t.includes("orientation")) return <MessageSquare {...PROPS} />;
-  return <FileText {...PROPS} />;
+interface DemandeIconeProps {
+  typeSaisie: TypeSaisie;
+  /** Demande urgente : l'icône passe en orange */
+  urgent?: boolean;
 }
 
-export function DemandeIcone({ titre }: { titre: string }) {
+/** Pastille de la demande : micro pour un message vocal, page pour un texte */
+export function DemandeIcone({ typeSaisie, urgent = false }: DemandeIconeProps) {
+  const Icone = typeSaisie === "VOCAL" ? Mic : FileText;
   return (
     <span
       aria-hidden
-      className="grid size-11 shrink-0 place-items-center rounded-full bg-ink/5 text-navy"
+      className={`grid size-11 shrink-0 place-items-center rounded-full ${
+        urgent ? "bg-signal/10 text-signal" : "bg-ink/5 text-navy"
+      }`}
     >
-      <IconePour titre={titre} />
+      <Icone className="size-5" strokeWidth={1.75} />
     </span>
   );
 }

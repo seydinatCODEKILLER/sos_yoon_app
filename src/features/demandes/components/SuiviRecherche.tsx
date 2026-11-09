@@ -10,6 +10,7 @@ import { SuiviTimeline } from "./SuiviTimeline";
 import { AnnulerDemandeLien } from "./AnnulerDemandeLien";
 import { ReorienterDemandeLien } from "./ReorienterDemandeLien";
 import { ProfessionnelCarte } from "./ProfessionnelCarte";
+import { VotreDemande } from "./VotreDemande";
 import { dateEnvoiSuivi, etapesVersTimeline } from "../lib/etapeSuivi";
 
 function SearchOrb() {
@@ -124,6 +125,10 @@ export function SuiviRecherche({ demandeId, suivi }: SuiviRechercheProps) {
         </div>
         <SuiviTimeline items={items} />
       </section>
+
+      <div className="mt-6">
+        <VotreDemande demandeId={demandeId} repliable />
+      </div>
 
       <div className="mt-auto flex flex-col items-center pt-8">
         <Link

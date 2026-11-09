@@ -171,13 +171,13 @@ export interface DemandeDetail {
   titre: string | null;
   typeSaisie: TypeSaisie;
   description: string | null;
-  motsCles: string[];
+  motsCles: string[] | null;
   audio: DemandeAudio | null;
   transcription: string | null;
   statut: StatutDemande;
   niveauUrgence: NiveauUrgence | null;
-  matiere: { id: string; libelle: string } | null;
-  metiersRequis: string[];
+  matiere: { id: string | number; libelle: string } | null;
+  metiersRequis: string[] | null;
   localisation: DemandeLocalisation | null;
   dateCreation: string;
   dateEnvoi: string | null;
@@ -186,24 +186,42 @@ export interface DemandeDetail {
   avisDonne: boolean;
 }
 
-/* ───────────── Liste « Mes demandes » ─────────────
- * À MIGRER à l'étape suivante (GET /demandes/moi + compteurs).
- * Ces types restent tels quels pour que les écrans de liste compilent encore. */
+/* ───────────── Liste « Mes demandes » (spec 8.4 / 8.5) ───────────── */
 
-export type PhaseDemande =
-  | "ENVOYEE"
-  | "PROS_NOTIFIES"
-  | "ACCEPTEE"
-  | "CONTACT_ETABLI";
+/** Onglets de la liste : correspondent au paramètre `statut` de GET /demandes/moi */
+export type FiltreDemandes = "TOUTES" | "EN_COURS" | "TERMINEES" | "ANNULEES";
 
-export type StatutListe = "EN_COURS" | "TERMINEE" | "SANS_REPONSE" | "ANNULEE";
+export interface ProfessionnelResume {
+  id: string;
+  nomComplet: string;
+  titre: string | null;
+  organisme: string | null;
+  specialiteDominante: string | null;
+  /** Peut être relative (/uploads/...) : passer par mediaUrl() */
+  photoUrl: string | null;
+  proximite: string | null;
+}
 
 export interface DemandeResume {
   id: string;
   reference: string;
-  titre: string;
+  titre: string | null;
+  statut: StatutDemande;
+  niveauUrgence: NiveauUrgence | null;
+  typeSaisie: TypeSaisie;
+  dureeAudioSecondes: number | null;
+  libelleLocalisation: string | null;
   dateCreation: string;
-  statut: StatutListe;
-  phase: PhaseDemande;
-  professionnelNom: string | null;
+  dateCloture: string | null;
+  /** Renseigné quand un professionnel a accepté */
+  professionnel: ProfessionnelResume | null;
+  avisDonne: boolean;
+}
+
+/** GET /demandes/moi/compteurs */
+export interface CompteursDemandes {
+  toutes: number;
+  enCours: number;
+  terminees: number;
+  annulees: number;
 }

@@ -4,6 +4,7 @@ import { PhoneCall, SearchX, Users } from "lucide-react";
 import type { SuiviDemande } from "../types/demande.types";
 import { demandeRoutes } from "../lib/demandeRoutes";
 import { AnnulerDemandeLien } from "./AnnulerDemandeLien";
+import { VotreDemande } from "./VotreDemande";
 
 interface SuiviAucunProfessionnelProps {
   demandeId: string;
@@ -74,6 +75,10 @@ export function SuiviAucunProfessionnel({
           </span>
         </a>
       )}
+
+      <div className="mt-6">
+        <VotreDemande demandeId={demandeId} repliable />
+      </div>
 
       <div className="mt-auto flex flex-col gap-3 pt-8">
         <Link

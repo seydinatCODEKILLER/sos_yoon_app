@@ -1,84 +1,122 @@
 import { Link } from "react-router-dom";
-import { Check, Clock, Send } from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
-import { Card, CardContent } from "@/shared/components/ui/card";
+import { ChevronRight, MapPin, Mic } from "lucide-react";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import type { DemandeResume } from "../types/demande.types";
 import { demandeRoutes } from "../lib/demandeRoutes";
-import { nomCourt } from "../lib/contactProfessionnel";
+import { initiales, nomCourt } from "../lib/contactProfessionnel";
+import { formatDateDemande } from "../lib/formatDateDemande";
+import { formatHorloge } from "../lib/formatDuration";
+import { etatDemande, NB_ETAPES, TONS } from "../lib/statutDemandeUi";
 import { DemandeIcone } from "./DemandeIcone";
 import { MiniProgression } from "./MiniProgression";
-import { formatDateDemande } from "../lib/formatDateDemande";
-import { CARTE_LIEN } from "@/shared/lib/styleCarte";
 
-const BADGE =
-  "h-auto gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium [&>svg]:size-4";
-
-function BadgePhase({ demande }: { demande: DemandeResume }) {
-  if (demande.phase === "ACCEPTEE" || demande.phase === "CONTACT_ETABLI") {
-    const nom = demande.professionnelNom
-      ? nomCourt(demande.professionnelNom)
-      : "Un professionnel";
-    return (
-      <Badge
-        variant="outline"
-        className={`${BADGE} border-emerald-200 bg-emerald-50 text-emerald-700`}
-      >
-        <Check aria-hidden />
-        {nom} a accepté
-      </Badge>
-    );
-  }
-  if (demande.phase === "PROS_NOTIFIES") {
-    return (
-      <Badge
-        variant="outline"
-        className={`${BADGE} border-sky-200 bg-sky-50 text-sky-700`}
-      >
-        <Clock aria-hidden />
-        Recherche en cours
-      </Badge>
-    );
-  }
+/** Ce que le professionnel affecté montre dans la carte */
+function ProfessionnelAffecte({
+  professionnel,
+}: {
+  professionnel: NonNullable<DemandeResume["professionnel"]>;
+}) {
+  const photo = mediaUrl(professionnel.photoUrl);
   return (
-    <Badge
-      variant="outline"
-      className={`${BADGE} border-ink/10 bg-ink/4 text-ink/70`}
-    >
-      <Send aria-hidden />
-      Demande envoyée
-    </Badge>
+    <div className="flex items-center gap-2.5">
+      {photo ? (
+        <img src={photo} alt="" className="size-8 rounded-full object-cover" />
+      ) : (
+        <span
+          aria-hidden
+          className="grid size-8 place-items-center rounded-full bg-navy text-xs font-semibold text-paper"
+        >
+          {initiales(professionnel.nomComplet)}
+        </span>
+      )}
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-ink">
+          {nomCourt(professionnel.nomComplet)} a accepté
+        </p>
+        {(professionnel.specialiteDominante || professionnel.titre) && (
+          <p className="truncate text-xs text-ink/55">
+            {professionnel.specialiteDominante ?? professionnel.titre}
+          </p>
+        )}
+      </div>
+    </div>
   );
 }
 
+/** Demande encore ouverte : une vraie carte, avec l'étape en cours */
 export function DemandeEnCoursCard({ demande }: { demande: DemandeResume }) {
+  const etat = etatDemande(demande);
+  const ton = TONS[etat.ton];
+  const urgent = demande.niveauUrgence === "URGENT";
+
   return (
     <Link
       to={demandeRoutes.suivi(demande.id)}
-      className="group block rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-signal/40"
+      className="group block rounded-2xl border border-ink/10 bg-white p-4 shadow-sm outline-none transition hover:border-ink/20 hover:shadow-md focus-visible:ring-2 focus-visible:ring-signal/40"
     >
-      <Card className={`gap-0 rounded-xl border py-0 ${CARTE_LIEN}`}>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-3">
-            <DemandeIcone titre={demande.titre} />
-            <div className="min-w-0">
-              <p className="truncate text-base font-bold text-navy">
-                {demande.titre}
-              </p>
-              <p className="text-[13px] text-ink/60">
-                {formatDateDemande(demande.dateCreation)}
-              </p>
-            </div>
-          </div>
+      <div className="flex items-start gap-3">
+        <DemandeIcone typeSaisie={demande.typeSaisie} urgent={urgent} />
 
-          <div className="mt-3">
-            <BadgePhase demande={demande} />
-          </div>
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-2 text-xs text-ink/50">
+            <span className="tabular-nums">{demande.reference}</span>
+            {urgent && (
+              <span className="rounded-md bg-signal/10 px-1.5 py-px font-semibold text-signal">
+                Urgent
+              </span>
+            )}
+          </p>
+          <p className="mt-0.5 line-clamp-2 text-base leading-snug font-bold text-navy">
+            {demande.titre ?? "Demande d'aide"}
+          </p>
+          <p className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] text-ink/60">
+            <span>{formatDateDemande(demande.dateCreation)}</span>
+            {demande.libelleLocalisation && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3.5" aria-hidden />
+                {demande.libelleLocalisation}
+              </span>
+            )}
+            {demande.typeSaisie === "VOCAL" && demande.dureeAudioSecondes && (
+              <span className="inline-flex items-center gap-1 tabular-nums">
+                <Mic className="size-3.5" aria-hidden />
+                {formatHorloge(demande.dureeAudioSecondes)}
+              </span>
+            )}
+          </p>
+        </div>
 
-          <div className="mt-4">
-            <MiniProgression phase={demande.phase} />
-          </div>
-        </CardContent>
-      </Card>
+        <ChevronRight
+          aria-hidden
+          className="mt-3 size-5 shrink-0 text-ink/30 transition-transform group-hover:translate-x-0.5"
+        />
+      </div>
+
+      {/* État courant : le professionnel s'il a accepté, sinon l'étape de la recherche */}
+      <div className={`mt-4 rounded-xl px-3 py-2.5 ${ton.fond}`}>
+        {demande.professionnel && etat.etape === 3 ? (
+          <ProfessionnelAffecte professionnel={demande.professionnel} />
+        ) : (
+          <p className={`flex items-center gap-2 text-sm font-semibold ${ton.texte}`}>
+            <span
+              aria-hidden
+              className={`size-2 shrink-0 rounded-full ${ton.plein} ${
+                etat.ton === "actif" ? "animate-pulse" : ""
+              }`}
+            />
+            {etat.libelle}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-3 flex items-center gap-3">
+        <div className="flex-1">
+          <MiniProgression etat={etat} />
+        </div>
+        <span className="text-xs tabular-nums text-ink/45">
+          {etat.etape}/{NB_ETAPES}
+        </span>
+      </div>
     </Link>
   );
 }

@@ -1,219 +1,201 @@
 import { Link } from "react-router-dom";
 import {
   ArrowLeft,
-  BadgeCheck,
   Check,
+  ChevronDown,
   Clock,
-  Landmark,
   MessageCircle,
   PhoneCall,
+  Plus,
   X,
 } from "lucide-react";
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
-import { CARTE } from "@/shared/lib/styleCarte";
-import type { PhaseDemande, SuiviDemande } from "../types/demande.types";
+import type { StatutDemande, SuiviDemande } from "../types/demande.types";
 import { demandeRoutes } from "../lib/demandeRoutes";
-import { formatDateDemande, formatHeure } from "../lib/formatDateDemande";
-import {
-  lienAppel,
-  lienWhatsApp,
-  nomCourt,
-} from "../lib/contactProfessionnel";
-import { SuiviTimeline, type TimelineItem } from "./SuiviTimeline";
+import { formatDateComplete } from "../lib/formatDateDemande";
+import { lienAppel, lienWhatsApp } from "../lib/contactProfessionnel";
+import { TONS, type TonStatut } from "../lib/statutDemandeUi";
+import { ProfessionnelCarte } from "./ProfessionnelCarte";
+import { SuiviTimeline } from "./SuiviTimeline";
+import { VotreDemande } from "./VotreDemande";
+import { dateEnvoiSuivi, etapesVersTimeline } from "../lib/etapeSuivi";
 
 const capitalise = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const PHASES: PhaseDemande[] = [
-  "ENVOYEE",
-  "PROS_NOTIFIES",
-  "ACCEPTEE",
-  "CONTACT_ETABLI",
-];
+/** Ce que dit l'écran selon la façon dont la demande s'est close */
+const ISSUES: Partial<
+  Record<
+    StatutDemande,
+    {
+      titre: string;
+      detail: string;
+      ton: TonStatut;
+      Icone: typeof Check;
+    }
+  >
+> = {
+  TERMINEE: {
+    titre: "Demande terminée",
+    detail: "Votre dossier est clos.",
+    ton: "succes",
+    Icone: Check,
+  },
+  ANNULEE: {
+    titre: "Demande annulée",
+    detail: "Cette demande a été annulée.",
+    ton: "neutre",
+    Icone: X,
+  },
+  EXPIRE_FALLBACK: {
+    titre: "Demande sans réponse",
+    detail: "Aucun professionnel n'a pu la prendre en charge.",
+    ton: "alerte",
+    Icone: Clock,
+  },
+  REFUSEE: {
+    titre: "Demande refusée",
+    detail: "Cette demande n'a pas pu être retenue.",
+    ton: "neutre",
+    Icone: X,
+  },
+};
 
-const CARTE_CLASSE = `gap-0 rounded-xl border py-0 ${CARTE}`;
+interface DemandeDetailTermineeProps {
+  suivi: SuiviDemande;
+  demandeId: string;
+}
 
-export function DemandeDetailTerminee({ suivi }: { suivi: SuiviDemande }) {
-  const pro = suivi.professionnel;
-  const annulee = suivi.statut === "ANNULEE";
-  const titre = capitalise(suivi.matiereLibelle ?? "Demande d'aide");
+/** Demande close (terminée, annulée ou restée sans réponse) : ce qui s'est passé et ce qui a été demandé */
+export function DemandeDetailTerminee({
+  suivi,
+  demandeId,
+}: DemandeDetailTermineeProps) {
+  const pro = suivi.professionnelAffecte;
+  const terminee = suivi.statut === "TERMINEE";
+  const issue = ISSUES[suivi.statut] ?? ISSUES.ANNULEE!;
+  const ton = TONS[issue.ton];
+  const { Icone } = issue;
 
-  const jalon = (phase: PhaseDemande) =>
-    suivi.jalons.find((j) => j.phase === phase);
-
-  const textes: Record<PhaseDemande, { titre: string; description: string }> = {
-    ENVOYEE: {
-      titre: "Demande envoyée",
-      description: "Reçue par le système central SOS Yoon",
-    },
-    PROS_NOTIFIES: {
-      titre: "Professionnels notifiés",
-      description: "Disponibilités vérifiées dans votre zone",
-    },
-    ACCEPTEE: {
-      titre: "Demande acceptée",
-      description: pro
-        ? `Attribution confirmée avec ${nomCourt(pro.nomComplet)}`
-        : "Attribution confirmée",
-    },
-    CONTACT_ETABLI: {
-      titre: "Contact établi",
-      description: "Échange direct réalisé",
-    },
-  };
-
-  const items: TimelineItem[] = PHASES.map((phase) => {
-    const j = jalon(phase);
-    return {
-      id: phase,
-      titre: textes[phase].titre,
-      description: textes[phase].description,
-      status: j ? "done" : "pending",
-      heure: j ? formatHeure(j.date) : undefined,
-    };
-  });
-
-  const nbEtapes = items.filter((i) => i.status === "done").length;
+  const dateEnvoi = dateEnvoiSuivi(suivi.etapes);
+  const dateCloture = suivi.etapes.find((e) => e.code === "CLOTURE")?.date;
+  const items = etapesVersTimeline(suivi.etapes);
 
   return (
     <div className="flex flex-1 flex-col">
-      <Button
-        variant="ghost"
-        size="icon"
-        nativeButton={false}
-        render={<Link to={demandeRoutes.liste} />}
+      <Link
+        to={demandeRoutes.liste}
         aria-label="Retour à mes demandes"
-        className="-ml-2 size-10 rounded-full text-navy hover:bg-ink/5"
+        className="-ml-2 inline-flex size-10 items-center justify-center rounded-full text-navy outline-none transition-colors hover:bg-ink/5 focus-visible:ring-2 focus-visible:ring-signal/40"
       >
         <ArrowLeft className="size-5" />
-      </Button>
+      </Link>
 
-      {/* En-tête */}
-      <Card className={`mt-2 ${CARTE_CLASSE}`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg leading-snug font-bold text-navy">
-              {titre}
-            </h2>
-            <Badge
-              variant="secondary"
-              className="h-auto shrink-0 gap-1 rounded-lg bg-ink/6 px-2.5 py-1 text-xs font-semibold text-ink/70 [&>svg]:size-3.5"
-            >
-              {annulee ? <X aria-hidden /> : <Check aria-hidden />}
-              {annulee ? "Annulée" : "Terminée"}
-            </Badge>
-          </div>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-ink/60">
-            <Clock className="size-3.5" aria-hidden />
-            {formatDateDemande(suivi.dateEnvoi)}
-          </p>
-        </CardContent>
-      </Card>
-
-      {/* Parcours */}
-      <Card
-        role="region"
-        aria-label="Parcours de prise en charge"
-        className={`mt-4 ${CARTE_CLASSE}`}
-      >
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between rounded-lg bg-ink/5 px-3 py-2">
-            <h3 className="text-[13px] font-semibold text-ink">
-              Parcours de prise en charge
-            </h3>
-            <Badge
-              variant="secondary"
-              className="h-auto rounded-md bg-ink/8 px-2 py-0.5 text-xs font-medium text-ink/60"
-            >
-              {nbEtapes === PHASES.length
-                ? "Complet"
-                : `${nbEtapes}/${PHASES.length} étapes`}
-            </Badge>
-          </div>
-          <div className="mt-2">
-            <SuiviTimeline items={items} />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Professionnel */}
-      {pro && (
-        <Card
-          role="region"
-          aria-label="Professionnel"
-          className={`mt-4 ${CARTE_CLASSE}`}
+      {/* Issue de la demande */}
+      <header className="mt-2 flex flex-col items-center text-center">
+        <span
+          aria-hidden
+          className={`grid size-16 place-items-center rounded-full ${ton.fond} ${ton.texte}`}
         >
-          <CardContent className="flex items-start gap-3 p-4">
-            <span
-              aria-hidden
-              className="grid size-10 shrink-0 place-items-center text-navy"
-            >
-              <Landmark className="size-7" strokeWidth={1.5} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-base leading-snug font-bold text-navy">
-                  {pro.nomComplet}
-                </p>
-                {!annulee && (
-                  <Badge
-                    variant="secondary"
-                    className="h-auto shrink-0 gap-1.5 rounded-lg bg-ink/6 px-2 py-0.5 text-xs font-medium text-ink/70"
-                  >
-                    <span
-                      aria-hidden
-                      className="size-1.5 rounded-full bg-ink/40"
-                    />
-                    Contact terminé
-                  </Badge>
-                )}
-              </div>
-              <p className="text-[13px] text-ink/60">
-                {capitalise(pro.metier)} · {pro.communeLibelle}
-              </p>
-              {pro.ordre && (
-                <Badge
-                  variant="outline"
-                  className="mt-2 h-auto gap-1.5 rounded-lg border-ink/10 bg-ink/3 px-2.5 py-1 text-xs font-medium text-ink/70 [&>svg]:size-3.5"
-                >
-                  <BadgeCheck aria-hidden />
-                  {pro.ordre}
-                </Badge>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          <Icone className="size-7" strokeWidth={2.5} />
+        </span>
+        <h2 className="mt-4 text-[26px] leading-tight font-bold text-navy">
+          {issue.titre}
+        </h2>
+        <p className="mt-1.5 text-[15px] leading-snug text-ink/60">
+          {issue.detail}
+        </p>
+      </header>
 
-      {/* Contact */}
+      {/* Identité de la demande */}
+      <section
+        aria-label="Résumé"
+        className="mt-6 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"
+      >
+        <p className="text-xs tabular-nums text-ink/50">{suivi.reference}</p>
+        <p className="mt-0.5 text-lg leading-snug font-bold text-navy">
+          {capitalise(suivi.titre ?? "Demande d'aide")}
+        </p>
+        <dl className="mt-3 space-y-1 text-[13px] text-ink/60">
+          {dateEnvoi && (
+            <div className="flex gap-1.5">
+              <dt>Envoyée le</dt>
+              <dd className="font-medium text-ink/80">
+                {formatDateComplete(dateEnvoi)}
+              </dd>
+            </div>
+          )}
+          {dateCloture && (
+            <div className="flex gap-1.5">
+              <dt>Clôturée le</dt>
+              <dd className="font-medium text-ink/80">
+                {formatDateComplete(dateCloture)}
+              </dd>
+            </div>
+          )}
+        </dl>
+      </section>
+
+      {/* Professionnel et moyens de le recontacter */}
       {pro && (
-        <div className="mt-auto grid grid-cols-2 gap-3 pt-6">
-          <Button
-            nativeButton={false}
-            render={<a href={lienAppel(pro.telephone)} />}
-            className="h-13 rounded-xl bg-navy text-sm font-semibold text-paper hover:bg-navy/90"
-          >
-            <PhoneCall className="size-4" aria-hidden />
-            Appeler
-          </Button>
-          <Button
-            variant="secondary"
-            nativeButton={false}
-            render={
+        <section
+          aria-label="Professionnel"
+          className="mt-4 rounded-2xl border border-ink/10 bg-white p-4 shadow-sm"
+        >
+          <ProfessionnelCarte pro={pro} />
+          {pro.telephone && (
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <a
+                href={lienAppel(pro.telephone)}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-navy text-sm font-semibold text-paper transition hover:bg-navy/90"
+              >
+                <PhoneCall className="size-4" aria-hidden />
+                Appeler
+              </a>
               <a
                 href={lienWhatsApp(pro.telephone, pro.nomComplet, suivi.reference)}
                 target="_blank"
                 rel="noopener noreferrer"
-              />
-            }
-            className="h-13 rounded-xl bg-ink/8 text-sm font-semibold text-ink/80 hover:bg-ink/12"
-          >
-            <MessageCircle className="size-4" aria-hidden />
-            Message
-          </Button>
-        </div>
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-ink/10 bg-white text-sm font-semibold text-navy transition-colors hover:bg-ink/3"
+              >
+                <MessageCircle className="size-4" aria-hidden />
+                WhatsApp
+              </a>
+            </div>
+          )}
+        </section>
       )}
+
+      {/* Message ou audio envoyé, mots-clés, lieu */}
+      <div className="mt-4">
+        <VotreDemande demandeId={demandeId} />
+      </div>
+
+      {/* Déroulé : utile à relire, mais replié pour garder l'écran net */}
+      <details className="group mt-4 rounded-2xl border border-ink/10 bg-white shadow-sm">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-4 py-3.5 text-[15px] font-semibold text-navy outline-none focus-visible:ring-2 focus-visible:ring-signal/40 [&::-webkit-details-marker]:hidden">
+          Déroulé de la demande
+          <ChevronDown
+            aria-hidden
+            className="size-5 text-ink/40 transition-transform group-open:rotate-180"
+          />
+        </summary>
+        <div className="border-t border-ink/8 p-2">
+          <SuiviTimeline items={items} />
+        </div>
+      </details>
+
+      <div className="mt-auto pt-8">
+        <Link
+          to={demandeRoutes.nouvelle}
+          className={`inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition ${
+            terminee
+              ? "border border-ink/10 bg-white text-navy hover:bg-ink/3"
+              : "bg-signal text-paper shadow-[0_6px_18px_rgba(249,97,13,0.3)] hover:brightness-105"
+          }`}
+        >
+          <Plus className="size-4" aria-hidden />
+          Faire une nouvelle demande
+        </Link>
+      </div>
     </div>
   );
 }

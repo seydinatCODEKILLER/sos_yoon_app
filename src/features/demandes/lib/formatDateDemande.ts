@@ -33,6 +33,21 @@ export function formatDateDemande(iso: string) {
   });
 }
 
+/** "9 novembre 2026 à 18:20" */
+export function formatDateComplete(iso: string) {
+  const date = parseDateServeur(iso);
+  const jour = date.toLocaleDateString("fr-FR", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const heure = date.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${jour} à ${heure}`;
+}
+
 /** "14:32" */
 export function formatHeure(iso: string) {
   return parseDateServeur(iso).toLocaleTimeString("fr-FR", {

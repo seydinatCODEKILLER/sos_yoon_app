@@ -31,11 +31,15 @@ export function SuiviDemandePage() {
     );
   } else if (estStatutFinal(suivi.statut)) {
     // Terminée, annulée ou restée sans réponse
-    contenu = <DemandeDetailTerminee suivi={suivi} />;
+    contenu = <DemandeDetailTerminee suivi={suivi} demandeId={id} />;
   } else if (suivi.professionnelAffecte) {
     // ACCEPTEE / EN_COURS : un professionnel est affecté
     contenu = (
-      <SuiviAccepte suivi={suivi} pro={suivi.professionnelAffecte} />
+      <SuiviAccepte
+        suivi={suivi}
+        pro={suivi.professionnelAffecte}
+        demandeId={id}
+      />
     );
   } else if (suivi.statut === "RECHERCHE_PROFESSIONNEL") {
     // File épuisée : transmise à l'équipe SOS Yoon

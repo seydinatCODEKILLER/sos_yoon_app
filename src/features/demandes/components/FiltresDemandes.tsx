@@ -1,58 +1,73 @@
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-
-export type FiltreDemandes = "EN_COURS" | "TERMINEES" | "TOUTES";
+import type {
+  CompteursDemandes,
+  FiltreDemandes,
+} from "../types/demande.types";
 
 interface FiltresDemandesProps {
   value: FiltreDemandes;
   onChange: (value: FiltreDemandes) => void;
-  /** Nombre de demandes en cours, affiché sur le premier onglet */
-  enCours: number;
+  /** Absents tant que le serveur n'a pas répondu : l'onglet s'affiche sans nombre */
+  compteurs?: CompteursDemandes;
 }
 
-const ONGLETS: { id: FiltreDemandes; libelle: string }[] = [
-  { id: "EN_COURS", libelle: "En cours" },
-  { id: "TERMINEES", libelle: "Terminées" },
-  { id: "TOUTES", libelle: "Toutes" },
+const ONGLETS: {
+  id: FiltreDemandes;
+  libelle: string;
+  cle: keyof CompteursDemandes;
+}[] = [
+  { id: "TOUTES", libelle: "Toutes", cle: "toutes" },
+  { id: "EN_COURS", libelle: "En cours", cle: "enCours" },
+  { id: "TERMINEES", libelle: "Terminées", cle: "terminees" },
+  { id: "ANNULEES", libelle: "Annulées", cle: "annulees" },
 ];
 
+/** Onglets à soulignement ; défilent horizontalement sur petit écran */
 export function FiltresDemandes({
   value,
   onChange,
-  enCours,
+  compteurs,
 }: FiltresDemandesProps) {
   return (
     <div
-      role="group"
+      role="tablist"
       aria-label="Filtrer les demandes"
-      className="flex flex-wrap gap-2"
+      className="-mx-5 flex gap-1 overflow-x-auto border-b border-ink/10 px-5 scrollbar-none md:mx-0 md:px-0 [&::-webkit-scrollbar]:hidden"
     >
-      {ONGLETS.map(({ id, libelle }) => {
+      {ONGLETS.map(({ id, libelle, cle }) => {
         const actif = value === id;
+        const nombre = compteurs?.[cle];
         return (
-          <Button
+          <button
             key={id}
             type="button"
-            variant={actif ? "default" : "outline"}
-            aria-pressed={actif}
+            role="tab"
+            aria-selected={actif}
             onClick={() => onChange(id)}
-            className={`h-10 gap-2 rounded-full px-4 text-sm font-semibold shadow-sm ${
+            className={`relative flex shrink-0 items-center gap-2 px-3 pb-3 text-sm outline-none transition-colors focus-visible:rounded-md focus-visible:ring-2 focus-visible:ring-signal/40 ${
               actif
-                ? "bg-navy text-paper hover:bg-navy/90"
-                : "border-ink/8 bg-white text-ink/80 hover:bg-ink/3"
+                ? "font-semibold text-navy"
+                : "font-medium text-ink/55 hover:text-ink"
             }`}
           >
             {libelle}
-            {id === "EN_COURS" && (
-              <Badge
-                className={`h-5 min-w-5 justify-center rounded-full px-1.5 text-xs font-medium tabular-nums ${
-                  actif ? "bg-white/20 text-paper" : "bg-ink/8 text-ink/70"
+            {nombre !== undefined && (
+              <span
+                className={`min-w-5 rounded-full px-1.5 py-px text-center text-xs font-medium tabular-nums ${
+                  actif && id === "EN_COURS" && nombre > 0
+                    ? "bg-signal text-paper"
+                    : "bg-ink/6 text-ink/60"
                 }`}
               >
-                {enCours}
-              </Badge>
+                {nombre}
+              </span>
             )}
-          </Button>
+            {actif && (
+              <span
+                aria-hidden
+                className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-signal"
+              />
+            )}
+          </button>
         );
       })}
     </div>

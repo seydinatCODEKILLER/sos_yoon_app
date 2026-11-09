@@ -1,5 +1,9 @@
 import { apiClient } from "@/shared/lib/apiClient";
+import type { Page } from "@/types/api.types";
 import type {
+  CompteursDemandes,
+  FiltreDemandes,
+  ProfessionnelResume,
   CreerDemandeEcritePayload,
   CreerDemandeVocalePayload,
   DemandeCreee,
@@ -8,6 +12,11 @@ import type {
   MotCleFrequent,
   SuiviDemande,
 } from "../types/demande.types";
+
+type DemandeResumeBrut = Omit<DemandeResume, "professionnel"> & {
+  professionnel?: ProfessionnelResume | null;
+  professional?: ProfessionnelResume | null;
+};
 
 export interface DemandesApi {
   /** 8.1 : création + envoi en une seule requête (multipart) */
@@ -24,8 +33,14 @@ export interface DemandesApi {
   reorienter(id: string): Promise<SuiviDemande>;
   /** 6.6 (public) */
   motsClesFrequents(): Promise<MotCleFrequent[]>;
-  /** À MIGRER vers GET /demandes/moi à l'étape « liste » */
-  lister(): Promise<DemandeResume[]>;
+  /** 8.4 : une page de la liste, filtrée par onglet */
+  lister(params: {
+    statut: FiltreDemandes;
+    page: number;
+    taille: number;
+  }): Promise<Page<DemandeResume>>;
+  /** 8.5 : compteurs des onglets */
+  compteurs(): Promise<CompteursDemandes>;
 }
 
 export const demandesApi: DemandesApi = {
@@ -95,9 +110,25 @@ export const demandesApi: DemandesApi = {
     return data;
   },
 
-  // TODO étape « liste » : GET /demandes/moi?statut=…&page=…&taille=… + /demandes/moi/compteurs
-  async lister() {
-    const { data } = await apiClient.get<DemandeResume[]>("/demandes");
+  async lister({ statut, page, taille }) {
+    const { data } = await apiClient.get<Page<DemandeResumeBrut>>(
+      "/demandes/moi",
+      { params: { statut, page, taille } },
+    );
+    return {
+      ...data,
+      contenu: data.contenu.map(({ professional, ...d }) => ({
+        ...d,
+        // Le backend a longtemps nommé ce champ « professional » (faute de frappe, corrigée côté serveur)
+        professionnel: d.professionnel ?? professional ?? null,
+      })),
+    };
+  },
+
+  async compteurs() {
+    const { data } = await apiClient.get<CompteursDemandes>(
+      "/demandes/moi/compteurs",
+    );
     return data;
   },
 };

@@ -1,14 +1,39 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { demandesService } from "../service/demandesService";
+import type { FiltreDemandes } from "../types/demande.types";
+import { estStatutFinal } from "../lib/demandeStatus";
 
-const POLL_MS = 15000;
+const TAILLE_PAGE = 10;
+const POLL_MS = 15_000;
 
-export function useMesDemandes() {
-  return useQuery({
-    queryKey: ["demandes", "liste"],
-    queryFn: () => demandesService.lister(),
-    // Tant qu'une demande est en cours, la liste se rafraîchit toute seule
+/** Liste « Mes demandes » d'un onglet, par pages de 10 (bouton « Voir plus ») */
+export function useMesDemandes(filtre: FiltreDemandes) {
+  return useInfiniteQuery({
+    queryKey: ["demandes", "liste", filtre],
+    initialPageParam: 0,
+    queryFn: ({ pageParam }) =>
+      demandesService.lister({
+        statut: filtre,
+        page: pageParam,
+        taille: TAILLE_PAGE,
+      }),
+    getNextPageParam: (derniere) =>
+      derniere.page + 1 < derniere.totalPages ? derniere.page + 1 : undefined,
+    // Tant qu'une demande est ouverte, la liste se rafraîchit toute seule
     refetchInterval: (query) =>
-      query.state.data?.some((d) => d.statut === "EN_COURS") ? POLL_MS : false,
+      query.state.data?.pages.some((p) =>
+        p.contenu.some((d) => !estStatutFinal(d.statut)),
+      )
+        ? POLL_MS
+        : false,
+  });
+}
+
+/** Nombres affichés sur les onglets */
+export function useCompteursDemandes() {
+  return useQuery({
+    queryKey: ["demandes", "compteurs"],
+    queryFn: () => demandesService.compteurs(),
+    refetchInterval: (query) => (query.state.data?.enCours ? POLL_MS : false),
   });
 }
