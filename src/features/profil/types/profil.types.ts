@@ -12,6 +12,9 @@ export interface ZoneRef {
 /** Zone renvoyée par GET /referentiels/zones */
 export interface Zone extends ZoneRef {
   regionId: string;
+  /** Centre de la zone ; null si non renseigné (zone inutilisable pour localiser une demande) */
+  latitudeCentre?: number | null;
+  longitudeCentre?: number | null;
 }
 
 /** <ProfilParticulier> (spec §2) */

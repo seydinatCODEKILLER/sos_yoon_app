@@ -1,24 +1,29 @@
 import { useQuery } from "@tanstack/react-query";
 import { demandesService } from "../service/demandesService";
+import { demandeErrorCode } from "../lib/demandeErrors";
+import { estStatutFinal } from "../lib/demandeStatus";
 
-const POLL_MS = 5000;
-const STATUTS_FINAUX = ["ANNULEE", "TERMINEE", "REFUSEE"];
-const ETAPES_FINALES = ["ACCEPTEE", "AUCUN_PROFESSIONNEL"];
+export const suiviQueryKey = (id: string | undefined) =>
+  ["demandes", "suivi", id] as const;
 
+/**
+ * Suivi d'une demande (spec 8.3), rafraîchi toutes les 5 s tant que la recherche est en cours.
+ * - une fois un professionnel affecté : toutes les 15 s (on attend seulement la clôture)
+ * - demande close : plus d'interrogation
+ */
 export function useSuiviDemande(id: string | undefined) {
   return useQuery({
-    queryKey: ["demandes", "suivi", id],
+    queryKey: suiviQueryKey(id),
     queryFn: () => demandesService.suivi(id!),
     enabled: !!id,
-    // On s'arrête dès qu'un professionnel a accepté ou que la demande est close
     refetchInterval: (query) => {
-      const d = query.state.data;
-      if (!d) return POLL_MS;
-      return ETAPES_FINALES.includes(d.etape) ||
-        STATUTS_FINAUX.includes(d.statut)
-        ? false
-        : POLL_MS;
+      const suivi = query.state.data;
+      if (!suivi) return 5_000;
+      if (estStatutFinal(suivi.statut)) return false;
+      return suivi.professionnelAffecte ? 15_000 : 5_000;
     },
-    refetchIntervalInBackground: false,
+    // Une demande introuvable (404) ne se règle pas en réessayant
+    retry: (nbEchecs, error) =>
+      demandeErrorCode(error) !== "INTROUVABLE" && nbEchecs < 2,
   });
 }

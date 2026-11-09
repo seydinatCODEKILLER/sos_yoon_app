@@ -1,12 +1,16 @@
 import { Link } from "react-router-dom";
 import { motion, useReducedMotion } from "motion/react";
-import { ArrowRight, Clock, Search } from "lucide-react";
+import { ArrowRight, Clock, Hourglass, Search } from "lucide-react";
 import type { SuiviDemande } from "../types/demande.types";
 import { formatDuree } from "../lib/formatDuration";
 import { demandeRoutes } from "../lib/demandeRoutes";
 import { useSecondesEcoulees } from "../hooks/useSecondesEcoulees";
-import { SuiviTimeline, type TimelineItem } from "./SuiviTimeline";
+import { useSecondesRestantes } from "../hooks/useSecondesRestantes";
+import { SuiviTimeline } from "./SuiviTimeline";
 import { AnnulerDemandeLien } from "./AnnulerDemandeLien";
+import { ReorienterDemandeLien } from "./ReorienterDemandeLien";
+import { ProfessionnelCarte } from "./ProfessionnelCarte";
+import { dateEnvoiSuivi, etapesVersTimeline } from "../lib/etapeSuivi";
 
 function SearchOrb() {
   const reduce = useReducedMotion();
@@ -34,50 +38,44 @@ function SearchOrb() {
   );
 }
 
-export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
-  const secondes = useSecondesEcoulees(suivi.dateEnvoi);
+/** Le professionnel sollicité dispose d'un délai pour répondre */
+function ReponseAttendue({ expireLe }: { expireLe: string | null | undefined }) {
+  const restantes = useSecondesRestantes(expireLe);
+  if (restantes === null) return null;
+  return (
+    <p className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-ink/5 px-2.5 py-1 text-xs font-medium text-ink/70 tabular-nums">
+      <Hourglass className="size-3.5" aria-hidden />
+      {restantes > 0
+        ? `Réponse attendue sous ${formatDuree(restantes)}`
+        : "Délai écoulé, passage au suivant…"}
+    </p>
+  );
+}
 
-  const metier = suivi.metierPluriel ?? "professionnels";
+interface SuiviRechercheProps {
+  demandeId: string;
+  suivi: SuiviDemande;
+}
 
-  // Étape en cours : 1 = analyse du message, 2 = notification des professionnels
-  const courante = suivi.etape === "ENREGISTREE" ? 1 : 2;
-  const statut = (i: number): TimelineItem["status"] =>
-    i < courante ? "done" : i === courante ? "current" : "pending";
+/**
+ * Demande en cours de traitement :
+ * - analyse de la situation (aucun professionnel sollicité pour l'instant) ;
+ * - ou « professionnel identifié » : un professionnel est sollicité, d'autres attendent en réserve.
+ */
+export function SuiviRecherche({ demandeId, suivi }: SuiviRechercheProps) {
+  const secondes = useSecondesEcoulees(dateEnvoiSuivi(suivi.etapes));
+  const sollicite = suivi.sollicitationEnCours;
+  const enReserve = suivi.fileReserve.length;
+  const enTriage = suivi.statut === "EN_ATTENTE_TRIAGE";
 
-  const items: TimelineItem[] = [
-    {
-      id: "enregistree",
-      titre: "Demande enregistrée",
-      description: "Horodatée et chiffrée de bout en bout",
-      status: statut(0),
-    },
-    {
-      id: "analysee",
-      titre: "Message analysé",
-      description: suivi.matiereLibelle
-        ? `Qualification : ${suivi.matiereLibelle}`
-        : "Qualification de votre situation",
-      status: statut(1),
-    },
-    {
-      id: "notifies",
-      titre: "Professionnels notifiés",
-      description: suivi.zoneElargie
-        ? "Tour de garde étendu aux secteurs mitoyens"
-        : "Tour de garde de votre secteur",
-      status: statut(2),
-      badge:
-        suivi.nbProfessionnelsNotifies > 0
-          ? `${suivi.nbProfessionnelsNotifies} ${metier}`
-          : undefined,
-    },
-    {
-      id: "relation",
-      titre: "Mise en relation",
-      description: "Liaison audio sécurisée & mandat direct",
-      status: statut(3),
-    },
-  ];
+  const items = etapesVersTimeline(suivi.etapes, {
+    codes: [
+      "DEMANDE_ENVOYEE",
+      "SITUATION_ANALYSEE",
+      "PROFESSIONNEL_IDENTIFIE",
+      "DEMANDE_ACCEPTEE",
+    ],
+  });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -85,10 +83,14 @@ export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
         <SearchOrb />
 
         <h2 className="mt-2 text-[28px] leading-tight font-bold text-navy">
-          Recherche en cours
+          {sollicite ? "Professionnel identifié" : "Recherche en cours"}
         </h2>
         <p className="mt-2 text-[15px] leading-snug text-ink/60">
-          Nous contactons les {metier} proches de vous.
+          {sollicite
+            ? "Votre demande lui a été transmise, nous attendons sa réponse."
+            : enTriage
+              ? "Notre équipe examine votre demande."
+              : "Nous analysons votre situation pour trouver le bon professionnel."}
         </p>
 
         <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-ink/6 px-3 py-1.5 text-xs font-medium text-ink/70 tabular-nums">
@@ -97,16 +99,28 @@ export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
         </span>
       </div>
 
+      {sollicite?.professionnel && (
+        <section
+          aria-label="Professionnel sollicité"
+          className="mt-6 rounded-2xl border border-ink/8 bg-white p-4 shadow-sm"
+        >
+          <ProfessionnelCarte pro={sollicite.professionnel} />
+          <ReponseAttendue expireLe={sollicite.expireLe} />
+          {enReserve > 0 && (
+            <p className="mt-2 text-xs text-ink/50">
+              {enReserve === 1
+                ? "1 autre professionnel est prêt à prendre le relais."
+                : `${enReserve} autres professionnels sont prêts à prendre le relais.`}
+            </p>
+          )}
+        </section>
+      )}
+
       <section aria-label="Protocole de dispatching" className="mt-8">
         <div className="mb-2 flex h-5 items-center justify-between px-3">
           <h3 className="text-[11px] font-bold tracking-wider text-ink/50 uppercase">
             Protocole de dispatching
           </h3>
-          {suivi.zoneElargie && (
-            <span className="text-xs font-semibold text-signal">
-              Zone élargie
-            </span>
-          )}
         </div>
         <SuiviTimeline items={items} />
       </section>
@@ -119,9 +133,16 @@ export function SuiviRecherche({ suivi }: { suivi: SuiviDemande }) {
           Continuer vers mes demandes <ArrowRight className="size-4" />
         </Link>
 
+        {/* Changer de professionnel seulement s'il en reste un en réserve */}
+        {sollicite && enReserve > 0 && (
+          <div className="mt-3">
+            <ReorienterDemandeLien demandeId={demandeId} />
+          </div>
+        )}
+
         {/* Zone de hauteur fixe : pas de décalage entre lien et confirmation */}
-        <div className="mt-3">
-          <AnnulerDemandeLien demandeId={suivi.demandeId} />
+        <div className="mt-1">
+          <AnnulerDemandeLien demandeId={demandeId} />
         </div>
       </div>
     </div>

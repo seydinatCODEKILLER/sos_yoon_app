@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { parseDateServeur } from "../lib/formatDateDemande";
 
 /** Secondes écoulées depuis une date ISO, rafraîchies chaque seconde */
-export function useSecondesEcoulees(depuisIso: string) {
+export function useSecondesEcoulees(depuisIso: string | null | undefined) {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
@@ -9,5 +10,9 @@ export function useSecondesEcoulees(depuisIso: string) {
     return () => clearInterval(t);
   }, []);
 
-  return Math.max(0, Math.floor((now - new Date(depuisIso).getTime()) / 1000));
+  if (!depuisIso) return 0;
+  return Math.max(
+    0,
+    Math.floor((now - parseDateServeur(depuisIso).getTime()) / 1000),
+  );
 }

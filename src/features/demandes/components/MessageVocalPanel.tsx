@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { ChevronRight, Loader2, Mic, Square, SquarePen } from "lucide-react";
 import {
@@ -6,7 +6,7 @@ import {
   useAudioRecorder,
 } from "../hooks/useVoiceRecorder";
 import { formatDuree } from "../lib/formatDuration";
-import { useEnvoyerMessageVocal } from "../hooks/useEnvoyerMessageVocal";
+import { useMotsClesFrequents } from "../hooks/useMotsClesFrequents";
 import { MessageVocalEnregistre } from "./MessageVocalEnregistre";
 import { useLocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
@@ -89,11 +89,13 @@ interface MessageVocalPanelProps {
 
 export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
   const localisation = useLocalisationPartagee();
-  const { envoyer, isSending } = useEnvoyerDemande();
+  const { envoyerVocale, isSending } = useEnvoyerDemande();
   const reduceMotion = useReducedMotion();
   const { supported, status, elapsed, audio, error, start, stop, reset } =
     useAudioRecorder();
-  const { submit, isSubmitting } = useEnvoyerMessageVocal();
+  const [motsCles, setMotsCles] = useState<string[]>([]);
+  const { data: motsClesFrequents, isLoading: loadingMotsCles } =
+    useMotsClesFrequents();
   const { estVisiteur, garderVocale, isSaving } = useDemandeVisiteur();
 
   useEffect(() => {
@@ -109,12 +111,21 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
       await garderVocale(audio, localisation.localisation);
       return;
     }
-    const id = await submit({
+    // Une seule requête : audio + position + mots-clés (POST /demandes, spec 8.1)
+    await envoyerVocale({
       fichier: audio.blob,
       dureeSecondes: audio.dureeSecondes,
+      motsCles,
+      localisation: localisation.localisation,
     });
-    if (id) await envoyer(id, localisation.localisation);
   };
+
+  const toggleMotCle = (motCle: string) =>
+    setMotsCles((prev) =>
+      prev.includes(motCle)
+        ? prev.filter((m) => m !== motCle)
+        : [...prev, motCle],
+    );
 
   if (!supported) {
     return (
@@ -136,8 +147,12 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
         audio={audio}
         onReset={reset}
         onSend={handleSend}
-        isSubmitting={isSubmitting || isSending || isSaving}
+        isSubmitting={isSending || isSaving}
         localisation={localisation}
+        motsClesFrequents={motsClesFrequents}
+        loadingMotsCles={loadingMotsCles}
+        motsCles={motsCles}
+        onToggleMotCle={toggleMotCle}
       />
     );
   }

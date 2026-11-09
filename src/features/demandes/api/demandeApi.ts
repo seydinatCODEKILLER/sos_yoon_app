@@ -1,79 +1,64 @@
 import { apiClient } from "@/shared/lib/apiClient";
 import type {
-  Commune,
-  CreerDemandePayload,
-  DemandeAudio,
+  CreerDemandeEcritePayload,
+  CreerDemandeVocalePayload,
+  DemandeCreee,
   DemandeDetail,
   DemandeResume,
-  EnvoyerAudioPayload,
-  LocalisationPayload,
-  LocalisationResultat,
-  ModifierDemandePayload,
   MotCleFrequent,
   SuiviDemande,
 } from "../types/demande.types";
 
 export interface DemandesApi {
-  creer(payload: CreerDemandePayload): Promise<DemandeDetail>;
-  lister(): Promise<DemandeResume[]>;
-  modifier(id: string, payload: ModifierDemandePayload): Promise<DemandeDetail>;
-  motsClesFrequents(): Promise<MotCleFrequent[]>;
-  envoyerAudio(id: string, payload: EnvoyerAudioPayload): Promise<DemandeAudio>;
-  definirLocalisation(
-    id: string,
-    payload: LocalisationPayload,
-  ): Promise<LocalisationResultat>;
-  envoyer(id: string): Promise<DemandeDetail>;
-  communes(): Promise<Commune[]>;
+  /** 8.1 : création + envoi en une seule requête (multipart) */
+  creerEcrite(payload: CreerDemandeEcritePayload): Promise<DemandeCreee>;
+  /** 8.1 : demande vocale, même route, avec le fichier audio */
+  creerVocale(payload: CreerDemandeVocalePayload): Promise<DemandeCreee>;
+  /** 8.3 */
   suivi(id: string): Promise<SuiviDemande>;
-  annuler(id: string): Promise<void>;
-  elargir(id: string): Promise<void>;
+  /** 8.2 */
+  detail(id: string): Promise<DemandeDetail>;
+  /** 8.6 */
+  annuler(id: string, motif?: string): Promise<DemandeDetail>;
+  /** 8.7 : renvoie le suivi à jour (409 AUCUN_PROFESSIONNEL_SUIVANT si la file est vide) */
+  reorienter(id: string): Promise<SuiviDemande>;
+  /** 6.6 (public) */
+  motsClesFrequents(): Promise<MotCleFrequent[]>;
+  /** À MIGRER vers GET /demandes/moi à l'étape « liste » */
   lister(): Promise<DemandeResume[]>;
 }
 
 export const demandesApi: DemandesApi = {
-  creer: async (payload) =>
-    (await apiClient.post<DemandeDetail>("/demandes", payload)).data,
-
-  modifier: async (id, payload) =>
-    (await apiClient.put<DemandeDetail>(`/demandes/${id}`, payload)).data,
-
-  // Endpoint public (section 6.8) ; à déplacer dans shared/ quand d'autres features auront besoin des référentiels
-  motsClesFrequents: async () =>
-    (await apiClient.get<MotCleFrequent[]>("/referentiels/mots-cles-frequents"))
-      .data,
-
-  envoyerAudio: async (id, { fichier, dureeSecondes }) => {
+  async creerEcrite({ description, motsCles, localisation }) {
+    // Le backend attend un multipart : champ « donnees » = JSON sous forme de texte.
+    // Ne pas fixer de Content-Type : le navigateur ajoute lui-même la boundary.
     const form = new FormData();
+    form.append(
+      "donnees",
+      JSON.stringify({
+        typeSaisie: "TEXTE",
+        description,
+        motsCles,
+        localisation,
+      }),
+    );
+    const { data } = await apiClient.post<DemandeCreee>("/demandes", form);
+    return data;
+  },
+
+  async creerVocale({ fichier, dureeSecondes, motsCles, localisation }) {
     const extension = fichier.type.includes("mp4")
       ? "m4a"
       : fichier.type.includes("ogg")
         ? "ogg"
         : "webm";
-    form.append("fichier", fichier, `message.${extension}`);
-    form.append("dureeSecondes", String(dureeSecondes));
-    // Axios retire lui-même le Content-Type JSON pour un FormData
-    return (await apiClient.post<DemandeAudio>(`/demandes/${id}/audio`, form))
-      .data;
-  },
-
-  async definirLocalisation(id, payload) {
-    const { data } = await apiClient.put<LocalisationResultat>(
-      `/demandes/${id}/localisation`,
-      payload,
+    const form = new FormData();
+    form.append(
+      "donnees",
+      JSON.stringify({ typeSaisie: "VOCAL", dureeSecondes, motsCles, localisation }),
     );
-    return data;
-  },
-
-  async envoyer(id) {
-    const { data } = await apiClient.post<DemandeDetail>(
-      `/demandes/${id}/envoyer`,
-    );
-    return data;
-  },
-
-  async communes() {
-    const { data } = await apiClient.get<Commune[]>("/referentiels/communes");
+    form.append("fichier", fichier, `message-vocal.${extension}`);
+    const { data } = await apiClient.post<DemandeCreee>("/demandes", form);
     return data;
   },
 
@@ -82,14 +67,35 @@ export const demandesApi: DemandesApi = {
     return data;
   },
 
-  async annuler(id) {
-    await apiClient.post(`/demandes/${id}/annuler`);
+  async detail(id) {
+    const { data } = await apiClient.get<DemandeDetail>(`/demandes/${id}`);
+    return data;
   },
 
-  async elargir(id) {
-    await apiClient.post(`/demandes/${id}/elargir`);
+  async annuler(id, motif) {
+    const { data } = await apiClient.post<DemandeDetail>(
+      `/demandes/${id}/annuler`,
+      motif ? { motif } : {},
+    );
+    return data;
   },
 
+  async reorienter(id) {
+    const { data } = await apiClient.post<SuiviDemande>(
+      `/demandes/${id}/reorienter`,
+    );
+    return data;
+  },
+
+  // Endpoint public (6.6)
+  async motsClesFrequents() {
+    const { data } = await apiClient.get<MotCleFrequent[]>(
+      "/referentiels/mots-cles-frequents",
+    );
+    return data;
+  },
+
+  // TODO étape « liste » : GET /demandes/moi?statut=…&page=…&taille=… + /demandes/moi/compteurs
   async lister() {
     const { data } = await apiClient.get<DemandeResume[]>("/demandes");
     return data;

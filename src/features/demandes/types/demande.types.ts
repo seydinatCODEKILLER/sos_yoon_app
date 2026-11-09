@@ -5,25 +5,156 @@ export interface MotCleFrequent {
   libelle: string;
 }
 
-export interface CreerDemandePayload {
-  typeSaisie: TypeSaisie;
-  /** Obligatoire pour TEXTE, 1 000 caractères max. Omise pour VOCAL. */
-  description?: string;
-  motsCles: string[];
+/* ───────────── Création (spec 8.1) ───────────── */
+
+/** Position envoyée avec la demande : latitude et longitude sont obligatoires */
+export interface LocalisationPayload {
+  latitude: number;
+  longitude: number;
+  /** Nom du lieu affiché au citoyen */
+  libelle: string;
 }
 
-export interface ModifierDemandePayload {
-  description?: string;
-  motsCles?: string[];
+export interface CreerDemandeEcritePayload {
+  /** Obligatoire, 1 000 caractères max */
+  description: string;
+  motsCles: string[];
+  localisation: LocalisationPayload;
+}
+
+/** Demande vocale : audio (webm, mp4 ou ogg ; 5 Mo et 120 s maximum) envoyé dans le champ « fichier » */
+export interface CreerDemandeVocalePayload {
+  fichier: Blob;
+  /** 1 à 120 */
+  dureeSecondes: number;
+  /** Facultatifs, mais utiles : sans transcription, ils guident la qualification */
+  motsCles: string[];
+  localisation: LocalisationPayload;
+}
+
+/** Réponse 202 de POST /demandes */
+export interface DemandeCreee {
+  id: string;
+  reference: string;
+  statut: "ENVOYEE";
+  dateEnvoi: string;
+  localisation: {
+    libelle: string | null;
+    rayonKm: number;
+    secteur: string | null;
+    professionnelsDisponiblesDansZone: boolean;
+  };
+}
+
+/* ───────────── Statuts ───────────── */
+
+/**
+ * Statuts renvoyés par le backend.
+ * - ENVOYEE / EN_ATTENTE_TRIAGE / ANALYSEE_IA / EN_DISPATCH : analyse en cours
+ * - EN_ATTENTE_ACCEPTATION : un professionnel est sollicité
+ * - RECHERCHE_PROFESSIONNEL : plus personne dans la file, transmis à l'équipe SOS Yoon
+ * - ACCEPTEE / EN_COURS : un professionnel est affecté
+ * - TERMINEE / ANNULEE / EXPIRE_FALLBACK : demande close
+ */
+export type StatutDemande =
+  | "BROUILLON"
+  | "ENVOYEE"
+  | "EN_ATTENTE_TRIAGE"
+  | "ANALYSEE_IA"
+  | "EN_DISPATCH"
+  | "RECHERCHE_PROFESSIONNEL"
+  | "EN_ATTENTE_ACCEPTATION"
+  | "ACCEPTEE"
+  | "EN_COURS"
+  | "TERMINEE"
+  | "REFUSEE"
+  | "ANNULEE"
+  | "EXPIRE_FALLBACK";
+
+export type NiveauUrgence = "URGENT" | "NORMAL" | string;
+
+/* ───────────── Professionnel (spec <ProfessionnelPublic>) ───────────── */
+
+export interface SpecialitePro {
+  id: string;
+  libelle: string;
+  dominante: boolean;
+}
+
+export interface ProfessionnelPublic {
+  id: string;
+  /** "Maître Amadou Diop" */
+  nomComplet: string;
+  /** "Avocat à la Cour" */
+  titre: string | null;
+  typeProfession: string | null;
+  organisme: string | null;
+  matricule: string | null;
+  anneesExperience: number | null;
+  langues: string[] | null;
+  specialites: SpecialitePro[] | null;
+  /** Peut être relative (/uploads/...) : toujours passer par mediaUrl() */
+  photoUrl: string | null;
+  verifie: boolean;
+  noteMoyenne: number | null;
+  nombreAvis: number | null;
+  enLigne: boolean;
+  /** "À proximité de vous (Dakar)" */
+  proximite: string | null;
+  /** Chiffres seulement ("221771234567", pour tel: et wa.me). Présent uniquement pour le professionnel affecté. */
+  telephone?: string | null;
+}
+
+/* ───────────── Suivi (spec 8.3) ───────────── */
+
+export type CodeEtape =
+  | "DEMANDE_ENVOYEE"
+  | "SITUATION_ANALYSEE"
+  | "PROFESSIONNEL_IDENTIFIE"
+  | "DEMANDE_ACCEPTEE"
+  | "ECHANGE_EN_DIRECT"
+  | "CLOTURE";
+
+export type EtatEtape = "FAIT" | "EN_COURS" | "A_VENIR";
+
+export interface EtapeSuivi {
+  code: CodeEtape;
+  libelle: string;
+  etat: EtatEtape;
+  date: string | null;
+}
+
+export interface SollicitationSuivi {
+  rang: number;
+  statut: string;
+  /** Présent seulement pour la sollicitation en cours */
+  expireLe?: string | null;
+  professionnel: ProfessionnelPublic | null;
+}
+
+export interface SuiviDemande {
+  reference: string;
+  titre: string | null;
+  statut: StatutDemande;
+  niveauUrgence: NiveauUrgence | null;
+  etapes: EtapeSuivi[];
+  sollicitationEnCours: SollicitationSuivi | null;
+  fileReserve: SollicitationSuivi[];
+  professionnelAffecte: ProfessionnelPublic | null;
+  tempsMoyenMinutes: number | null;
+  /** "800 00 12 12" */
+  numeroUrgence: string | null;
+}
+
+/* ───────────── Détail (spec 8.2) ───────────── */
+
+export interface DemandeAudio {
+  url: string;
+  dureeSecondes: number;
 }
 
 export interface EnvoyerAudioPayload {
   fichier: Blob;
-  dureeSecondes: number;
-}
-
-export interface DemandeAudio {
-  url: string;
   dureeSecondes: number;
 }
 
@@ -34,7 +165,6 @@ export interface DemandeLocalisation {
   longitudeApprox: number | null;
 }
 
-/** <DemandeDetail> du document (section 2) */
 export interface DemandeDetail {
   id: string;
   reference: string;
@@ -44,132 +174,36 @@ export interface DemandeDetail {
   motsCles: string[];
   audio: DemandeAudio | null;
   transcription: string | null;
-  /** BROUILLON, EN_ATTENTE_ACCEPTATION, EN_COURS… (liste complète non fixée par le document) */
-  statut: string;
-  niveauUrgence: string | null;
+  statut: StatutDemande;
+  niveauUrgence: NiveauUrgence | null;
   matiere: { id: string; libelle: string } | null;
   metiersRequis: string[];
   localisation: DemandeLocalisation | null;
   dateCreation: string;
   dateEnvoi: string | null;
-  professionnel: Record<string, unknown> | null;
-  conversationId: string | null;
+  professionnel: ProfessionnelPublic | null;
   compteRenduDisponible: boolean;
   avisDonne: boolean;
 }
 
-export interface LocalisationPayload {
-  latitude: number | null;   // null si le GPS est refusé
-  longitude: number | null;
-  libelle: string;
-  communeId?: number | null; // obligatoire si latitude/longitude sont null
-}
+/* ───────────── Liste « Mes demandes » ─────────────
+ * À MIGRER à l'étape suivante (GET /demandes/moi + compteurs).
+ * Ces types restent tels quels pour que les écrans de liste compilent encore. */
 
-export interface LocalisationResultat {
-  libelle: string;
-  rayonKm: number;
-  secteur: string;
-  professionnelsDisponiblesDansZone: boolean;
-}
-
-export interface Commune {
-  id: number;
-  nom: string;
-}
-
-export type EtapeSuivi =
-  | "ENREGISTREE"
-  | "ANALYSEE"
-  | "NOTIFIES"
-  | "ACCEPTEE"
-  /** Délai écoulé sans qu'aucun professionnel n'accepte */
-  | "AUCUN_PROFESSIONNEL";
-
-export interface ProfessionnelAccepte {
-  id: string;
-  /** "Me Mamadou Diallo" */
-  nomComplet: string;
-  /** "huissier de justice" */
-  metier: string;
-  /** "Chambre Nationale des Huissiers de Justice" */
-  organisme: string;
-  verifie: boolean;
-  disponibleImmediatement: boolean;
-  distanceKm: number;
-  /** "Dakar-Plateau" */
-  communeLibelle: string;
-  delaiContactMinutes: number;
-  photoUrl: string | null;
-  /** Format international, chiffres seulement : "221771234567" (sert à tel: et wa.me) */
-  telephone: string;
-    /** "Ordre des Huissiers du Sénégal" ; null si le métier n'a pas d'ordre */
-  ordre: string | null;
-}
-
-export interface SuiviDemande {
-  demandeId: string;
-  statut: string;
-  etape: EtapeSuivi;
-  /** "constat d'huissier" */
-  matiereLibelle: string | null;
-    /** "huissiers", "avocats"… ; null si plusieurs métiers ou inconnu */
-  metierPluriel: string | null;
-  nbProfessionnelsNotifies: number;
-  /** true quand la recherche s'est étendue aux secteurs mitoyens */
-  zoneElargie: boolean;
-  dateEnvoi: string;
-  dateAcceptation: string | null;
-  professionnel: ProfessionnelAccepte | null;
-    /** Étapes franchies, avec leur heure (sert au détail de la demande) */
-  jalons: JalonDemande[];
-
-    /** Renseigné dès que la recherche a été élargie, sinon null */
-  perimetreElargi: PerimetreElargi | null;
-  professionnelsContactes: ProfessionnelContacte[];
-    /** "SY-00249", sert au message WhatsApp pré-rempli */
-  reference: string;
-    /** false une fois la recherche déjà élargie au maximum */
-  elargissementPossible: boolean;
-}
-
-/** Où en est la demande, pour la mini-progression de la liste */
 export type PhaseDemande =
   | "ENVOYEE"
   | "PROS_NOTIFIES"
   | "ACCEPTEE"
   | "CONTACT_ETABLI";
 
-/** Statut simplifié pour l'affichage de la liste */
 export type StatutListe = "EN_COURS" | "TERMINEE" | "SANS_REPONSE" | "ANNULEE";
 
 export interface DemandeResume {
   id: string;
   reference: string;
-  /** "Constat d'huissier" */
   titre: string;
   dateCreation: string;
   statut: StatutListe;
   phase: PhaseDemande;
-  /** "Me Mamadou Diallo" une fois un professionnel assigné */
   professionnelNom: string | null;
-}
-
-/** Date à laquelle une étape du parcours a été franchie */
-export interface JalonDemande {
-  phase: PhaseDemande;
-  date: string;
-}
-
-export interface PerimetreElargi {
-  /** "Grand Dakar" */
-  zone: string;
-  /** ["Médina", "Fann", "Almadies"] */
-  secteurs: string[];
-}
-
-export interface ProfessionnelContacte {
-  id: string;
-  /** Nom abrégé par le backend : "Me Birane T." */
-  nom: string;
-  statut: "NOTIFIE" | "VU";
 }

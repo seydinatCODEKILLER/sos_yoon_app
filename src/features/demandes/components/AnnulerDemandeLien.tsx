@@ -12,7 +12,7 @@ export function AnnulerDemandeLien({ demandeId }: { demandeId: string }) {
         <>
           <button
             type="button"
-            onClick={annuler}
+            onClick={() => annuler()}
             disabled={isCancelling}
             className="font-semibold text-red-600 hover:underline disabled:opacity-60"
           >

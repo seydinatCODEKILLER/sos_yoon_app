@@ -1,8 +1,18 @@
+/**
+ * Le backend envoie des dates sans fuseau ("2026-11-09T16:44:12.123456").
+ * Sans correctif, le navigateur les lirait en heure locale : on les traite comme de l'UTC,
+ * comme le montre la spécification ("…Z").
+ */
+export function parseDateServeur(iso: string): Date {
+  const aFuseau = /(Z|[+-]\d{2}:?\d{2})$/i.test(iso);
+  return new Date(aFuseau ? iso : `${iso}Z`);
+}
+
 const debutDeJour = (d: Date) =>
   new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 
 export function formatDateDemande(iso: string) {
-  const date = new Date(iso);
+  const date = parseDateServeur(iso);
   const jours = Math.round(
     (debutDeJour(new Date()) - debutDeJour(date)) / (24 * 3600 * 1000),
   );
@@ -25,7 +35,7 @@ export function formatDateDemande(iso: string) {
 
 /** "14:32" */
 export function formatHeure(iso: string) {
-  return new Date(iso).toLocaleTimeString("fr-FR", {
+  return parseDateServeur(iso).toLocaleTimeString("fr-FR", {
     hour: "2-digit",
     minute: "2-digit",
   });

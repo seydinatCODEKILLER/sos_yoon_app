@@ -6,7 +6,7 @@ import { SuiviRecherche } from "../components/SuiviRecherche";
 import { SuiviAccepte } from "../components/SuiviAccepte";
 import { SuiviAucunProfessionnel } from "../components/SuiviAucunProfessionnel";
 import { DemandeDetailTerminee } from "../components/DemandeDetailTerminee";
-import { SuiviElargissement } from "../components/SuiviElargissement";
+import { estStatutFinal } from "../lib/demandeStatus";
 
 export function SuiviDemandePage() {
   const { id } = useParams<{ id: string }>();
@@ -23,24 +23,26 @@ export function SuiviDemandePage() {
         />
       </div>
     );
-  } else if (error || !suivi) {
+  } else if (error || !suivi || !id) {
     contenu = (
       <p role="alert" className="py-24 text-center text-sm text-red-600">
         {demandeErrorMessage(error)}
       </p>
     );
-  } else if (suivi.statut === "TERMINEE" || suivi.statut === "ANNULEE") {
+  } else if (estStatutFinal(suivi.statut)) {
+    // Terminée, annulée ou restée sans réponse
     contenu = <DemandeDetailTerminee suivi={suivi} />;
-  } else if (suivi.etape === "ACCEPTEE" && suivi.professionnel) {
-    contenu = <SuiviAccepte suivi={suivi} pro={suivi.professionnel} />;
-  } else if (suivi.etape === "AUCUN_PROFESSIONNEL") {
-    contenu = <SuiviAucunProfessionnel suivi={suivi} />;
-  } else if (suivi.perimetreElargi) {
+  } else if (suivi.professionnelAffecte) {
+    // ACCEPTEE / EN_COURS : un professionnel est affecté
     contenu = (
-      <SuiviElargissement suivi={suivi} perimetre={suivi.perimetreElargi} />
+      <SuiviAccepte suivi={suivi} pro={suivi.professionnelAffecte} />
     );
+  } else if (suivi.statut === "RECHERCHE_PROFESSIONNEL") {
+    // File épuisée : transmise à l'équipe SOS Yoon
+    contenu = <SuiviAucunProfessionnel demandeId={id} suivi={suivi} />;
   } else {
-    contenu = <SuiviRecherche suivi={suivi} />;
+    // Analyse en cours, ou professionnel sollicité (EN_ATTENTE_ACCEPTATION)
+    contenu = <SuiviRecherche demandeId={id} suivi={suivi} />;
   }
 
   return (

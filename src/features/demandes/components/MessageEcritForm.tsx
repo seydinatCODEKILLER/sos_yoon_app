@@ -6,9 +6,8 @@ import {
   demandeEcriteSchema,
   type DemandeEcriteValues,
 } from "../schema/demandeEcrite.schema";
-import { useDemandeBrouillon } from "../store/demandeBrouillon.store";
+import { demandeDetailChamp } from "../lib/demandeErrors";
 import { useMotsClesFrequents } from "../hooks/useMotsClesFrequents";
-import { useSauvegarderBrouillon } from "../hooks/useSauvegarderBrouillon";
 import { useLocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
 import { LocalisationCard } from "./LocalisationCard";
@@ -20,9 +19,6 @@ import { useDemandeVisiteur } from "../hooks/useDemandeVisiteur";
 const MESSAGE_CLAIR_MIN = 30;
 
 export function MessageEcritForm() {
-  const draftDescription = useDemandeBrouillon((s) => s.description);
-  const draftMotsCles = useDemandeBrouillon((s) => s.motsCles);
-  const { submit, isSubmitting } = useSauvegarderBrouillon();
   const { envoyer, isSending } = useEnvoyerDemande();
   const localisation = useLocalisationPartagee();
   const { estVisiteur, garderEcrite } = useDemandeVisiteur();
@@ -36,8 +32,8 @@ export function MessageEcritForm() {
   const form = useForm<DemandeEcriteValues>({
     resolver: zodResolver(demandeEcriteSchema),
     defaultValues: {
-      description: restaure?.description ?? draftDescription,
-      motsCles: restaure?.motsCles ?? draftMotsCles,
+      description: restaure?.description ?? "",
+      motsCles: restaure?.motsCles ?? [],
     },
   });
 
@@ -45,7 +41,6 @@ export function MessageEcritForm() {
   const motsCles = form.watch("motsCles");
   const error = form.formState.errors.description;
 
-  const busy = isSubmitting || isSending;
   const positionPartagee = localisation.status === "shared";
   const messageClair = !error && description.trim().length >= MESSAGE_CLAIR_MIN;
 
@@ -57,13 +52,22 @@ export function MessageEcritForm() {
   };
 
   const onSubmit = form.handleSubmit(async (values) => {
-    if (!localisation.localisation) return;
+    const position = localisation.localisation;
+    if (!position) return;
     if (estVisiteur) {
-      garderEcrite(values, localisation.localisation);
+      garderEcrite(values, position);
       return;
     }
-    const draft = await submit(values);
-    if (draft) await envoyer(draft.id, localisation.localisation);
+    const resultat = await envoyer({
+      description: values.description.trim(),
+      motsCles: values.motsCles,
+      localisation: position,
+    });
+    if (!resultat.ok) {
+      // 400 VALIDATION_ERREUR : le serveur désigne le champ fautif
+      const message = demandeDetailChamp(resultat.error, "description");
+      if (message) form.setError("description", { message });
+    }
   });
 
   return (
@@ -167,14 +171,14 @@ export function MessageEcritForm() {
       <div className="border-t border-ink/8 pt-4 md:border-0 md:pt-0">
         <button
           type="submit"
-          disabled={!positionPartagee || busy}
+          disabled={!positionPartagee || isSending}
           className={`inline-flex h-13 w-full items-center justify-center gap-2 rounded-xl px-6 text-sm font-semibold transition md:w-auto ${
             positionPartagee
               ? "bg-signal text-paper shadow-[0_6px_18px_rgba(249,97,13,0.3)] hover:brightness-105 disabled:opacity-60"
               : "bg-ink/8 text-ink/40"
           }`}
         >
-          {busy ? (
+          {isSending ? (
             <>
               <Loader2 className="size-4 animate-spin" aria-hidden />
               Envoi en cours…

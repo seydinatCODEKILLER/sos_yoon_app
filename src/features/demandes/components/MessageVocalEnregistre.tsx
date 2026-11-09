@@ -1,8 +1,10 @@
 import { Loader2, Mic, RotateCw, Send } from "lucide-react";
 import { LecteurAudio } from "./LecteurAudio";
 import { LocalisationCard } from "./LocalisationCard";
+import { MotsClesPicker } from "./MotsClesPicker";
 import type { AudioEnregistre } from "../hooks/useVoiceRecorder";
 import type { LocalisationPartagee } from "../hooks/useLocalisationPartagee";
+import type { MotCleFrequent } from "../types/demande.types";
 import { formatHorloge } from "../lib/formatDuration";
 
 interface MessageVocalEnregistreProps {
@@ -11,6 +13,10 @@ interface MessageVocalEnregistreProps {
   onSend: () => void;
   isSubmitting: boolean;
   localisation: LocalisationPartagee;
+  motsClesFrequents: MotCleFrequent[] | undefined;
+  loadingMotsCles: boolean;
+  motsCles: string[];
+  onToggleMotCle: (motCle: string) => void;
 }
 
 export function MessageVocalEnregistre({
@@ -19,6 +25,10 @@ export function MessageVocalEnregistre({
   onSend,
   isSubmitting,
   localisation,
+  motsClesFrequents,
+  loadingMotsCles,
+  motsCles,
+  onToggleMotCle,
 }: MessageVocalEnregistreProps) {
   const pret = localisation.status === "shared" && !!localisation.localisation;
 
@@ -61,6 +71,20 @@ export function MessageVocalEnregistre({
           <LecteurAudio src={audio.url} blob={audio.blob} dureeSecondes={audio.dureeSecondes} />
         </div>
       </section>
+
+      {/* Facultatif : aide à trouver plus vite le bon professionnel */}
+      <div className="mt-4 rounded-2xl border border-ink/10 bg-white p-5 shadow-sm">
+        <p className="mb-3 text-xs leading-snug text-ink/60">
+          Facultatif : indiquer le sujet de votre demande aide à trouver plus
+          vite le bon professionnel.
+        </p>
+        <MotsClesPicker
+          items={motsClesFrequents}
+          loading={loadingMotsCles}
+          selected={motsCles}
+          onToggle={onToggleMotCle}
+        />
+      </div>
 
       <div className="mt-4">
         <LocalisationCard state={localisation} />
