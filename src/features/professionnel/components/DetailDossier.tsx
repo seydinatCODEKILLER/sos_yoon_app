@@ -10,24 +10,25 @@ import {
   Phone,
   Play,
 } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { CARTE } from "@/shared/lib/styleCarte";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import {
   useChangerStatutDossier,
   useCloturerDossier,
   useDossierDetail,
 } from "../hooks/useDossiers";
 import { formaterTelephone } from "../lib/contactClient";
+import { codeErreur, messageDossier } from "../lib/dossier";
 import { formaterDateCourte, initiales } from "../lib/formatDashboard";
 import { STATUT_DOSSIER } from "../lib/statutDossier";
-import { DialogCloture } from "./DialogCloture";
 import { BoutonsContactClient } from "./BoutonsContactClient";
-
-const messageErreur = (e: unknown, defaut: string) => (e as Partial<ApiErreur>).message ?? defaut;
+import { DialogCloture } from "./DialogCloture";
+import { DocumentsDossier } from "./DocumentsDossier";
+import { LecteurAudio } from "./LecteurAudio";
 
 interface DetailDossierProps {
   demandeId: string;
@@ -36,7 +37,7 @@ interface DetailDossierProps {
 }
 
 export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
-  const { data: d, isError } = useDossierDetail(demandeId);
+  const { data: d, isError, error, refetch } = useDossierDetail(demandeId);
   const changerStatut = useChangerStatutDossier();
   const cloturer = useCloturerDossier();
   const [clotureOuverte, setClotureOuverte] = useState(false);
@@ -48,30 +49,46 @@ export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
     try {
       await changerStatut.mutateAsync({ id: demandeId, statut });
     } catch (e) {
-      setErreur(messageErreur(e, "Impossible de modifier le statut du dossier."));
+      setErreur(messageDossier(e, "Impossible de modifier le statut du dossier."));
     }
   }
 
-  async function confirmerCloture(commentaire: string) {
+  async function confirmerCloture(commentaire: string, compteRendu: File | null) {
     setErreurCloture(null);
     try {
-      await cloturer.mutateAsync({ id: demandeId, commentaire });
+      await cloturer.mutateAsync({ id: demandeId, commentaire, compteRendu });
       setClotureOuverte(false);
     } catch (e) {
-      setErreurCloture(messageErreur(e, "Impossible de clôturer le dossier."));
+      // Déjà clôturé ailleurs : le dossier est relu, inutile de garder la fenêtre ouverte
+      if (codeErreur(e) === "DOSSIER_DEJA_CLOTURE") setClotureOuverte(false);
+      else setErreurCloture(messageDossier(e, "Impossible de clôturer le dossier."));
     }
   }
 
   if (isError) {
+    // 403 / 404 : le dossier n'existe pas pour ce professionnel ; autre erreur : on peut réessayer
+    const introuvable = ["ACCES_REFUSE", "INTROUVABLE"].includes(codeErreur(error));
     return (
       <div className="grid min-h-64 place-items-center text-center">
         <div className="space-y-3">
-          <p className="text-sm font-semibold text-ink">Dossier introuvable</p>
-          {onRetour && (
-            <Button type="button" variant="outline" onClick={onRetour}>
-              Retour aux dossiers
-            </Button>
+          <p className="text-sm font-semibold text-ink">
+            {introuvable ? "Dossier introuvable" : "Impossible de charger ce dossier"}
+          </p>
+          {!introuvable && (
+            <p className="text-xs text-ink/60">{messageDossier(error, "Réessayez dans un instant.")}</p>
           )}
+          <div className="flex justify-center gap-2">
+            {!introuvable && (
+              <Button type="button" variant="outline" onClick={() => void refetch()}>
+                Réessayer
+              </Button>
+            )}
+            {onRetour && (
+              <Button type="button" variant="outline" onClick={onRetour}>
+                Retour aux dossiers
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -86,10 +103,14 @@ export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
     );
   }
 
-  const nom = `${d.citoyen.prenom} ${d.citoyen.nom}`;
+  const c = d.citoyen;
+  const nom = c ? [c.prenom, c.nom].filter(Boolean).join(" ") || "Client" : "Client";
   const statut = STATUT_DOSSIER[d.statutDossier];
   const objet = d.demande.description ?? d.demande.transcription ?? "Aucune description.";
   const ouvert = d.statutDossier !== "CLOTURE";
+  const urlAudio = mediaUrl(d.demande.audio?.url);
+  // Sous l'audio, la transcription n'est utile que si elle n'a pas déjà servi d'objet
+  const transcription = d.demande.description ? d.demande.transcription : null;
 
   return (
     <motion.div variants={conteneur} initial="cache" animate="visible" className="space-y-5">
@@ -124,20 +145,24 @@ export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
           </div>
           <p className="font-mono text-[11px] font-semibold text-ink/50">{d.reference}</p>
           <ul className="space-y-0.5 text-xs text-ink/65">
-            <li className="flex items-center gap-1.5">
-              <Phone className="size-3.5" aria-hidden />
-              {formaterTelephone(d.citoyen.telephone)}
-            </li>
-            {d.citoyen.email && (
+            {c?.telephone && (
               <li className="flex items-center gap-1.5">
-                <Mail className="size-3.5" aria-hidden />
-                {d.citoyen.email}
+                <Phone className="size-3.5" aria-hidden />
+                {formaterTelephone(c.telephone)}
               </li>
             )}
-            <li className="flex items-center gap-1.5">
-              <MapPin className="size-3.5" aria-hidden />
-              {d.demande.libelleLocalisation}
-            </li>
+            {c?.email && (
+              <li className="flex items-center gap-1.5">
+                <Mail className="size-3.5" aria-hidden />
+                {c.email}
+              </li>
+            )}
+            {(d.demande.libelleLocalisation ?? c?.commune) && (
+              <li className="flex items-center gap-1.5">
+                <MapPin className="size-3.5" aria-hidden />
+                {d.demande.libelleLocalisation ?? c?.commune}
+              </li>
+            )}
           </ul>
         </div>
       </motion.header>
@@ -145,7 +170,9 @@ export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
       {/* Contact et actions */}
       {ouvert && (
         <motion.section variants={apparition} className="space-y-3">
-          <BoutonsContactClient telephone={d.citoyen.telephone} reference={d.reference} />
+          {c?.telephone && (
+            <BoutonsContactClient telephone={c.telephone} reference={d.reference} />
+          )}
 
           <div className="flex flex-wrap items-center gap-2">
             {d.statutDossier === "EN_COURS" ? (
@@ -208,16 +235,36 @@ export function DetailDossier({ demandeId, onRetour }: DetailDossierProps) {
                 <span aria-hidden className="size-1.5 rounded-full bg-signal" />
                 Demande initiale acceptée
               </h3>
-              <span className="text-[11px] text-ink/50">
-                Acceptée le {formaterDateCourte(d.demande.dateAcceptation)} via SOS Yoon
-              </span>
+              {d.demande.dateAcceptation && (
+                <span className="text-[11px] text-ink/50">
+                  Acceptée le {formaterDateCourte(d.demande.dateAcceptation)} via SOS Yoon
+                </span>
+              )}
             </div>
             <p className="text-sm leading-relaxed text-ink/80">
               <strong className="text-ink">Objet du dossier :</strong> {d.titre ? `${d.titre}. ` : ""}
               {objet}
             </p>
+
+            {d.demande.audio && urlAudio && (
+              <div className="space-y-1.5 border-t border-signal/15 pt-3">
+                <p className="text-xs font-semibold text-ink/70">Message vocal du client</p>
+                <LecteurAudio
+                  key={urlAudio}
+                  url={urlAudio}
+                  dureeSecondes={d.demande.audio.dureeSecondes ?? 0}
+                />
+                {transcription && (
+                  <p className="text-xs leading-relaxed text-ink/60 italic">« {transcription} »</p>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
+      </motion.div>
+
+      <motion.div variants={apparition}>
+        <DocumentsDossier demandeId={demandeId} />
       </motion.div>
 
       {!ouvert && (

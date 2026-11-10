@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { CircleAlert, FolderCheck } from "lucide-react";
+import { useRef, useState, type ChangeEvent } from "react";
+import { CircleAlert, FileText, FolderCheck, Paperclip, X } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Dialog,
@@ -9,23 +9,37 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Label } from "@/shared/components/ui/label";
 import { Textarea } from "@/shared/components/ui/textarea";
+import { TAILLE_MAX_COMPTE_RENDU, formaterTaille } from "../lib/dossier";
 
 interface FormulaireClotureProps {
   enCours: boolean;
   erreur: string | null;
   onAnnuler: () => void;
-  onConfirmer: (commentaire: string) => void;
+  onConfirmer: (commentaire: string, compteRendu: File | null) => void;
 }
 
 function FormulaireCloture({ enCours, erreur, onAnnuler, onConfirmer }: FormulaireClotureProps) {
   const [commentaire, setCommentaire] = useState("");
+  const [fichier, setFichier] = useState<File | null>(null);
+  const [erreurFichier, setErreurFichier] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  function choisir(e: ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    e.target.value = "";
+    if (!f) return;
+    if (f.type !== "application/pdf") return setErreurFichier("Joignez un fichier PDF.");
+    if (f.size > TAILLE_MAX_COMPTE_RENDU) return setErreurFichier("10 Mo maximum.");
+    setErreurFichier(null);
+    setFichier(f);
+  }
 
   return (
     <form
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
-        onConfirmer(commentaire.trim());
+        onConfirmer(commentaire.trim(), fichier);
       }}
       className="space-y-4"
     >
@@ -39,9 +53,57 @@ function FormulaireCloture({ enCours, erreur, onAnnuler, onConfirmer }: Formulai
           maxLength={500}
           disabled={enCours}
           value={commentaire}
-          onChange={(e) => setCommentaire(e.target.value)}
+          onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setCommentaire(e.target.value)}
           placeholder="Résumé de la mission, suite donnée…"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <p className="text-sm font-medium text-ink">
+          Compte rendu <span className="font-normal text-ink/50">(PDF, facultatif)</span>
+        </p>
+        {fichier ? (
+          <div className="flex items-center gap-3 rounded-lg border border-ink/10 bg-ink/3 px-3 py-2">
+            <FileText className="size-4 shrink-0 text-signal" aria-hidden />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-ink">{fichier.name}</p>
+              <p className="text-[11px] text-ink/55">{formaterTaille(fichier.size)}</p>
+            </div>
+            <button
+              type="button"
+              disabled={enCours}
+              onClick={() => setFichier(null)}
+              aria-label="Retirer le compte rendu"
+              className="grid size-7 place-items-center rounded-md text-ink/55 outline-none hover:bg-ink/8 focus-visible:ring-2 focus-visible:ring-signal disabled:opacity-60"
+            >
+              <X className="size-4" aria-hidden />
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            disabled={enCours}
+            onClick={() => inputRef.current?.click()}
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-dashed border-ink/20 px-3 py-3 text-sm font-medium text-ink/65 outline-none hover:border-signal hover:text-signal focus-visible:ring-2 focus-visible:ring-signal disabled:opacity-60"
+          >
+            <Paperclip className="size-4" aria-hidden />
+            Joindre un compte rendu
+          </button>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          accept="application/pdf"
+          className="hidden"
+          onChange={choisir}
+        />
+        {erreurFichier ? (
+          <p role="alert" className="text-xs text-red-600">
+            {erreurFichier}
+          </p>
+        ) : (
+          <p className="text-xs text-ink/55">Le client pourra le télécharger depuis sa demande.</p>
+        )}
       </div>
 
       {erreur && (
@@ -84,7 +146,7 @@ interface DialogClotureProps {
   enCours: boolean;
   erreur: string | null;
   onFermer: () => void;
-  onConfirmer: (commentaire: string) => void;
+  onConfirmer: (commentaire: string, compteRendu: File | null) => void;
 }
 
 export function DialogCloture({
@@ -110,10 +172,11 @@ export function DialogCloture({
           </DialogTitle>
           <DialogDescription className="text-sm leading-relaxed text-ink/65">
             La demande de <strong className="text-ink">{nomClient}</strong> passera à « Terminée ».
-            Le client pourra ensuite donner son avis sur votre accompagnement.
+            Le client pourra ensuite donner son avis sur votre accompagnement. Cette action est
+            définitive.
           </DialogDescription>
         </div>
-        {/* Le formulaire est démonté à la fermeture : le commentaire est vidé */}
+        {/* Le formulaire est démonté à la fermeture : commentaire et fichier sont vidés */}
         {ouvert && (
           <FormulaireCloture
             enCours={enCours}

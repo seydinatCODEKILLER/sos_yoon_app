@@ -1,15 +1,15 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { dossiersService } from "../lib/dossiersService";
-import type { FiltreDossiers } from "../types/dossier.types";
+import { dossiersApi } from "../api/dossiersApi";
+import type { ClotureDonnees, FiltreDossiers, StatutDossier } from "../types/dossier.types";
+import { DASHBOARD_KEY } from "./useTableauDeBord";
 
-// Même préfixe que l'invalidation faite à l'acceptation d'une demande
 export const DOSSIERS_KEY = ["pro", "dossiers"] as const;
 export const TAILLE_DOSSIERS = 20;
 
 export function useDossiers(filtre: FiltreDossiers, q: string, page: number) {
   return useQuery({
     queryKey: [...DOSSIERS_KEY, "liste", filtre, q, page],
-    queryFn: () => dossiersService.lister(filtre, q, page, TAILLE_DOSSIERS),
+    queryFn: () => dossiersApi.lister(filtre, q, page, TAILLE_DOSSIERS),
     placeholderData: keepPreviousData,
   });
 }
@@ -17,7 +17,7 @@ export function useDossiers(filtre: FiltreDossiers, q: string, page: number) {
 export function useCompteursDossiers(actif = true) {
   return useQuery({
     queryKey: [...DOSSIERS_KEY, "compteurs"],
-    queryFn: () => dossiersService.compteurs(),
+    queryFn: () => dossiersApi.compteurs(),
     enabled: actif,
   });
 }
@@ -25,25 +25,46 @@ export function useCompteursDossiers(actif = true) {
 export function useDossierDetail(demandeId: string | null) {
   return useQuery({
     queryKey: [...DOSSIERS_KEY, "detail", demandeId],
-    queryFn: () => dossiersService.detail(demandeId as string),
+    queryFn: () => dossiersApi.detail(demandeId as string),
     enabled: demandeId !== null,
+    retry: false,
   });
 }
 
-export function useChangerStatutDossier() {
+/** Les liens des documents sont signés pour environ une heure : on les relit à chaque ouverture */
+export function useDocumentsDossier(demandeId: string) {
+  return useQuery({
+    queryKey: [...DOSSIERS_KEY, "documents", demandeId],
+    queryFn: () => dossiersApi.documents(demandeId),
+    staleTime: 0,
+  });
+}
+
+/** Liste, compteurs, détail et le nombre de dossiers en cours du tableau de bord */
+function useActualiserDossiers() {
   const queryClient = useQueryClient();
+  return () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: DOSSIERS_KEY }),
+      queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY }),
+    ]);
+}
+
+export function useChangerStatutDossier() {
+  const actualiser = useActualiserDossiers();
   return useMutation({
-    mutationFn: ({ id, statut }: { id: string; statut: "EN_COURS" | "EN_ATTENTE_CLIENT" }) =>
-      dossiersService.changerStatut(id, statut),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: DOSSIERS_KEY }),
+    mutationFn: ({ id, statut }: { id: string; statut: Exclude<StatutDossier, "CLOTURE"> }) =>
+      dossiersApi.changerStatut(id, statut),
+    onSuccess: actualiser,
   });
 }
 
 export function useCloturerDossier() {
-  const queryClient = useQueryClient();
+  const actualiser = useActualiserDossiers();
   return useMutation({
-    mutationFn: ({ id, commentaire }: { id: string; commentaire: string }) =>
-      dossiersService.cloturer(id, commentaire),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: DOSSIERS_KEY }),
+    mutationFn: ({ id, ...donnees }: { id: string } & ClotureDonnees) =>
+      dossiersApi.cloturer(id, donnees),
+    onSuccess: actualiser,
+    onError: actualiser,
   });
 }

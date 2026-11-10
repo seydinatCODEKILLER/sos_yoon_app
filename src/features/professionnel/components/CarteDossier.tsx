@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
-import { Calendar } from "lucide-react";
+import { Calendar, Paperclip } from "lucide-react";
 import { Badge } from "@/shared/components/ui/badge";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { CARTE } from "@/shared/lib/styleCarte";
@@ -42,13 +42,15 @@ export function CarteDossier({ dossier: d, selectionne }: CarteDossierProps) {
             </div>
 
             <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-bold text-ink">{d.citoyenNom}</p>
-              <Badge
-                variant="secondary"
-                className="h-auto shrink-0 rounded-md bg-ink/8 px-1.5 py-0.5 text-[10px] font-medium text-ink/70"
-              >
-                {d.matiere}
-              </Badge>
+              <p className="text-sm font-bold text-ink">{d.citoyenNom ?? "Client"}</p>
+              {d.matiere && (
+                <Badge
+                  variant="secondary"
+                  className="h-auto shrink-0 rounded-md bg-ink/8 px-1.5 py-0.5 text-[10px] font-medium text-ink/70"
+                >
+                  {d.matiere}
+                </Badge>
+              )}
             </div>
 
             <p
@@ -56,12 +58,21 @@ export function CarteDossier({ dossier: d, selectionne }: CarteDossierProps) {
                 selectionne ? "font-medium text-signal" : "text-ink/70"
               }`}
             >
-              {d.titre ?? d.matiere}
+              {d.titre ?? d.matiere ?? d.reference}
             </p>
 
-            <p className="flex items-center gap-1.5 border-t border-ink/8 pt-2 text-[11px] text-ink/50">
-              <Calendar className="size-3" aria-hidden />
-              Ouvert le {formaterDateCourte(d.dateOuverture)}
+            <p className="flex items-center gap-3 border-t border-ink/8 pt-2 text-[11px] text-ink/50">
+              <span className="flex items-center gap-1.5">
+                <Calendar className="size-3" aria-hidden />
+                Ouvert le {formaterDateCourte(d.dateOuverture)}
+              </span>
+              {d.nombreDocuments > 0 && (
+                <span className="flex items-center gap-1">
+                  <Paperclip className="size-3" aria-hidden />
+                  {d.nombreDocuments}
+                  <span className="sr-only"> document{d.nombreDocuments > 1 ? "s" : ""}</span>
+                </span>
+              )}
             </p>
           </CardContent>
         </Card>

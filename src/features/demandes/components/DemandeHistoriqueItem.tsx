@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check, ChevronRight, Clock, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Star, X } from "lucide-react";
 import type { DemandeResume } from "../types/demande.types";
 import { demandeRoutes } from "../lib/demandeRoutes";
 import { nomCourt } from "../lib/contactProfessionnel";
@@ -17,6 +17,8 @@ export function DemandeHistoriqueItem({ demande }: { demande: DemandeResume }) {
   const ton = TONS[etat.ton];
   const Icone = ICONES[etat.ton];
   const date = demande.dateCloture ?? demande.dateCreation;
+  // Demande terminée avec un professionnel : l'avis reste à donner
+  const aNoter = demande.statut === "TERMINEE" && !!demande.professionnel && !demande.avisDonne;
 
   return (
     <Link
@@ -43,9 +45,16 @@ export function DemandeHistoriqueItem({ demande }: { demande: DemandeResume }) {
         </p>
       </div>
 
-      <span className={`shrink-0 text-xs font-semibold ${ton.texte}`}>
-        {etat.libelle}
-      </span>
+      {aNoter ? (
+        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-signal/10 px-2.5 py-1 text-xs font-semibold text-signal">
+          <Star className="size-3 fill-current" aria-hidden />
+          Noter
+        </span>
+      ) : (
+        <span className={`shrink-0 text-xs font-semibold ${ton.texte}`}>
+          {etat.libelle}
+        </span>
+      )}
       <ChevronRight
         aria-hidden
         className="size-4 shrink-0 text-ink/25 transition-transform group-hover:translate-x-0.5"

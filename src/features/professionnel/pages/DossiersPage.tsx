@@ -16,7 +16,6 @@ import type { FiltreDossiers } from "../types/dossier.types";
 export function DossiersPage() {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  // /pro/dossiers/:id sélectionne un dossier (liste + détail sur grand écran)
   const { id } = useParams<{ id: string }>();
 
   const [filtre, setFiltre] = useState<FiltreDossiers>("EN_COURS");
@@ -24,10 +23,9 @@ export function DossiersPage() {
   const q = useDeferredValue(recherche.trim());
   const [page, setPage] = useState(0);
 
-  const { data } = useDossiers(filtre, q, page);
+  const { data, isError, refetch } = useDossiers(filtre, q, page);
   const { data: compteurs } = useCompteursDossiers();
 
-  // Sur grand écran, le premier dossier est affiché tant qu'aucun n'est choisi
   // Aucun dossier n'est sélectionné tant que l'utilisateur n'en a pas choisi un
   const idSelectionne = id;
   const afficherListe = !isMobile || !id;
@@ -97,7 +95,19 @@ export function DossiersPage() {
             aria-label="Liste des dossiers"
             className="md:sticky md:top-20 md:max-h-[calc(100dvh-9rem)] md:self-start md:overflow-y-auto md:pr-1"
           >
-            {!data ? (
+            {isError && !data ? (
+              <div
+                role="alert"
+                className="flex min-h-40 flex-col items-center justify-center gap-3 rounded-xl bg-red-50 p-4 text-center"
+              >
+                <p className="text-sm font-semibold text-red-700">
+                  Impossible de charger vos dossiers.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+                  Réessayer
+                </Button>
+              </div>
+            ) : !data ? (
               <div className="space-y-3">
                 {[0, 1, 2].map((i) => (
                   <div
@@ -115,7 +125,9 @@ export function DossiersPage() {
                 <p className="max-w-xs text-xs text-ink/60">
                   {q
                     ? "Aucun dossier ne correspond à votre recherche."
-                    : "Les demandes que vous acceptez apparaîtront ici."}
+                    : filtre === "EN_COURS" || filtre === "TOUS"
+                      ? "Les demandes que vous acceptez apparaîtront ici."
+                      : "Aucun dossier dans cet onglet."}
                 </p>
               </div>
             ) : (

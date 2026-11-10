@@ -14,6 +14,7 @@ import { demandeRoutes } from "../lib/demandeRoutes";
 import { formatDateComplete } from "../lib/formatDateDemande";
 import { lienAppel, lienWhatsApp } from "../lib/contactProfessionnel";
 import { TONS, type TonStatut } from "../lib/statutDemandeUi";
+import { AvisEtCompteRendu } from "./AvisEtCompteRendu";
 import { ProfessionnelCarte } from "./ProfessionnelCarte";
 import { SuiviTimeline } from "./SuiviTimeline";
 import { VotreDemande } from "./VotreDemande";
@@ -163,6 +164,9 @@ export function DemandeDetailTerminee({
           )}
         </section>
       )}
+
+      {/* Compte rendu du professionnel et avis : seulement quand le dossier est bien clos */}
+      {terminee && pro && <AvisEtCompteRendu demandeId={demandeId} nomPro={pro.nomComplet} />}
 
       {/* Message ou audio envoyé, mots-clés, lieu */}
       <div className="mt-4">
