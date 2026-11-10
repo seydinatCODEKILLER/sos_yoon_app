@@ -1,9 +1,13 @@
 import { useRef, useState, type ChangeEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { Bell, Camera, Gavel, ShieldCheck, Star, Target, Zap } from "lucide-react";
+import { Label } from "@/shared/components/ui/label";
+import { Switch } from "@/shared/components/ui/switch";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import { useAbonnementDetail } from "../hooks/useAbonnement";
+import { useDisponibilite } from "../hooks/useDisponibilite";
 import { PROFIL_KEY, useEnvoyerPhoto } from "../hooks/useProfil";
-import { dashboardService } from "../lib/dashboardService";
+import { messageEspacePro } from "../lib/erreurSollicitation";
 import { formaterDelaiMoyen, initialesProfil } from "../lib/profil";
 import type { ProfilPro } from "../types/profil.types";
 
@@ -23,14 +27,23 @@ export function EnteteProfil({ profil, onVoirAbonnement }: EnteteProfilProps) {
   const { data: abo } = useAbonnementDetail();
   const s = profil.statistiques;
 
-  // Même service que l'interrupteur du tableau de bord
-  const disponibilite = useMutation({
-    mutationFn: (disponible: boolean) => dashboardService.changerDisponibilite(disponible),
-    onSuccess: (_r, disponible) => {
-      queryClient.setQueryData<ProfilPro>(PROFIL_KEY, (p) => (p ? { ...p, disponible } : p));
-      queryClient.invalidateQueries({ queryKey: ["pro", "dashboard"] });
-    },
-  });
+  // Même mutation que l'interrupteur du tableau de bord (message d'erreur compris)
+  const disponibilite = useDisponibilite();
+  function basculer(valeur: boolean) {
+    disponibilite.mutate(valeur, {
+      onSuccess: () =>
+        queryClient.setQueryData<ProfilPro>(PROFIL_KEY, (p) =>
+          p ? { ...p, disponible: valeur } : p,
+        ),
+    });
+  }
+
+  // Affichage optimiste de l'interrupteur pendant l'appel (comme sur le tableau de bord)
+  const disponible = disponibilite.isPending
+    ? (disponibilite.variables ?? profil.disponible)
+    : profil.disponible;
+
+  const photo = mediaUrl(profil.photoUrl);
 
   function choisir(e: ChangeEvent<HTMLInputElement>) {
     const fichier = e.target.files?.[0];
@@ -39,18 +52,20 @@ export function EnteteProfil({ profil, onVoirAbonnement }: EnteteProfilProps) {
     if (!["image/jpeg", "image/png"].includes(fichier.type)) return setErreur("JPG ou PNG uniquement.");
     if (fichier.size > TAILLE_MAX) return setErreur("3 Mo maximum.");
     setErreur(null);
-    envoyer.mutate(fichier, { onError: () => setErreur("Envoi de la photo impossible.") });
+    envoyer.mutate(fichier, {
+      onError: (e) => setErreur(messageEspacePro(e, "Envoi de la photo impossible.")),
+    });
   }
 
   const libellePlan = !abo
     ? null
     : abo.statut === "ESSAI"
-      ? `Essai gratuit · ${abo.joursRestants} j`
+      ? `Essai gratuit · ${abo.joursRestants ?? 0} j`
       : abo.statut === "ACTIF"
         ? "Abonnement actif"
         : "Compte suspendu";
 
-const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(" · ");
+  const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(" · ");
 
   return (
     <section className="relative overflow-hidden rounded-2xl border border-ink/10 bg-white p-5 sm:p-6">
@@ -63,8 +78,8 @@ const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(
       <div className="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <div className="relative size-22 shrink-0">
-            {profil.photoUrl ? (
-              <img src={profil.photoUrl} alt="" className="size-22 rounded-2xl object-cover" />
+            {photo ? (
+              <img src={photo} alt="" className="size-22 rounded-2xl object-cover" />
             ) : (
               <span className="flex size-22 items-center justify-center rounded-2xl bg-navy text-2xl font-bold text-white">
                 {initialesProfil(profil.prenom, profil.nom)}
@@ -136,10 +151,14 @@ const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(
           <div>
             <dt className="sr-only">Note moyenne</dt>
             <dd className="text-lg leading-tight font-bold text-ink">
-              {s.noteMoyenne.toFixed(1)}
+              {s.noteMoyenne === null ? "—" : s.noteMoyenne.toFixed(1)}
               <span className="text-xs font-medium text-ink/50"> / 5</span>
             </dd>
-            <dd className="text-[11px] text-ink/60">{s.nombreAvis} avis vérifiés</dd>
+            <dd className="text-[11px] text-ink/60">
+              {s.nombreAvis === 0
+                ? "Aucun avis pour l'instant"
+                : `${s.nombreAvis} avis`}
+            </dd>
           </div>
         </div>
 
@@ -149,7 +168,7 @@ const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(
           </span>
           <div>
             <dt className="sr-only">Taux d'acceptation</dt>
-            <dd className="text-lg leading-tight font-bold text-ink">{s.tauxAcceptation}%</dd>
+            <dd className="text-lg leading-tight font-bold text-ink">{s.tauxAcceptation === null ? "—" : `${s.tauxAcceptation}%`}</dd>
             <dd className="text-[11px] text-ink/60">Taux d'acceptation</dd>
           </div>
         </div>
@@ -170,32 +189,34 @@ const ligneCabinet = [profil.titre, profil.adresseCabinet].filter(Boolean).join(
         <div className="flex items-center gap-3">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
             <Bell
-              className={`size-5 ${profil.disponible ? "text-emerald-700" : "text-ink/40"}`}
+              className={`size-5 ${disponible ? "text-emerald-700" : "text-ink/40"}`}
               aria-hidden
             />
           </span>
-          <div>
+          <div className="min-w-0">
             <dt className="sr-only">Statut</dt>
-            <dd
-              className={`flex items-center gap-1.5 text-sm font-bold ${
-                profil.disponible ? "text-emerald-700" : "text-ink/55"
-              }`}
-            >
-              <span
-                className={`size-2 rounded-full ${profil.disponible ? "bg-emerald-600" : "bg-ink/30"}`}
-                aria-hidden
-              />
-              {profil.disponible ? "Actif SOS Yoon" : "Indisponible"}
-            </dd>
             <dd>
-              <button
-                type="button"
-                disabled={disponibilite.isPending}
-                onClick={() => disponibilite.mutate(!profil.disponible)}
-                className="text-[11px] font-semibold text-signal underline underline-offset-2 outline-none hover:text-signal/80 focus-visible:ring-2 focus-visible:ring-signal disabled:opacity-60"
+              <Label
+                htmlFor="profil-disponibilite"
+                className={`flex items-center gap-1.5 text-sm font-bold ${
+                  disponible ? "text-emerald-700" : "text-ink/55"
+                }`}
               >
-                {disponibilite.isPending ? "Mise à jour…" : "Modifier statut"}
-              </button>
+                <span
+                  className={`size-2 rounded-full ${disponible ? "bg-emerald-600" : "bg-ink/30"}`}
+                  aria-hidden
+                />
+                {disponible ? "Actif SOS Yoon" : "Indisponible"}
+              </Label>
+            </dd>
+            <dd className="mt-1 flex items-center gap-2">
+              <Switch
+                id="profil-disponibilite"
+                checked={disponible}
+                onCheckedChange={basculer}
+                className="shrink-0 data-checked:bg-signal"
+              />
+              <span className="text-[11px] leading-tight text-ink/60">Recevoir les demandes</span>
             </dd>
           </div>
         </div>

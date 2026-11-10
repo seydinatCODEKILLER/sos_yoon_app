@@ -6,6 +6,8 @@ const MESSAGES: Record<string, string> = {
   DEMANDE_DEJA_AFFECTEE:
     "Un autre professionnel a déjà accepté cette demande, ou le citoyen l'a annulée.",
   ABONNEMENT_EXPIRE: "Votre abonnement a expiré : renouvelez-le pour continuer.",
+  TELEPHONE_DEJA_UTILISE: "Ce numéro est déjà utilisé par un autre compte.",
+  CHAMP_NON_MODIFIABLE: "Le matricule, le métier et l'e-mail ne sont pas modifiables.",
   RESEAU: "Connexion impossible. Vérifiez votre réseau.",
 };
 

@@ -1,3 +1,4 @@
+import { parseDateServeur } from "@/features/demandes/lib/formatDateDemande";
 import type { TypeProfession } from "../types/profil.types";
 
 /**
@@ -20,9 +21,10 @@ export const PLANS: { libelle: string; metiers: TypeProfession[]; montant: numbe
 
 export const formaterFcfa = (n: number) => `${n.toLocaleString("fr-FR")} FCFA`;
 
-/** Accepte AAAA-MM-JJ ou une date ISO complète */
+/** Date seule (AAAA-MM-JJ) lue en local ; date et heure sans fuseau lues comme de l'UTC. */
 export function formaterDateIso(s: string) {
-  return new Date(s.length === 10 ? `${s}T00:00:00` : s).toLocaleDateString("fr-FR", {
+  const date = s.length === 10 ? new Date(`${s}T00:00:00`) : parseDateServeur(s);
+  return date.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -30,3 +32,9 @@ export function formaterDateIso(s: string) {
 }
 
 export const LIBELLE_MOYEN = { WAVE: "Wave", ORANGE_MONEY: "Orange Money" } as const;
+
+/** Libellé d'un moyen de paiement reçu du serveur, y compris un code inattendu */
+export function libelleMoyen(code: string | null) {
+  if (!code) return "Paiement";
+  return code in LIBELLE_MOYEN ? LIBELLE_MOYEN[code as keyof typeof LIBELLE_MOYEN] : code;
+}

@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CircleAlert, CircleCheck, Info } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
+import { Check, CircleAlert, CircleCheck, Info } from "lucide-react";
+import { toApiErreur } from "@/shared/lib/apiError";
 import { Button } from "@/shared/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { usePayerAbonnement } from "../hooks/useAbonnement";
+import { messageEspacePro } from "../lib/erreurSollicitation";
 import { LIBELLE_MOYEN, formaterDateIso, formaterFcfa } from "../lib/abonnement";
 import { paiementSchema, type PaiementValues } from "../schema/paiement.schema";
 import type { PaiementInitie } from "../types/abonnement.types";
+import { LogoMoyenPaiement } from "./LogoPaiement";
 
 interface FormulairePaiementProps {
   montant: number;
@@ -29,9 +31,11 @@ function FormulairePaiement({ montant, onFermer }: FormulairePaiementProps) {
   async function valider(v: PaiementValues) {
     payer.reset();
     try {
+      // Le backend exige le format international (+221…) : on le complète si besoin
+      const national = v.telephonePaiement.replace(/\D/g, "").replace(/^221/, "");
       const r = await payer.mutateAsync({
         moyenPaiement: v.moyenPaiement,
-        telephonePaiement: v.telephonePaiement.replace(/\s/g, ""),
+        telephonePaiement: `+221${national}`,
       });
       // Branchement réel : le prestataire renvoie une URL de paiement à ouvrir
       if (r.urlPaiement) {
@@ -39,8 +43,10 @@ function FormulairePaiement({ montant, onFermer }: FormulairePaiementProps) {
         return;
       }
       setResultat(r);
-    } catch {
-      /* lue via payer.error */
+    } catch (e) {
+      // Une erreur sur le numéro s'affiche sous le champ
+      const sur = toApiErreur(e).details?.find((d) => d.champ === "telephonePaiement");
+      if (sur) form.setError("telephonePaiement", { message: sur.message });
     }
   }
 
@@ -85,11 +91,19 @@ function FormulairePaiement({ montant, onFermer }: FormulairePaiementProps) {
                     aria-pressed={actif}
                     disabled={payer.isPending}
                     onClick={() => field.onChange(m)}
-                    className={`rounded-lg border-2 px-3 py-2.5 text-sm font-semibold outline-none focus-visible:ring-2 focus-visible:ring-signal ${
-                      actif ? "border-signal bg-signal/5 text-ink" : "border-ink/10 text-ink/65 hover:bg-ink/3"
+                    className={`relative flex flex-col items-center gap-2 rounded-xl border-2 px-3 py-3.5 outline-none focus-visible:ring-2 focus-visible:ring-signal disabled:opacity-60 ${
+                      actif ? "border-signal bg-signal/5" : "border-ink/10 hover:bg-ink/3"
                     }`}
                   >
-                    {LIBELLE_MOYEN[m]}
+                    <LogoMoyenPaiement moyen={m} libelle={LIBELLE_MOYEN[m]} className="size-12" />
+                    <span className={`text-sm font-semibold ${actif ? "text-ink" : "text-ink/65"}`}>
+                      {LIBELLE_MOYEN[m]}
+                    </span>
+                    {actif && (
+                      <span className="absolute top-2 right-2 flex size-5 items-center justify-center rounded-full bg-signal text-white">
+                        <Check className="size-3" aria-hidden />
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -120,13 +134,13 @@ function FormulairePaiement({ montant, onFermer }: FormulairePaiementProps) {
 
       <p className="flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
         <Info className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-        Paiement simulé : aucun montant ne sera débité.
+        Vous serez redirigé vers {LIBELLE_MOYEN[form.watch("moyenPaiement")]} pour valider le paiement.
       </p>
 
       {payer.isError && (
         <p role="alert" className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
           <CircleAlert className="size-4 shrink-0" aria-hidden />
-          {(payer.error as Partial<ApiErreur>).message ?? "Le paiement a échoué."}
+          {messageEspacePro(payer.error, "Le paiement a échoué.")}
         </p>
       )}
 

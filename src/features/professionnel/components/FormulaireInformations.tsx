@@ -1,11 +1,12 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleAlert, CircleCheck } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
+import { toApiErreur } from "@/shared/lib/apiError";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
 import { useMettreAJourProfil } from "../hooks/useProfil";
+import { messageEspacePro } from "../lib/erreurSollicitation";
 import { LIBELLE_PROFESSION } from "../lib/profil";
 import { profilProSchema, type ProfilProValues } from "../schema/profilPro.schema";
 import type { ProfilPro } from "../types/profil.types";
@@ -73,8 +74,11 @@ export function FormulaireInformations({ profil }: { profil: ProfilPro }) {
         adresseCabinet: v.adresseCabinet.trim(),
       });
       form.reset(versValues(miseAJour)); // remet "modifié" à zéro
-    } catch {
-      /* l'erreur est lue via maj.error */
+    } catch (e) {
+      // Une erreur sur un champ précis s'affiche sous ce champ
+      for (const d of toApiErreur(e).details ?? []) {
+        if (d.champ in v) form.setError(d.champ as keyof ProfilProValues, { message: d.message });
+      }
     }
   }
 
@@ -90,17 +94,19 @@ export function FormulaireInformations({ profil }: { profil: ProfilPro }) {
             <Input id="pf-nom" aria-invalid={!!errors.nom} {...form.register("nom")} />
           </Champ>
           <Champ id="pf-tel" libelle="Numéro de téléphone" erreur={errors.telephone?.message}>
-            <div className="flex">
-              <span className="flex h-10 shrink-0 items-center rounded-l-lg border border-r-0 border-ink/10 bg-navy/5 px-3 text-xs font-semibold text-navy">
+            {/* Une seule boîte : l'indicatif et le numéro partagent bordure, hauteur et focus */}
+            <div className="flex h-10 items-stretch overflow-hidden rounded-lg border border-ink/10 bg-white transition-colors focus-within:border-signal focus-within:ring-3 focus-within:ring-signal/20 has-aria-invalid:border-red-500">
+              <span className="flex shrink-0 items-center border-r border-ink/10 bg-navy/5 px-3 text-xs font-semibold text-navy">
                 SN +221
               </span>
-              <Input
+              <input
                 id="pf-tel"
                 type="tel"
+                inputMode="tel"
                 autoComplete="tel-national"
                 placeholder="77 123 45 67"
                 aria-invalid={!!errors.telephone}
-                className="rounded-l-none"
+                className="min-w-0 flex-1 bg-transparent px-3 text-sm text-ink outline-none placeholder:text-ink/40"
                 {...form.register("telephone")}
               />
             </div>
@@ -137,7 +143,7 @@ export function FormulaireInformations({ profil }: { profil: ProfilPro }) {
         {maj.isError && (
           <p role="alert" className="flex items-center gap-2 text-sm text-red-600 sm:mr-auto">
             <CircleAlert className="size-4" aria-hidden />
-            {(maj.error as Partial<ApiErreur>).message ?? "Enregistrement impossible."}
+            {messageEspacePro(maj.error, "Enregistrement impossible.")}
           </p>
         )}
         {maj.isSuccess && !isDirty && (

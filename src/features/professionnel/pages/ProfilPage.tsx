@@ -1,9 +1,10 @@
 import { useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
-import { ApercuSpecialitesZone } from "../components/ApercuSpecialitesZone";
 import { EnteteProfil } from "../components/EnteteProfil";
 import { FormulaireInformations } from "../components/FormulaireInformations";
+import { FormulaireMotDePasse } from "../components/FormulaireMotDePasse";
+import { FormulaireSpecialitesZone } from "../components/FormulaireSpecialitesZone";
 import { PanneauAbonnement } from "../components/PanneauAbonnement";
 import { useProfil } from "../hooks/useProfil";
 
@@ -11,6 +12,7 @@ const ONGLETS = [
   { valeur: "informations", libelle: "Informations" },
   { valeur: "specialites", libelle: "Spécialités & zone" },
   { valeur: "abonnement", libelle: "Abonnement" },
+  { valeur: "securite", libelle: "Sécurité" },
 ] as const;
 
 type Onglet = (typeof ONGLETS)[number]["valeur"];
@@ -20,7 +22,7 @@ export function ProfilProPage() {
   const demande = params.get("onglet");
   const onglet: Onglet =
     ONGLETS.find((o) => o.valeur === demande)?.valeur ?? "informations";
-  const { data: profil, isError } = useProfil();
+  const { data: profil, isError, refetch } = useProfil();
 
   return (
     <motion.div
@@ -34,18 +36,25 @@ export function ProfilProPage() {
           Mon profil
         </h2>
         <p className="text-sm text-ink/60">
-          Vos informations professionnelles, vos spécialités et votre
-          abonnement.
+          Vos informations professionnelles, vos spécialités, votre abonnement
+          et la sécurité de votre compte.
         </p>
       </motion.header>
 
       {isError ? (
-        <p
+        <div
           role="alert"
-          className="rounded-xl bg-red-50 p-4 text-sm text-red-700"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-4 text-sm text-red-700"
         >
-          Impossible de charger votre profil. Réessayez dans un instant.
-        </p>
+          Impossible de charger votre profil.
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="font-semibold underline"
+          >
+            Réessayer
+          </button>
+        </div>
       ) : !profil ? (
         <div className="space-y-4">
           <div className="h-32 animate-pulse rounded-xl bg-ink/5" />
@@ -96,9 +105,10 @@ export function ProfilProPage() {
               <FormulaireInformations profil={profil} />
             )}
             {onglet === "specialites" && (
-              <ApercuSpecialitesZone profil={profil} />
+              <FormulaireSpecialitesZone profil={profil} />
             )}
             {onglet === "abonnement" && <PanneauAbonnement />}
+            {onglet === "securite" && <FormulaireMotDePasse />}
           </motion.div>
         </>
       )}

@@ -2,9 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
-// ↓ À ADAPTER : chemin de ton store d'authentification (celui qui expose logout())
 import { useAuthStore } from "@/features/auth/store/auth.store";
-// ↓ À ADAPTER : chemin de ton composant logo (celui utilisé dans AppSidebar)
 import { BrandLogo } from "@/shared/components/BrandLogo";
 
 export function EnteteSuspension() {
@@ -15,7 +13,6 @@ export function EnteteSuspension() {
   function seDeconnecter() {
     logout();
     queryClient.clear();
-    // Page sans sidebar : on renvoie explicitement vers la connexion
     navigate("/login", { replace: true });
   }
 

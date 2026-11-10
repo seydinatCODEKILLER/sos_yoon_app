@@ -3,12 +3,12 @@ import { CircleAlert, CircleCheck, CreditCard, Gift } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { useAbonnementDetail, usePaiements } from "../hooks/useAbonnement";
 import {
-  LIBELLE_MOYEN,
   PLANS,
   formaterDateIso,
   formaterFcfa,
+  libelleMoyen,
 } from "../lib/abonnement";
-import { DUREE_ESSAI_JOURS } from "../lib/formatDashboard";
+import { DUREE_ESSAI_JOURS, joursEntre } from "../lib/formatDashboard";
 import { DialogPaiement } from "./DialogPaiement";
 
 const carte = "rounded-xl border border-ink/10 bg-white p-5";
@@ -27,9 +27,16 @@ export function PanneauAbonnement() {
   }
   if (!abo) return <div className="h-64 animate-pulse rounded-xl bg-ink/5" />;
 
+  const restants = abo.joursRestants ?? 0;
+  const pluriel = restants > 1 ? "s" : "";
+  // Durée réelle de l'essai d'après ses dates ; 30 jours à défaut
+  const dureeEssai =
+    abo.debutEssai && abo.finEssai
+      ? Math.max(1, joursEntre(abo.debutEssai, abo.finEssai))
+      : DUREE_ESSAI_JOURS;
   const progression =
     abo.statut === "ESSAI"
-      ? Math.min(100, Math.round(((DUREE_ESSAI_JOURS - abo.joursRestants) / DUREE_ESSAI_JOURS) * 100))
+      ? Math.min(100, Math.max(0, Math.round(((dureeEssai - restants) / dureeEssai) * 100)))
       : 0;
 
   const etat =
@@ -38,8 +45,10 @@ export function PanneauAbonnement() {
           Icone: Gift,
           classe: "border-signal/30 bg-signal/5",
           iconeClasse: "text-signal",
-          titre: `Essai gratuit : ${abo.joursRestants} jour${abo.joursRestants > 1 ? "s" : ""} restant${abo.joursRestants > 1 ? "s" : ""}`,
-          texte: `Votre essai se termine le ${formaterDateIso(abo.finEssai)}. Ensuite, l'abonnement est de ${formaterFcfa(abo.montantMensuel)} par mois.`,
+          titre: `Essai gratuit : ${restants} jour${pluriel} restant${pluriel}`,
+          texte: `${
+            abo.finEssai ? `Votre essai se termine le ${formaterDateIso(abo.finEssai)}. ` : ""
+          }Ensuite, l'abonnement est de ${formaterFcfa(abo.montantMensuel)} par mois.`,
         }
       : abo.statut === "ACTIF"
         ? {
@@ -48,14 +57,16 @@ export function PanneauAbonnement() {
             iconeClasse: "text-emerald-600",
             titre: "Abonnement actif",
             texte: abo.finPeriode
-              ? `Valable jusqu'au ${formaterDateIso(abo.finPeriode)} (${abo.joursRestants} jour${abo.joursRestants > 1 ? "s" : ""}).`
+              ? `Valable jusqu'au ${formaterDateIso(abo.finPeriode)}${
+                  abo.joursRestants !== null ? ` (${restants} jour${pluriel})` : ""
+                }.`
               : "Votre abonnement est en cours.",
           }
         : {
             Icone: CircleAlert,
             classe: "border-red-200 bg-red-50",
             iconeClasse: "text-red-600",
-            titre: "Compte suspendu",
+            titre: abo.suspendu ? "Compte suspendu" : "Abonnement expiré",
             texte: "Votre abonnement a expiré. Réglez-le pour retrouver l'accès à vos demandes et dossiers.",
           };
 
@@ -108,7 +119,7 @@ export function PanneauAbonnement() {
         <h3 className="text-base font-bold text-ink">Tarifs par métier</h3>
         <ul className="divide-y divide-ink/10">
           {PLANS.map((p) => {
-            const courant = p.metiers.includes(abo.typeProfession);
+            const courant = abo.typeProfession !== null && p.metiers.includes(abo.typeProfession);
             return (
               <li key={p.libelle} className="flex items-center justify-between gap-3 py-2.5">
                 <span className="flex items-center gap-2 text-sm text-ink">
@@ -139,8 +150,10 @@ export function PanneauAbonnement() {
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-ink">{formaterFcfa(p.montant)}</p>
                   <p className="truncate text-xs text-ink/55">
-                    {LIBELLE_MOYEN[p.moyenPaiement]} · {formaterDateIso(p.datePaiement)} · du{" "}
-                    {formaterDateIso(p.periodeDebut)} au {formaterDateIso(p.periodeFin)}
+                    {libelleMoyen(p.moyenPaiement)} · {formaterDateIso(p.datePaiement)}
+                    {p.periodeDebut &&
+                      p.periodeFin &&
+                      ` · du ${formaterDateIso(p.periodeDebut)} au ${formaterDateIso(p.periodeFin)}`}
                   </p>
                 </div>
                 <span
