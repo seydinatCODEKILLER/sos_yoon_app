@@ -10,7 +10,7 @@ export const URGENCE: Record<
     texte: "text-red-600",
     barre: "bg-signal",
   },
-  ELEVE: {
+  URGENT: {
     libelle: "Urgent",
     pastille: "border-amber-200 bg-amber-50 text-amber-700",
     texte: "text-amber-600",
@@ -23,3 +23,8 @@ export const URGENCE: Record<
     barre: "bg-sky-400",
   },
 };
+
+/** Un niveau absent ou inconnu s'affiche comme NORMAL */
+export function urgenceDe(niveau: NiveauUrgence | null | undefined) {
+  return (niveau && URGENCE[niveau]) || URGENCE.NORMAL;
+}

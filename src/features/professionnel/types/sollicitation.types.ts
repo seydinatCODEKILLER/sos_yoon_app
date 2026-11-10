@@ -27,12 +27,15 @@ export interface RefusResultat {
 export interface SollicitationDetail extends Omit<SollicitationResume, "citoyen"> {
   description: string | null;
   motsCles: string[];
-  /** Disponible à partir de la phase P2 */
-  audio: { url: string; dureeSecondes: number } | null;
-  /** Disponible à partir de la phase P2 */
+  /** url peut être relative : passer par mediaUrl() pour la lire */
+  audio: { url: string | null; dureeSecondes: number | null } | null;
   transcription: string | null;
   metiersRequis: string[];
   prestationRecommandee: string | null;
   /** Téléphone et email valent null tant que la demande n'est pas acceptée */
-  citoyen: { affichage: string; telephone: string | null; email: string | null };
+  citoyen: {
+    affichage: string | null;
+    telephone: string | null;
+    email: string | null;
+  };
 }

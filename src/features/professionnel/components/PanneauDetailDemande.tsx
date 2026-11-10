@@ -13,9 +13,10 @@ import {
   SheetDescription,
   SheetTitle,
 } from "@/shared/components/ui/sheet";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import { useSollicitationDetail } from "../hooks/useSollicitationDetail";
 import { libelleMetier, libellePrestation } from "../lib/libellesDemande";
-import { URGENCE } from "../lib/urgence";
+import { urgenceDe } from "../lib/urgence";
 import type { SollicitationDetail } from "../types/sollicitation.types";
 import { LecteurAudio } from "./LecteurAudio";
 import { formaterTelephone } from "../lib/contactClient";
@@ -65,7 +66,8 @@ export function PanneauDetailDemande({
 }: PanneauDetailDemandeProps) {
   const { data: d, isError } = useSollicitationDetail(id);
   const enAttente = d?.statut === "EN_ATTENTE";
-  const urgence = d ? (URGENCE[d.niveauUrgence] ?? URGENCE.NORMAL) : null;
+  const urgence = d ? urgenceDe(d.niveauUrgence) : null;
+  const urlAudio = mediaUrl(d?.audio?.url);
   const statut = d ? STATUTS[d.statut] : undefined;
   const texteLibre = d?.transcription ?? d?.description ?? d?.extrait;
 
@@ -104,7 +106,7 @@ export function PanneauDetailDemande({
             <header className="space-y-3 border-b border-ink/10 bg-linear-to-br from-white to-navy/6 px-6 pt-6 pb-4">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 pr-8">
                 <SheetTitle className="text-2xl font-bold text-ink">
-                  {d.citoyen.affichage}
+                  {d.citoyen.affichage ?? "Citoyen"}
                 </SheetTitle>
                 <code className="rounded bg-ink/8 px-1.5 py-0.5 text-[11px] text-ink/60">
                   {d.reference}
@@ -132,15 +134,16 @@ export function PanneauDetailDemande({
               <SheetDescription className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-ink/65">
                 <span className="inline-flex items-center gap-1 font-semibold text-ink">
                   <MapPin className="size-3.5" aria-hidden />
-                  {d.libelleLocalisation}
-                  <span className="font-normal text-ink/50">
-                    (~{d.distanceKm} km)
-                  </span>
+                  {d.libelleLocalisation ?? "Lieu non précisé"}
+                  {d.distanceKm !== null && (
+                    <span className="font-normal text-ink/50">
+                      (~{d.distanceKm.toFixed(1)} km)
+                    </span>
+                  )}
                 </span>
                 <span className="inline-flex items-center gap-1 text-emerald-700">
                   <ShieldCheck className="size-3.5 shrink-0" aria-hidden />
-                  Numéro &amp; email certifiés SOS Yoon, débloqués dès
-                  l'acceptation
+                  Numéro et e-mail du citoyen débloqués dès l'acceptation
                 </span>
               </SheetDescription>
 
@@ -160,12 +163,18 @@ export function PanneauDetailDemande({
                     <Sparkles className="size-4 shrink-0" aria-hidden />
                     Pertinence pour votre profil
                   </h3>
-                  <Badge className="shrink-0 border border-violet-200 bg-white text-[11px] font-bold text-violet-700">
-                    Correspondance : {d.scoreCorrespondance} %
-                  </Badge>
+                  {d.scoreCorrespondance !== null && (
+                    <Badge className="shrink-0 border border-violet-200 bg-white text-[11px] font-bold text-violet-700">
+                      Correspondance : {Math.round(d.scoreCorrespondance)} %
+                    </Badge>
+                  )}
                 </div>
                 <p className="text-sm leading-relaxed text-ink/80">
-                  <strong className="text-ink">Matière :</strong> {d.matiere}.
+                  {d.matiere && (
+                    <>
+                      <strong className="text-ink">Matière :</strong> {d.matiere}.
+                    </>
+                  )}
                   {d.metiersRequis.length > 0 && (
                     <>
                       {" "}
@@ -176,12 +185,14 @@ export function PanneauDetailDemande({
                 </p>
               </section>
 
-              {d.audio && (
+              {d.audio && urlAudio && (
                 <Bloc titre="Message vocal du citoyen">
                   <LecteurAudio
-                    key={d.audio.url}
-                    url={d.audio.url}
-                    dureeSecondes={d.audio.dureeSecondes}
+                    key={urlAudio}
+                    url={urlAudio}
+                    dureeSecondes={
+                      d.audio.dureeSecondes ?? d.dureeAudioSecondes ?? 0
+                    }
                   />
                 </Bloc>
               )}
@@ -236,7 +247,7 @@ export function PanneauDetailDemande({
                   </Button>
                 </div>
                 <p className="text-center text-[11px] leading-snug text-ink/50">
-                  En acceptant, le citoyen est notifié par SMS et un dossier est
+                  En acceptant, le citoyen est notifié et un dossier est
                   instantanément créé dans votre espace.
                 </p>
               </footer>

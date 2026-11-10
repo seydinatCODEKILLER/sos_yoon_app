@@ -1,7 +1,7 @@
 export type Periode = "7j" | "30j";
 
-// Seul CRITIQUE figure dans le doc ; les autres valeurs sont supposées.
-export type NiveauUrgence = "CRITIQUE" | "ELEVE" | "NORMAL";
+/** Valeurs envoyées par le backend (enum NiveauUrgence) */
+export type NiveauUrgence = "CRITIQUE" | "URGENT" | "NORMAL";
 
 export type StatutSollicitation =
   | "EN_ATTENTE"
@@ -13,20 +13,25 @@ export interface SollicitationResume {
   id: string;
   demandeId: string;
   reference: string;
-  niveauUrgence: NiveauUrgence;
-  matiere: string;
-  extrait: string;
-  typeSaisie: "VOCAL" | "TEXTE";
+  /** null si la demande n'a pas de niveau : traité comme NORMAL à l'affichage */
+  niveauUrgence: NiveauUrgence | null;
+  matiere: string | null;
+  extrait: string | null;
+  typeSaisie: "VOCAL" | "TEXTE" | null;
   dureeAudioSecondes: number | null;
-  libelleLocalisation: string;
-  distanceKm: number;
-  scoreCorrespondance: number;
+  libelleLocalisation: string | null;
+  /** null si la position du professionnel ou du citoyen manque */
+  distanceKm: number | null;
+  /** 0 à 100, calculé par le serveur */
+  scoreCorrespondance: number | null;
+  /** Dates sans fuseau (UTC) : toujours lire avec parseDateServeur */
   recueLe: string;
   expireLe: string;
-  secondesRestantes: number;
+  /** null dès que la demande n'est plus EN_ATTENTE */
+  secondesRestantes: number | null;
   statut: StatutSollicitation;
   /** Nom abrégé tant que la demande n'est pas acceptée */
-  citoyen: { affichage: string };
+  citoyen: { affichage: string | null };
 }
 
 export interface PointEvolution {
@@ -36,10 +41,10 @@ export interface PointEvolution {
 
 export interface TableauDeBord {
   disponible: boolean;
-  demandesRecues: { total: number; variationPourcent: number };
+  demandesRecues: { total: number; variationPourcent: number | null };
   dossiersEnCours: number;
-  tauxAcceptation: number;
-  delaiMoyenReponseSecondes: number;
+  tauxAcceptation: number | null;
+  delaiMoyenReponseSecondes: number | null;
   sollicitationsEnAttente: number;
   urgentes: SollicitationResume[];
   evolution: PointEvolution[];
@@ -64,7 +69,8 @@ export interface SollicitationAcceptee {
   demandeId: string;
   reference: string;
   statutDossier: string;
-  conversationId: string;
+  /** Présent dans la spec, absent de la réponse actuelle du backend */
+  conversationId?: string;
   premierContactAvant: string;
   citoyen: {
     id: string;
@@ -75,4 +81,10 @@ export interface SollicitationAcceptee {
     photoUrl: string | null;
     commune: string | null;
   };
+}
+
+/** Réponse de PUT /pro/disponibilite */
+export interface DisponibiliteResultat {
+  disponible: boolean;
+  derniereActivite: string;
 }

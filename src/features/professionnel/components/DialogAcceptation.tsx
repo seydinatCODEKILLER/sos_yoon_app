@@ -8,6 +8,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/shared/components/ui/dialog";
+import { parseDateServeur } from "@/features/demandes/lib/formatDateDemande";
 import { formaterTelephone } from "../lib/contactClient";
 import { initiales } from "../lib/formatDashboard";
 import type { SollicitationAcceptee } from "../types/dashboard.types";
@@ -28,7 +29,7 @@ interface DialogAcceptationProps {
 }
 
 function heureLocale(iso: string) {
-  return new Date(iso)
+  return parseDateServeur(iso)
     .toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })
     .replace(":", "h");
 }

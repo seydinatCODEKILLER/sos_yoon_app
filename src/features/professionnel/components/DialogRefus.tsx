@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeftRight, CircleAlert, Lock, Undo2 } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import { Label } from "@/shared/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/shared/components/ui/radio-group";
 import { Textarea } from "@/shared/components/ui/textarea";
 import { useRefuserSollicitation } from "../hooks/useRefuserSollicitation";
+import { messageEspacePro } from "../lib/erreurSollicitation";
 import { initiales } from "../lib/formatDashboard";
 import {
   MOTIF_RECOMMANDE,
@@ -26,10 +26,6 @@ import {
   type RefusSollicitationValues,
 } from "../schema/refusSollicitation.schema";
 import type { SollicitationResume } from "../types/dashboard.types";
-
-const MESSAGES_ERREUR: Record<string, string> = {
-  SOLLICITATION_EXPIREE: "Cette demande a déjà expiré ou a été traitée.",
-};
 
 interface FormulaireRefusProps {
   enCours: boolean;
@@ -62,7 +58,7 @@ function FormulaireRefus({
           <p className="text-sm font-semibold text-ink">
             Motif de refus{" "}
             <span className="font-normal text-ink/50">
-              (aide à l'amélioration du dispatch IA)
+              (aide à mieux cibler vos demandes)
             </span>
           </p>
           <span className="text-[11px] font-bold text-red-600">
@@ -192,12 +188,7 @@ export function DialogRefus({ sollicitation: s, onFermer }: DialogRefusProps) {
       });
       fermer();
     } catch (e) {
-      const err = e as Partial<ApiErreur>;
-      setErreur(
-        (err.code && MESSAGES_ERREUR[err.code]) ??
-          err.message ??
-          "Impossible de refuser la demande.",
-      );
+      setErreur(messageEspacePro(e, "Impossible de refuser la demande."));
     }
   }
 
@@ -242,10 +233,13 @@ export function DialogRefus({ sollicitation: s, onFermer }: DialogRefusProps) {
                 </span>
                 <div className="min-w-0 text-sm">
                   <p className="truncate font-semibold text-ink">
-                    {s.citoyen.affichage}{" "}
-                    <span className="font-normal text-ink/50">
-                      · {s.libelleLocalisation}
-                    </span>
+                    {s.citoyen.affichage ?? "Citoyen"}
+                    {s.libelleLocalisation && (
+                      <span className="font-normal text-ink/50">
+                        {" "}
+                        · {s.libelleLocalisation}
+                      </span>
+                    )}
                   </p>
                   <p className="text-xs text-ink/55">Réf : {s.reference}</p>
                 </div>
@@ -256,7 +250,9 @@ export function DialogRefus({ sollicitation: s, onFermer }: DialogRefusProps) {
                   <Badge className="border-0 bg-signal/15 text-[10px] font-bold text-signal uppercase">
                     Objet
                   </Badge>
-                  <span className="line-clamp-1">{s.extrait}</span>
+                  <span className="line-clamp-1">
+                    {s.extrait ?? s.matiere ?? s.reference}
+                  </span>
                 </p>
                 <span className="inline-flex items-center gap-1 text-ink/50">
                   <Lock className="size-3" aria-hidden />

@@ -7,5 +7,6 @@ export function useSollicitationDetail(id: string | null) {
     queryKey: [...SOLLICITATIONS_KEY, "detail", id],
     queryFn: () => sollicitationsService.detail(id as string),
     enabled: id !== null,
+    retry: false,
   });
 }

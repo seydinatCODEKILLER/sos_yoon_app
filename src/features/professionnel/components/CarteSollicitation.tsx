@@ -14,12 +14,13 @@ import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { CARTE } from "@/shared/lib/styleCarte";
 import { apparition } from "@/shared/lib/animationsPage";
+import { parseDateServeur } from "@/features/demandes/lib/formatDateDemande";
 import {
   formaterCompteARebours,
   formaterMmSs,
   ilYa,
 } from "../lib/formatDashboard";
-import { URGENCE } from "../lib/urgence";
+import { urgenceDe } from "../lib/urgence";
 import type { SollicitationResume } from "../types/dashboard.types";
 
 const STATUTS: Record<string, { libelle: string; classe: string }> = {
@@ -49,23 +50,25 @@ export function CarteSollicitation({
   onOuvrir,
 }: CarteSollicitationProps) {
   const enAttente = s.statut === "EN_ATTENTE";
-  const urgence = URGENCE[s.niveauUrgence] ?? URGENCE.NORMAL;
+  const urgence = urgenceDe(s.niveauUrgence);
   const critique = s.niveauUrgence === "CRITIQUE";
 
-  // Compte à rebours en direct. La carte est remontée à chaque récupération
-  // (key = dataUpdatedAt) : secondesRestantes repart donc de la valeur du serveur.
-  const [ecoule, setEcoule] = useState(0);
+  // Compte à rebours en direct. On part de secondesRestantes (horloge du serveur), recalée
+  // à chaque récupération : la carte n'a pas besoin d'être remontée, donc pas de
+  // réapparition animée toutes les 30 s.
+  const [horloge, setHorloge] = useState(maintenant);
   useEffect(() => {
     if (!enAttente) return;
-    const id = setInterval(() => setEcoule((e) => e + 1), 1000);
+    const id = setInterval(() => setHorloge(Date.now()), 1000);
     return () => clearInterval(id);
   }, [enAttente]);
 
-  const restant = Math.max(0, s.secondesRestantes - ecoule);
+  const ecoule = Math.max(0, (horloge - maintenant) / 1000);
+  const restant = Math.max(0, Math.round((s.secondesRestantes ?? 0) - ecoule));
   const expiree = enAttente && restant === 0;
   const totalSecondes = Math.max(
     1,
-    (new Date(s.expireLe).getTime() - new Date(s.recueLe).getTime()) / 1000,
+    (parseDateServeur(s.expireLe).getTime() - parseDateServeur(s.recueLe).getTime()) / 1000,
   );
   const part = Math.min(100, (restant / totalSecondes) * 100);
   const IconeDelai = critique ? Clock : Hourglass;
@@ -135,32 +138,41 @@ export function CarteSollicitation({
               onClick={() => onOuvrir(s)}
               className="text-left text-base font-bold text-ink outline-none after:absolute after:inset-0 after:content-[''] focus-visible:after:ring-2 focus-visible:after:ring-signal after:rounded-xl"
             >
-              {s.citoyen.affichage}
+              {s.citoyen.affichage ?? "Citoyen"}
             </button>
-            <Badge
-              className={`shrink-0 border-0 text-[10px] font-bold ${
-                s.scoreCorrespondance >= 95
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-ink/8 text-ink/70"
-              }`}
-            >
-              <Zap className="size-3" aria-hidden />
-              {s.scoreCorrespondance} % IA
-            </Badge>
+            {s.scoreCorrespondance !== null && (
+              <Badge
+                title="Correspondance avec votre profil (spécialité et distance)"
+                className={`shrink-0 border-0 text-[10px] font-bold ${
+                  s.scoreCorrespondance >= 95
+                    ? "bg-violet-100 text-violet-700"
+                    : "bg-ink/8 text-ink/70"
+                }`}
+              >
+                <Zap className="size-3" aria-hidden />
+                {Math.round(s.scoreCorrespondance)} % corresp.
+              </Badge>
+            )}
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-ink">{s.matiere}</p>
-            <p className="line-clamp-2 text-xs leading-snug text-ink/70">
-              {s.extrait}
-            </p>
+            {s.matiere && (
+              <p className="text-xs font-semibold text-ink">{s.matiere}</p>
+            )}
+            {s.extrait && (
+              <p className="line-clamp-2 text-xs leading-snug text-ink/70">
+                {s.extrait}
+              </p>
+            )}
           </div>
 
           {/* Lieu + type de saisie */}
           <div className="mt-auto flex items-center justify-between gap-2 border-t border-ink/8 pt-3 text-[11px]">
             <span className="inline-flex min-w-0 items-center gap-1 text-ink/60">
               <MapPin className="size-3.5 shrink-0" aria-hidden />
-              <span className="truncate">{s.libelleLocalisation}</span>
+              <span className="truncate">
+                {s.libelleLocalisation ?? "Lieu non précisé"}
+              </span>
             </span>
             {s.typeSaisie === "VOCAL" ? (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-signal/10 px-2 py-1 font-medium text-signal">
@@ -170,12 +182,12 @@ export function CarteSollicitation({
                   ? ` ${formaterMmSs(s.dureeAudioSecondes)}`
                   : ""}
               </span>
-            ) : (
+            ) : s.typeSaisie === "TEXTE" ? (
               <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-ink/8 px-2 py-1 font-medium text-ink/65">
                 <FileText className="size-3" aria-hidden />
                 Note écrite
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* Actions */}

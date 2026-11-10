@@ -2,7 +2,6 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { Ban, ChevronLeft, ChevronRight, CircleAlert, History, Inbox, type LucideIcon } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
@@ -20,11 +19,7 @@ import { useSollicitations } from "../hooks/useSollicitations";
 import { useTableauDeBord } from "../hooks/useTableauDeBord";
 import type { SollicitationResume } from "../types/dashboard.types";
 import type { OngletSollicitations } from "../types/sollicitation.types";
-
-const MESSAGES_ERREUR: Record<string, string> = {
-  SOLLICITATION_EXPIREE: "Cette demande a expiré.",
-  DEMANDE_DEJA_AFFECTEE: "Un autre professionnel a déjà accepté cette demande.",
-};
+import { messageEspacePro } from "../lib/erreurSollicitation";
 
 const VIDES: Record<OngletSollicitations, { icone: LucideIcon; titre: string; texte: string }> = {
   NOUVELLES: {
@@ -86,14 +81,9 @@ export function DemandesPage() {
       const resultat = await accepter.mutateAsync(s.id);
       // Le panneau se ferme avant d'ouvrir la fenêtre de confirmation
       if (idDetail) navigate("/pro/demandes", { replace: true });
-      setAcceptation({ resultat, objet: s.extrait });
+      setAcceptation({ resultat, objet: s.extrait ?? "" });
     } catch (e) {
-      const err = e as Partial<ApiErreur>;
-      setErreur(
-        (err.code && MESSAGES_ERREUR[err.code]) ??
-          err.message ??
-          "Impossible d'accepter la demande.",
-      );
+      setErreur(messageEspacePro(e, "Impossible d'accepter la demande."));
     }
   }
 
@@ -179,7 +169,7 @@ export function DemandesPage() {
         >
           {data.contenu.map((s) => (
             <CarteSollicitation
-              key={`${s.id}-${dataUpdatedAt}`}
+              key={s.id}
               s={s}
               maintenant={dataUpdatedAt}
               enCours={enCours === s.id}

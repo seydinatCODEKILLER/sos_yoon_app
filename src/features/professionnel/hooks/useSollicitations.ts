@@ -10,7 +10,6 @@ export function useSollicitations(onglet: OngletSollicitations, page: number) {
     queryKey: [...SOLLICITATIONS_KEY, onglet, page],
     queryFn: () => sollicitationsService.lister(onglet, page, TAILLE_PAGE),
     placeholderData: keepPreviousData,
-    // Les demandes expirent et sont réattribuées : on resynchronise
     refetchInterval: onglet === "NOUVELLES" ? 30_000 : false,
   });
 }

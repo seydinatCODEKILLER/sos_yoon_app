@@ -10,7 +10,6 @@ export function useRefuserSollicitation() {
   return useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: RefusPayload }) =>
       sollicitationsService.refuser(id, payload),
-    // Succès comme échec (déjà expirée) : les listes doivent se rafraîchir
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: DASHBOARD_KEY });
       queryClient.invalidateQueries({ queryKey: SOLLICITATIONS_KEY });

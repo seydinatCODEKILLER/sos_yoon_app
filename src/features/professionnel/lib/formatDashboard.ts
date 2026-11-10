@@ -1,3 +1,5 @@
+import { parseDateServeur } from "@/features/demandes/lib/formatDateDemande";
+
 export const DUREE_ESSAI_JOURS = 30;
 
 export function formaterDuree(secondes: number) {
@@ -10,7 +12,7 @@ export function formaterDuree(secondes: number) {
 
 /** `maintenant` vient de dataUpdatedAt : pas de Date.now() dans le rendu. */
 export function ilYa(iso: string, maintenant: number) {
-  const min = Math.max(0, Math.round((maintenant - new Date(iso).getTime()) / 60_000));
+  const min = Math.max(0, Math.round((maintenant - parseDateServeur(iso).getTime()) / 60_000));
   if (min < 1) return "à l'instant";
   if (min < 60) return `il y a ${min} min`;
   const h = Math.floor(min / 60);
@@ -18,13 +20,15 @@ export function ilYa(iso: string, maintenant: number) {
   return `il y a ${Math.floor(h / 24)} j`;
 }
 
-export function initiales(affichage: string) {
-  const mots = affichage.replace(/\./g, "").split(" ").filter(Boolean);
-  return ((mots[0]?.[0] ?? "") + (mots[1]?.[0] ?? "")).toUpperCase();
+/** Initiales d'un nom abrégé (« Amadou S. » donne « AS ») ; « ? » si le nom manque */
+export function initiales(affichage: string | null | undefined) {
+  const mots = (affichage ?? "").replace(/\./g, "").split(" ").filter(Boolean);
+  return ((mots[0]?.[0] ?? "") + (mots[1]?.[0] ?? "")).toUpperCase() || "?";
 }
 
+/** Date seule (« 2026-10-25 ») lue en local ; date et heure lues comme de l'UTC. */
 function enDate(iso: string) {
-  return new Date(iso.length === 10 ? `${iso}T00:00:00` : iso);
+  return iso.length === 10 ? new Date(`${iso}T00:00:00`) : parseDateServeur(iso);
 }
 
 export function formaterDateLongue(iso: string) {
