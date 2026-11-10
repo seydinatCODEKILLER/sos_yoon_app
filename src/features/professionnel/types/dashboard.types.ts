@@ -54,6 +54,8 @@ export type StatutAbonnement = "ESSAI" | "ACTIF" | "EXPIRE";
 
 export interface AbonnementPro {
   statut: StatutAbonnement;
+  /** AVOCAT, HUISSIER, NOTAIRE ou JURISTE_CONSEIL */
+  typeProfession: string | null;
   debutEssai: string | null;
   finEssai: string | null;
   debutPeriode: string | null;

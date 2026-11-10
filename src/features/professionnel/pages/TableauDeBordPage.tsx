@@ -17,6 +17,7 @@ import { CarteAbonnement } from "../components/CarteAbonnement";
 import { CarteStat } from "../components/CarteStat";
 import { DemandesUrgentes } from "../components/DemandesUrgentes";
 import { GraphiqueEvolution } from "../components/GraphiqueEvolution";
+import { useAbonnementPro } from "../hooks/useAbonnementPro";
 import { useTableauDeBord } from "../hooks/useTableauDeBord";
 import { formaterDuree } from "../lib/formatDashboard";
 import type { Periode } from "../types/dashboard.types";
@@ -48,10 +49,17 @@ export function TableauDeBordPage() {
   const { data, dataUpdatedAt } = useTableauDeBord(periode);
 
   const infoPeriode = PERIODES.find((p) => p.valeur === periode) ?? PERIODES[0];
+  const { data: abonnement } = useAbonnementPro();
   const nom = [user?.prenom, user?.nom].filter(Boolean).join(" ");
+  // « Maître » convient aux avocats, notaires et huissiers, pas aux juristes-conseils
+  const titre =
+    abonnement?.typeProfession && abonnement.typeProfession !== "JURISTE_CONSEIL"
+      ? "Maître "
+      : "";
 
-  const variation = data?.demandesRecues.variationPourcent ?? 0;
-  const VariationIcone = variation >= 0 ? TrendingUp : TrendingDown;
+  // null : le serveur n'a pas de période précédente à comparer
+  const variation = data?.demandesRecues.variationPourcent ?? null;
+  const VariationIcone = (variation ?? 0) >= 0 ? TrendingUp : TrendingDown;
   const totalPeriode =
     data?.evolution.reduce((somme, p) => somme + p.total, 0) ?? 0;
 
@@ -69,7 +77,7 @@ export function TableauDeBordPage() {
       >
         <div>
           <h2 className="text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-            {nom ? `Bonjour, Maître ${nom}` : "Bonjour"}{" "}
+            {nom ? `Bonjour, ${titre}${nom}` : "Bonjour"}{" "}
             <span aria-hidden>👋</span>
           </h2>
           <p className="mt-1 text-sm text-ink/60">
@@ -95,17 +103,19 @@ export function TableauDeBordPage() {
           pied={
             data && (
               <>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold ${
-                    variation >= 0
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-red-100 text-red-700"
-                  }`}
-                >
-                  <VariationIcone className="size-3" aria-hidden />
-                  {variation > 0 ? "+" : ""}
-                  {variation} %
-                </span>
+                {variation !== null && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 font-semibold ${
+                      variation >= 0
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
+                  >
+                    <VariationIcone className="size-3" aria-hidden />
+                    {variation > 0 ? "+" : ""}
+                    {variation} %
+                  </span>
+                )}
                 {infoPeriode.adjectif}
               </>
             )
@@ -122,14 +132,26 @@ export function TableauDeBordPage() {
           titre="Temps de réponse"
           icone={Clock}
           teinte="bg-violet-100 text-violet-700"
-          valeur={data ? formaterDuree(data.delaiMoyenReponseSecondes) : null}
+          valeur={
+            data
+              ? data.delaiMoyenReponseSecondes !== null
+                ? formaterDuree(data.delaiMoyenReponseSecondes)
+                : "—"
+              : null
+          }
           pied="Délai moyen de réponse"
         />
         <CarteStat
           titre="Taux d'acceptation"
           icone={CircleCheck}
           teinte="bg-emerald-100 text-emerald-700"
-          valeur={data ? `${data.tauxAcceptation} %` : null}
+          valeur={
+            data
+              ? data.tauxAcceptation !== null
+                ? `${data.tauxAcceptation} %`
+                : "—"
+              : null
+          }
           pied="Demandes acceptées"
         />
       </motion.section>

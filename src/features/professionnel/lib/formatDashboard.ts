@@ -31,6 +31,11 @@ function enDate(iso: string) {
   return iso.length === 10 ? new Date(`${iso}T00:00:00`) : parseDateServeur(iso);
 }
 
+/** Nombre de jours entre deux dates (« 2026-09-25 » et « 2026-10-25 » donnent 30) */
+export function joursEntre(debut: string, fin: string) {
+  return Math.round((enDate(fin).getTime() - enDate(debut).getTime()) / 86_400_000);
+}
+
 export function formaterDateLongue(iso: string) {
   return enDate(iso).toLocaleDateString("fr-FR", {
     day: "numeric",

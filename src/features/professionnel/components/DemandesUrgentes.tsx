@@ -2,13 +2,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import { ArrowRight, CircleAlert, Inbox } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
 import { Badge } from "@/shared/components/ui/badge";
 import { Button } from "@/shared/components/ui/button";
 import { Card, CardContent } from "@/shared/components/ui/card";
 import { CARTE } from "@/shared/lib/styleCarte";
 import { apparition } from "@/shared/lib/animationsPage";
 import { useAccepterSollicitation } from "../hooks/useAccepterSollicitation";
+import { messageEspacePro } from "../lib/erreurSollicitation";
 import { ilYa, initiales } from "../lib/formatDashboard";
 import type { SollicitationResume } from "../types/dashboard.types";
 import {
@@ -21,11 +21,6 @@ const AVATARS = [
   "bg-emerald-100 text-emerald-700",
   "bg-sky-100 text-sky-700",
 ];
-
-const MESSAGES_ERREUR: Record<string, string> = {
-  SOLLICITATION_EXPIREE: "Cette demande a expiré.",
-  DEMANDE_DEJA_AFFECTEE: "Un autre professionnel a déjà accepté cette demande.",
-};
 
 interface DemandesUrgentesProps {
   demandes: SollicitationResume[] | null;
@@ -50,14 +45,9 @@ export function DemandesUrgentes({
     setErreur(null);
     try {
       const resultat = await accepter.mutateAsync(d.id);
-      setAcceptation({ resultat, objet: d.extrait });
+      setAcceptation({ resultat, objet: d.extrait ?? "" });
     } catch (e) {
-      const err = e as Partial<ApiErreur>;
-      setErreur(
-        (err.code && MESSAGES_ERREUR[err.code]) ??
-          err.message ??
-          "Impossible d'accepter la demande.",
-      );
+      setErreur(messageEspacePro(e, "Impossible d'accepter la demande."));
     }
   }
 
@@ -125,20 +115,24 @@ export function DemandesUrgentes({
                     </span>
                     <div className="min-w-0 space-y-0.5">
                       <p className="flex flex-wrap items-center gap-2 text-sm font-semibold text-ink">
-                        {d.citoyen.affichage}
-                        <Badge
-                          variant="secondary"
-                          className="h-auto rounded-md bg-ink/8 px-1.5 py-0.5 text-[10px] font-medium text-ink/70"
-                        >
-                          {d.matiere}
-                        </Badge>
+                        {d.citoyen.affichage ?? "Citoyen"}
+                        {d.matiere && (
+                          <Badge
+                            variant="secondary"
+                            className="h-auto rounded-md bg-ink/8 px-1.5 py-0.5 text-[10px] font-medium text-ink/70"
+                          >
+                            {d.matiere}
+                          </Badge>
+                        )}
                       </p>
-                      <p className="line-clamp-1 text-xs text-ink/75">
-                        « {d.extrait} »
-                      </p>
+                      {d.extrait && (
+                        <p className="line-clamp-1 text-xs text-ink/75">
+                          « {d.extrait} »
+                        </p>
+                      )}
                       <p className="text-[11px] text-ink/50">
-                        Reçu {ilYa(d.recueLe, maintenant)} ·{" "}
-                        {d.libelleLocalisation}
+                        Reçu {ilYa(d.recueLe, maintenant)}
+                        {d.libelleLocalisation && ` · ${d.libelleLocalisation}`}
                       </p>
                     </div>
                   </div>
@@ -185,7 +179,7 @@ export function DemandesUrgentes({
       </Card>
       <DialogAcceptation
         acceptation={acceptation}
-        restantes={Math.max(0, total - 0)}
+        restantes={total}
         onFermer={() => setAcceptation(null)}
       />
     </motion.section>

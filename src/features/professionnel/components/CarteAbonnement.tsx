@@ -9,6 +9,7 @@ import {
   DUREE_ESSAI_JOURS,
   formaterDateLongue,
   formaterMontant,
+  joursEntre,
 } from "../lib/formatDashboard";
 import type { AbonnementPro } from "../types/dashboard.types";
 
@@ -27,8 +28,13 @@ export function CarteAbonnement() {
 
   const essai = a?.statut === "ESSAI" && !a.suspendu;
   const restants = a?.joursRestants ?? 0;
+  // Durée réelle de l'essai d'après ses dates ; 30 jours à défaut
+  const dureeEssai =
+    a?.debutEssai && a.finEssai
+      ? Math.max(1, joursEntre(a.debutEssai, a.finEssai))
+      : DUREE_ESSAI_JOURS;
   const progression = essai
-    ? Math.min(100, Math.max(0, ((DUREE_ESSAI_JOURS - restants) / DUREE_ESSAI_JOURS) * 100))
+    ? Math.min(100, Math.max(0, ((dureeEssai - restants) / dureeEssai) * 100))
     : 100;
   const etat = a ? etatAffiche(a) : null;
   const echeance = essai ? a?.finEssai : a?.finPeriode;

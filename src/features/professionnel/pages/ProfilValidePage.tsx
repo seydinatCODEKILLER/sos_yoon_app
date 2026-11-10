@@ -3,14 +3,15 @@ import { motion, useReducedMotion } from "motion/react";
 import { ArrowRight, Gift } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { FeuilleDossier } from "../components/FeuilleDossier";
+import { useAbonnementPro } from "../hooks/useAbonnementPro";
 import { RailDossier } from "../components/RailDossier";
 import type { EtapeDossier } from "../types/dossierPro.types";
 
 // À adapter à ta route réelle du tableau de bord pro
 const ROUTE_TABLEAU_DE_BORD = "/pro";
 
-// TODO : lire l'essai restant depuis GET /pro/abonnement quand il sera branché
-const DUREE_ESSAI_JOURS = 30;
+// Affiché tant que l'abonnement n'est pas chargé (durée standard de l'essai)
+const DUREE_ESSAI_PAR_DEFAUT = 30;
 
 const ETAPES_TERMINEES: EtapeDossier[] = [
   { code: "INFORMATIONS", libelle: "Informations", etat: "FAIT" },
@@ -45,6 +46,12 @@ function Medaille() {
 
 /** Première arrivée dans l'espace pro, une fois le dossier approuvé */
 export function ProfilValidePage() {
+  const { data: abonnement } = useAbonnementPro();
+  const joursEssai =
+    abonnement?.statut === "ESSAI" && abonnement.joursRestants !== null
+      ? abonnement.joursRestants
+      : DUREE_ESSAI_PAR_DEFAUT;
+
   return (
     <FeuilleDossier teinte="succes">
       <Medaille />
@@ -68,7 +75,7 @@ export function ProfilValidePage() {
         </span>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-ink">
-            {DUREE_ESSAI_JOURS} jours d'essai offerts
+            {joursEssai} jour{joursEssai > 1 ? "s" : ""} d'essai offert{joursEssai > 1 ? "s" : ""}
           </p>
           <p className="mt-0.5 text-sm leading-snug text-navy/70">
             Toutes les fonctions sont ouvertes. L'abonnement ne commence qu'à la
