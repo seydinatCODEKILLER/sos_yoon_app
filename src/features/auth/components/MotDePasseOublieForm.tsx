@@ -3,10 +3,10 @@ import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, ArrowRight, Loader2, MailCheck } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
 import { AuthTitle, AuthSubtitle } from "@/shared/components/AuthShell";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
+import { authErrorMessage } from "../lib/authErrors";
 import { useDemanderLienMotDePasse } from "../hooks/useMotDePasse";
 import { INPUT_CLASS } from "../lib/registerFormHelpers";
 import { motDePasseOublieSchema, type MotDePasseOublieValues } from "../schema/motDePasse.schema";
@@ -63,7 +63,7 @@ export function MotDePasseOublieForm() {
 
         {demander.isError && (
           <p role="alert" className="mt-3 text-sm text-red-600">
-            {(demander.error as Partial<ApiErreur>).message ?? "Envoi impossible. Réessayez."}
+            {authErrorMessage(demander.error)}
           </p>
         )}
 
@@ -120,7 +120,7 @@ export function MotDePasseOublieForm() {
 
         {demander.isError && (
           <p role="alert" className="text-sm text-red-600">
-            {(demander.error as Partial<ApiErreur>).message ?? "Envoi impossible. Réessayez."}
+            {authErrorMessage(demander.error)}
           </p>
         )}
 

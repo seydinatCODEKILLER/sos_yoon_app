@@ -3,9 +3,10 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight, CircleAlert, CircleCheck } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
+import { toApiErreur } from "@/shared/lib/apiError";
 import { AuthTitle, AuthSubtitle } from "@/shared/components/AuthShell";
 import { Button } from "@/shared/components/ui/button";
+import { authErrorMessage } from "../lib/authErrors";
 import { useReinitialiserMotDePasse } from "../hooks/useMotDePasse";
 import {
   reinitialiserMotDePasseSchema,
@@ -90,15 +91,15 @@ export function ReinitialiserMotDePasseForm() {
       });
       setTermine(true);
     } catch (e) {
-      const code = (e as Partial<ApiErreur>).code;
+      const { code } = toApiErreur(e);
       if (code === "JETON_EXPIRE" || code === "JETON_INVALIDE") setProbleme(code);
     }
   }
 
+  // Un lien périmé a son propre écran ; toute autre erreur s'affiche sous le formulaire
   const erreurGenerale =
-    reinitialiser.isError &&
-    !["JETON_EXPIRE", "JETON_INVALIDE"].includes((reinitialiser.error as Partial<ApiErreur>).code ?? "")
-      ? ((reinitialiser.error as Partial<ApiErreur>).message ?? "Une erreur est survenue. Réessayez.")
+    reinitialiser.isError && !["JETON_EXPIRE", "JETON_INVALIDE"].includes(toApiErreur(reinitialiser.error).code)
+      ? authErrorMessage(reinitialiser.error)
       : null;
 
   return (
