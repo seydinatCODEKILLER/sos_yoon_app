@@ -4,59 +4,79 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
 import { CarteDisponibilite } from "../components/CarteDisponibilite";
-import {
-  DialogRendezVous,
-  type EtatDialogueRendezVous,
-} from "../components/DialogRendezVous";
-import { SemaineAgenda } from "../components/SemaineAgenda";
+import { DialogRendezVous, type EtatDialogueRendezVous } from "../components/DialogRendezVous";
+import { GrilleSemaine } from "../components/GrilleSemaine";
+import { ListeJour } from "../components/ListeJour";
 import { useAgenda } from "../hooks/useAgenda";
+import { useMaintenant } from "../hooks/useMaintenant";
 import {
   JOURS_AFFICHES,
+  TYPES_RDV_CONFIG,
   ajouterJours,
   cleJour,
+  enteteJour,
+  heure,
   libelleSemaine,
   lundiDe,
+  prochainRendezVous,
 } from "../lib/agenda";
+import { TYPES_RDV } from "../schema/rendezVous.schema";
 import type { RendezVous, TypeRendezVous } from "../types/agenda.types";
 
 type FiltreAgenda = "TOUS" | TypeRendezVous;
 
 const FILTRES: { valeur: FiltreAgenda; libelle: string }[] = [
   { valeur: "TOUS", libelle: "Tous" },
-  { valeur: "AUDIENCE", libelle: "Audiences" },
-  { valeur: "CABINET", libelle: "Cabinet" },
-  { valeur: "VISIO", libelle: "Visio" },
-  { valeur: "APPEL", libelle: "Appels" },
+  ...TYPES_RDV.map((t) => ({ valeur: t, libelle: TYPES_RDV_CONFIG[t].libelle })),
 ];
 
 export function AgendaPage() {
-  // « Aujourd'hui » est figé au chargement de la page
-  const [aujourdhui] = useState(() => new Date());
+  const maintenant = useMaintenant();
   const [lundi, setLundi] = useState(() => lundiDe(new Date()));
   const [filtre, setFiltre] = useState<FiltreAgenda>("TOUS");
+  const [jourMobile, setJourMobile] = useState(() => cleJour(new Date()));
   const [dialogue, setDialogue] = useState<EtatDialogueRendezVous | null>(null);
 
-  const cleAujourdhui = cleJour(aujourdhui);
+  const cleAujourdhui = cleJour(maintenant);
   const jours = useMemo(
     () => Array.from({ length: JOURS_AFFICHES }, (_, i) => ajouterJours(lundi, i)),
     [lundi],
   );
+  const cles = useMemo(() => new Set(jours.map(cleJour)), [jours]);
+  const semaineCourante = cleJour(lundi) === cleJour(lundiDe(maintenant));
 
-  const { data, dataUpdatedAt } = useAgenda(cleJour(jours[0]), cleJour(jours[jours.length - 1]));
+  // Le backend découpe les journées en UTC : on lit un jour de marge de chaque côté
+  // et on range les rendez-vous par jour local, pour qu'aucun ne disparaisse à minuit
+  const { data, isError, refetch } = useAgenda(
+    cleJour(ajouterJours(lundi, -1)),
+    cleJour(ajouterJours(lundi, JOURS_AFFICHES)),
+  );
 
-  const compteur = (f: FiltreAgenda) =>
-    f === "TOUS" ? (data?.length ?? 0) : (data?.filter((r) => r.type === f).length ?? 0);
+  const semaine = useMemo(
+    () => (data ?? []).filter((r) => cles.has(cleJour(new Date(r.debut)))),
+    [data, cles],
+  );
 
   const parJour = useMemo(() => {
     const regroupe: Record<string, RendezVous[]> = {};
-    for (const r of data ?? []) {
+    for (const r of semaine) {
       if (filtre !== "TOUS" && r.type !== filtre) continue;
       (regroupe[cleJour(new Date(r.debut))] ??= []).push(r);
     }
     return regroupe;
-  }, [data, filtre]);
+  }, [semaine, filtre]);
 
-  const semaineCourante = cleJour(lundi) === cleJour(lundiDe(aujourdhui));
+  const compteur = (f: FiltreAgenda) =>
+    f === "TOUS" ? semaine.length : semaine.filter((r) => r.type === f).length;
+
+  // Jour affiché sur petit écran : celui choisi s'il est dans la semaine, sinon aujourd'hui ou le lundi
+  const jourActif = cles.has(jourMobile)
+    ? jourMobile
+    : semaineCourante
+      ? cleAujourdhui
+      : cleJour(jours[0]);
+
+  const prochain = prochainRendezVous(data ?? [], maintenant);
 
   return (
     <motion.div
@@ -70,11 +90,16 @@ export function AgendaPage() {
         className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
       >
         <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-ink">
-            Agenda &amp; Rendez-vous juridiques
-          </h2>
+          <h2 className="text-2xl font-bold tracking-tight text-ink">Agenda</h2>
           <p className="max-w-xl text-sm text-ink/60">
-            Gérez vos consultations, audiences et appels liés à vos dossiers.
+            {prochain ? (
+              <>
+                Prochain rendez-vous : <strong className="text-ink">{prochain.titre}</strong>,{" "}
+                {enteteJour(new Date(prochain.debut)).long} à {heure(prochain.debut)}.
+              </>
+            ) : (
+              "Gérez vos consultations, audiences et appels liés à vos dossiers."
+            )}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
@@ -84,7 +109,7 @@ export function AgendaPage() {
             onClick={() =>
               setDialogue({
                 rdv: null,
-                date: cleJour(semaineCourante ? aujourdhui : lundi),
+                date: semaineCourante ? cleAujourdhui : cleJour(lundi),
               })
             }
             className="h-11 rounded-xl bg-signal px-5 font-semibold text-white hover:bg-signal/90"
@@ -95,18 +120,21 @@ export function AgendaPage() {
         </div>
       </motion.header>
 
-      {/* Barre de navigation et filtres */}
+      {/* Navigation entre les semaines et filtres par type */}
       <motion.div
         variants={apparition}
-        className="flex flex-col gap-3 rounded-xl border border-ink/10 bg-linear-to-br from-white to-navy/5 p-3 lg:flex-row lg:items-center lg:justify-between"
+        className="flex flex-col gap-3 rounded-xl border border-ink/10 bg-white p-2 lg:flex-row lg:items-center lg:justify-between"
       >
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1">
           <Button
             type="button"
             variant="outline"
             size="sm"
             disabled={semaineCourante}
-            onClick={() => setLundi(lundiDe(aujourdhui))}
+            onClick={() => {
+              setLundi(lundiDe(new Date()));
+              setJourMobile(cleJour(new Date()));
+            }}
             className="h-9 text-xs font-semibold"
           >
             Aujourd'hui
@@ -120,9 +148,6 @@ export function AgendaPage() {
           >
             <ChevronLeft className="size-4" aria-hidden />
           </Button>
-          <p className="min-w-56 text-center text-sm font-bold text-ink" aria-live="polite">
-            {libelleSemaine(lundi)}
-          </p>
           <Button
             type="button"
             variant="ghost"
@@ -132,9 +157,16 @@ export function AgendaPage() {
           >
             <ChevronRight className="size-4" aria-hidden />
           </Button>
+          <p className="ml-1 text-sm font-bold text-ink" aria-live="polite">
+            {libelleSemaine(lundi)}
+          </p>
         </div>
 
-        <div className="flex max-w-full gap-1 overflow-x-auto" role="group" aria-label="Filtrer par type">
+        <div
+          className="flex max-w-full gap-1 overflow-x-auto"
+          role="group"
+          aria-label="Filtrer par type"
+        >
           {FILTRES.map((f) => {
             const actif = f.valeur === filtre;
             return (
@@ -149,8 +181,16 @@ export function AgendaPage() {
                   actif ? "bg-navy text-white hover:bg-navy/90 hover:text-white" : "text-ink/65"
                 }`}
               >
+                {f.valeur !== "TOUS" && (
+                  <span
+                    aria-hidden
+                    className={`size-2 rounded-full ${TYPES_RDV_CONFIG[f.valeur].point}`}
+                  />
+                )}
                 {f.libelle}
-                <span className={actif ? "text-white/70" : "text-ink/45"}>({compteur(f.valeur)})</span>
+                <span className={actif ? "text-white/70" : "text-ink/45"}>
+                  ({compteur(f.valeur)})
+                </span>
               </Button>
             );
           })}
@@ -158,21 +198,44 @@ export function AgendaPage() {
       </motion.div>
 
       <motion.div variants={apparition}>
-        {!data ? (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
-            {jours.map((j) => (
-              <div key={cleJour(j)} className="h-40 animate-pulse rounded-xl bg-ink/5 lg:h-72" />
-            ))}
+        {isError && !data ? (
+          <div
+            role="alert"
+            className="flex flex-col items-center gap-3 rounded-xl bg-red-50 p-6 text-center"
+          >
+            <p className="text-sm font-semibold text-red-700">Impossible de charger votre agenda.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
+              Réessayer
+            </Button>
           </div>
+        ) : !data ? (
+          <div className="h-104 animate-pulse rounded-xl bg-ink/5" />
         ) : (
-          <SemaineAgenda
-            key={cleJour(lundi)}
-            jours={jours}
-            parJour={parJour}
-            aujourdhui={cleAujourdhui}
-            maintenant={dataUpdatedAt}
-            onOuvrir={(rdv) => setDialogue({ rdv, date: cleJour(new Date(rdv.debut)) })}
-          />
+          <>
+            <div className="hidden lg:block">
+              <GrilleSemaine
+                key={cleJour(lundi)}
+                jours={jours}
+                parJour={parJour}
+                aujourdhui={cleAujourdhui}
+                maintenant={maintenant}
+                onOuvrir={(rdv) => setDialogue({ rdv, date: cleJour(new Date(rdv.debut)) })}
+                onCreer={(date, hhmm) => setDialogue({ rdv: null, date, heure: hhmm })}
+              />
+            </div>
+            <div className="lg:hidden">
+              <ListeJour
+                jours={jours}
+                parJour={parJour}
+                aujourdhui={cleAujourdhui}
+                jourActif={jourActif}
+                onChoisir={setJourMobile}
+                maintenant={maintenant}
+                onOuvrir={(rdv) => setDialogue({ rdv, date: cleJour(new Date(rdv.debut)) })}
+                onCreer={(date) => setDialogue({ rdv: null, date })}
+              />
+            </div>
+          </>
         )}
       </motion.div>
 
