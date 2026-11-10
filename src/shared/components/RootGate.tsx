@@ -13,8 +13,10 @@ export function RootGate() {
   if (isLoading) return <FullScreenLoader />;
 
   if (isAuthenticated && user && portee) {
+    console.log("RootGate", user?.role, portee);
     return <Navigate to={getRouteForSession(user.role, portee)} replace />;
   }
+
 
   return <AccueilVisiteurPage />;
 }

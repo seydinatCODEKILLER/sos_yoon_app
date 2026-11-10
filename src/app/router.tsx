@@ -44,6 +44,7 @@ import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
+import { VerifierEmailPage } from "@/features/auth/pages/VerifierEmailPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -59,8 +60,8 @@ export const router = createBrowserRouter([
   { path: "/verification-otp", element: <VerifyOtpPage /> },
   { path: "/code-oublie", element: <CodeOubliePage /> },
   {
-    path: "/verification-email",
-    element: <PagePlaceholder title="Vérification de l'email" />,
+    path: "/verifier-email",
+    element: <VerifierEmailPage />,
   },
 
   { path: "/inscription/code-secret", element: <CodeSecretInscriptionPage /> },

@@ -40,16 +40,16 @@ export const DOCUMENTS_BY_METIER: Record<Metier, MetierVerification> = {
     declaration:
       "Je certifie être juriste-conseil, apte à exercer, et je certifie l'authenticité de ma pièce d'identité et de mon diplôme en droit fournis à l'inscription. J'accepte que ma responsabilité personnelle soit engagée en cas de fausse déclaration ou de document falsifié.",
   },
-  // ⚠️ À CONFIRMER : documents exigés pour les 3 autres métiers.
-  // Pour l'instant : carte professionnelle facultative, comme sur la maquette.
+  // Spec 4.1 : CARTE_PRO est obligatoire pour un avocat, un huissier et un notaire
+  // (le serveur répond 422 DOSSIER_INCOMPLET sinon).
   AVOCAT: {
     statut: "officier de justice",
     documents: [
       {
         field: "carteProfessionnelle",
         label: "Carte professionnelle",
-        hint: "En cours de validité (facilite l'approbation express sous 24h)",
-        required: false,
+        hint: "En cours de validité, lisible (PDF, JPG ou PNG)",
+        required: true,
       },
     ],
     declaration: null,
@@ -60,8 +60,8 @@ export const DOCUMENTS_BY_METIER: Record<Metier, MetierVerification> = {
       {
         field: "carteProfessionnelle",
         label: "Carte professionnelle",
-        hint: "En cours de validité (facilite l'approbation express sous 24h)",
-        required: false,
+        hint: "En cours de validité, lisible (PDF, JPG ou PNG)",
+        required: true,
       },
     ],
     declaration: null,
@@ -72,15 +72,17 @@ export const DOCUMENTS_BY_METIER: Record<Metier, MetierVerification> = {
       {
         field: "carteProfessionnelle",
         label: "Carte professionnelle",
-        hint: "En cours de validité (facilite l'approbation express sous 24h)",
-        required: false,
+        hint: "En cours de validité, lisible (PDF, JPG ou PNG)",
+        required: true,
       },
     ],
     declaration: null,
   },
 };
 
-// ⚠️ Listes provisoires, à valider avec le métier.
+// ⚠️ Plus utilisées : les spécialités viennent de GET /referentiels/specialites, et l'organisme,
+// l'expérience, les langues et les tarifs ne font plus partie du modèle (spec 4.1). À supprimer
+// quand plus aucun écran ne les importe.
 export const ORGANISMES_BY_METIER: Record<Metier, string[]> = {
   AVOCAT: ["Ordre des Avocats du Sénégal"],
   HUISSIER: ["Chambre nationale des huissiers de justice"],

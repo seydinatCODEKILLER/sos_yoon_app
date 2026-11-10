@@ -55,6 +55,7 @@ const metierField = z.enum(METIER_VALUES, {
 const step2Object = z.object({
   metier: metierField,
   numeroOrdre: z.string().max(30, "Numéro trop long"),
+  /** Identifiants des spécialités (GET /referentiels/specialites) */
   specialites: z.array(z.string()).min(1, "Sélectionnez au moins une spécialité"),
 });
 
@@ -126,22 +127,10 @@ export const step3Schema = step3Object.superRefine((d, ctx) => {
 /* ── Étape 4 : localisation ─────────────────────────────────── */
 
 const step4Schema = z.object({
-  region: z.string().min(1, "Sélectionnez une région"),
+  regionId: z.string().min(1, "Sélectionnez une région"),
   adresse: z.string().min(5, "Renseignez l'adresse professionnelle"),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-});
-
-/* ── Étape 5 : présentation ─────────────────────────────────── */
-
-export const BIO_MAX_LENGTH = 1000;
-
-const step5Schema = z.object({
-  biographie: z
-    .string()
-    .min(50, "Présentez-vous en au moins 50 caractères")
-    .max(BIO_MAX_LENGTH, `${BIO_MAX_LENGTH} caractères maximum`),
-  langues: z.array(z.string()).min(1, "Sélectionnez au moins une langue"),
 });
 
 /* ── Export ─────────────────────────────────────────────────── */

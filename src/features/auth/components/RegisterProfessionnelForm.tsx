@@ -36,7 +36,7 @@ const NOTES = [
 export function RegisterProfessionnelForm() {
   const [step, setStep] = useState(0);
   const stepRef = useRef(0);
-    const navigate = useNavigate();
+  const navigate = useNavigate();
   const { submit, isSubmitting } = useRegisterProfessionnel();
 
   useEffect(() => {
@@ -67,7 +67,7 @@ export function RegisterProfessionnelForm() {
       numeroOrdre: "",
       specialites: [],
       declarationHonneur: false,
-      region: "",
+      regionId: "",
       adresse: "",
     },
   });
@@ -109,11 +109,17 @@ export function RegisterProfessionnelForm() {
       return;
     }
 
-    const ok = await submit(values);
-    if (ok) {
-      // TODO: rediriger vers un écran de confirmation
-     navigate("/pro/validation", { replace: true });
+    const resultat = await submit(values);
+    if (resultat.ok) {
+      // Compte créé, dossier transmis : écran « Demande envoyée » (portée DOSSIER)
+      navigate("/pro/validation", { replace: true });
+      return;
     }
+    // Le serveur a refusé un champ précis : on ramène le professionnel dessus
+    if (resultat.champ) {
+      form.setError(resultat.champ, { message: resultat.message });
+    }
+    if (resultat.etape !== undefined) allerA(resultat.etape);
   }
 
   function handleBack() {

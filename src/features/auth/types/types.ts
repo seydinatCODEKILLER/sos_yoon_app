@@ -1,4 +1,4 @@
-import type { Portee, StatutCompte, User } from "@/types/user.types";
+import type { Metier, Portee, StatutCompte, User } from "@/types/user.types";
 
 /* ── Réponses ── */
 
@@ -64,15 +64,32 @@ export interface RenvoyerCodePayload {
 /* ── Professionnel (email + mot de passe) ── */
 
 /** POST /auth/pro/inscription */
+
+/** Nom du fichier dans le multipart = type du document (spec 4.1) */
+export type TypeDocumentPro = "CARTE_PRO" | "DIPLOME" | "PIECE_IDENTITE";
+
+/** Champ « donnees » de POST /auth/pro/inscription (spec 4.1) */
 export interface RegisterProPayload {
   prenom: string;
   nom: string;
+  /** Format international : +221771234567 */
   telephone: string;
   email: string;
   motDePasse: string;
   confirmationMotDePasse: string;
   cguAcceptees: boolean;
   versionCgu: string;
+  typeProfession: Metier;
+  /** Omis pour un juriste-conseil */
+  matricule?: string;
+  /** Identifiants issus de GET /referentiels/specialites */
+  specialiteIds: string[];
+  /** true obligatoire pour un juriste-conseil */
+  declarationHonneur: boolean;
+  regionId: string;
+  adresseCabinet: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 /** POST /auth/pro/connexion */

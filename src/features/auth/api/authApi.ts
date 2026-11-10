@@ -16,6 +16,7 @@ import type {
   ReinitialiserMotDePassePayload,
   RenvoyerCodePayload,
   TokenResponse,
+  TypeDocumentPro,
   VerifierCodeInscriptionResponse,
   VerifierCodePayload,
   VerifierCodeReinitialisationResponse,
@@ -23,6 +24,8 @@ import type {
   VerifierEmailResponse,
   VerifierMfaPayload,
 } from "../types/types";
+import type { ResoumissionDossier, StatutDossier } from "@/features/professionnel/types/dossierPro.types";
+
 
 /** Le back renvoie l'objet directement : on renvoie `data` tel quel. */
 async function post<T>(
@@ -100,9 +103,50 @@ export const authApi = {
 
   /* ── Professionnel : email + mot de passe ── */
   pro: {
-    /** 201 : compte créé, portée INSCRIPTION, email à vérifier */
-    inscription: (payload: RegisterProPayload) =>
-      post<TokenResponse>("/auth/pro/inscription", payload),
+    /**
+     * 201 : crée le compte, enregistre le dossier complet et l'envoie à l'administration,
+     * en une seule requête. Réponse : portée DOSSIER, EN_ATTENTE_VALIDATION, e-mail à vérifier.
+     * Multipart : « donnees » (JSON) + un fichier par pièce, nommé par son type (spec 4.1).
+     * Pas de Content-Type posé ici : axios laisse le navigateur écrire le « boundary ».
+     */
+    inscription: (
+      donnees: RegisterProPayload,
+      fichiers: Partial<Record<TypeDocumentPro, File>>,
+    ) => {
+      const form = new FormData();
+      form.append("donnees", JSON.stringify(donnees));
+      for (const [type, fichier] of Object.entries(fichiers)) {
+        if (fichier) form.append(type, fichier, fichier.name);
+      }
+      return post<TokenResponse>("/auth/pro/inscription", form);
+    },
+
+    /** 200 : état du dossier d'inscription (portée DOSSIER) */
+    statutDossier: async () => {
+      const { data } = await api.get<StatutDossier>("/pro/inscription/statut");
+      return data;
+    },
+
+    /**
+     * 200 : soumet à nouveau un dossier rejeté (portée DOSSIER).
+     * Sans fichier ni donnée, le dossier repart tel quel (pas de corps).
+     * 422 RESOUMISSION_IMPOSSIBLE si le dossier n'est pas rejeté.
+     */
+    resoumettre: (
+      fichiers: Partial<Record<TypeDocumentPro, File>> = {},
+      donnees?: Partial<RegisterProPayload>,
+    ) => {
+      const pieces = Object.entries(fichiers).filter(([, f]) => !!f);
+      if (pieces.length === 0 && !donnees) {
+        return post<ResoumissionDossier>("/pro/inscription/resoumettre");
+      }
+      const form = new FormData();
+      if (donnees) form.append("donnees", JSON.stringify(donnees));
+      for (const [type, fichier] of pieces) {
+        form.append(type, fichier as File, (fichier as File).name);
+      }
+      return post<ResoumissionDossier>("/pro/inscription/resoumettre", form);
+    },
 
     /** 200 : la portée dit quel écran afficher */
     connexion: (payload: LoginProPayload) =>

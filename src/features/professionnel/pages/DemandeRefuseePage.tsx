@@ -1,118 +1,72 @@
-import { motion } from "motion/react";
-import { CircleAlert, Clock, House, SquarePen } from "lucide-react";
+import { Navigate } from "react-router-dom";
+import { useStatutDossierPro } from "../hooks/useDossierPro";
+import { formatDateComplete } from "@/features/demandes/lib/formatDateDemande";
+import { BandeauEmail } from "../components/BandeauEmail";
+import { CorrectionDossier } from "../components/CorrectionDossier";
+import {
+  DossierIndisponible,
+  FeuilleDossier,
+  PiedFeuille,
+} from "../components/FeuilleDossier";
+import { RailDossier } from "../components/RailDossier";
 
-import { Badge } from "@/shared/components/ui/badge";
-import { Button } from "@/shared/components/ui/button";
-import { Card, CardContent } from "@/shared/components/ui/card";
-import { FondMotif } from "@/shared/components/FondMotif";
-import { CARTE } from "@/shared/lib/styleCarte";
-import { apparition, conteneur, pastille } from "@/shared/lib/animationsPage";
-import { Link } from "react-router-dom";
+const ROUTE_ATTENTE = "/pro/validation";
 
-// À adapter à ta route réelle de resoumission
-const ROUTE_RESOUMISSION = "/pro/resoumission";
-
-// TODO : remplacer par la réponse de GET /pro/inscription/statut
-const MOTIF_MOCK = {
-  motif:
-    "Les documents professionnels fournis ne permettent pas de confirmer votre inscription professionnelle auprès du Barreau du Sénégal.",
-  pieceEnCause: "Carte Professionnelle ou Attestation d'inscription expirée ou illisible.",
-};
-
+/** Dossier rejeté : le motif, la pièce à remplacer, et le renvoi sur la même page */
 export function DemandeRefuseePage() {
-  const { motif, pieceEnCause } = MOTIF_MOCK;
+  const { data, isPending, isError, refetch } = useStatutDossierPro();
+
+  if (isPending || isError || !data) {
+    return <DossierIndisponible erreur={isError} onRetry={() => void refetch()} />;
+  }
+
+  // Dossier renvoyé (ou approuvé) : l'écran d'attente prend le relais
+  if (data.statut !== "REJETE") return <Navigate to={ROUTE_ATTENTE} replace />;
+
+  const { rejet } = data;
 
   return (
-    <FondMotif teinte="alerte">
-      <motion.div
-        variants={conteneur}
-        initial="cache"
-        animate="visible"
-        className="flex w-full max-w-2xl flex-col items-center text-center"
+    <FeuilleDossier teinte="alerte">
+      <h1 className="font-display text-3xl leading-tight font-bold text-ink">
+        Votre dossier n'a pas été approuvé
+      </h1>
+      <p className="mt-2 text-sm text-navy/60">
+        Dossier {data.reference}
+        {data.dateTraitement
+          ? `, examiné le ${formatDateComplete(data.dateTraitement)}`
+          : ""}
+      </p>
+
+      <div className="mt-6">
+        <RailDossier etapes={data.etapes} statut={data.statut} />
+      </div>
+
+      <div
+        role="alert"
+        className="mt-6 rounded-r-xl border-l-4 border-red-500 bg-red-50/70 py-3 pr-4 pl-4"
       >
-        <motion.div variants={pastille} className="relative mb-6 grid size-24 place-items-center">
-          <motion.span
-            aria-hidden
-            className="absolute inset-0 rounded-full bg-red-400/30"
-            animate={{ scale: [1, 1.3, 1], opacity: [0.7, 0, 0.7] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <span className="absolute inset-3 rounded-full bg-red-100" />
-          <span className="relative grid size-14 place-items-center rounded-full bg-red-600 text-white shadow-lg">
-            <CircleAlert className="size-7" />
-          </span>
-        </motion.div>
+        <p className="text-sm font-semibold text-ink">
+          {rejet?.motif ?? "Nos équipes n'ont pas pu valider votre dossier."}
+        </p>
+        {rejet?.commentaire && (
+          <p className="mt-1 text-sm leading-relaxed text-navy/70">
+            {rejet.commentaire}
+          </p>
+        )}
+      </div>
 
-        <motion.h1
-          variants={apparition}
-          className="text-3xl font-bold tracking-tight text-ink sm:text-4xl"
-        >
-          Demande non approuvée
-        </motion.h1>
+      {data.resoumissionPossible ? (
+        <CorrectionDossier pieceEnCause={rejet?.pieceEnCause ?? null} />
+      ) : (
+        <p className="mt-6 text-sm text-navy/70">
+          Ce dossier ne peut plus être renvoyé depuis l'application. Contactez
+          l'équipe SOS Yoon pour connaître la suite.
+        </p>
+      )}
 
-        <motion.p variants={apparition} className="mt-3 max-w-lg text-sm text-ink/70 sm:text-base">
-          Votre demande d'inscription n'a pas pu être validée par nos équipes et l'Ordre
-          professionnel lors de l'examen de vos pièces justificatives.
-        </motion.p>
+      <BandeauEmail />
 
-        <motion.div variants={apparition} className="mt-8 w-full text-left">
-          <Card className={`${CARTE} py-0`}>
-            <CardContent className="p-5">
-              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink/10 pb-4">
-                <h2 className="text-base font-semibold text-ink">
-                  Motif de non-approbation &amp; Statut
-                </h2>
-                <Badge className="border-0 bg-red-100 text-xs font-medium text-red-700">
-                  Action requise pour validation
-                </Badge>
-              </div>
-
-              <div className="mt-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
-                <span className="grid size-8 shrink-0 place-items-center rounded-full bg-red-100 text-red-600">
-                  <Clock className="size-4" />
-                </span>
-                <div className="min-w-0 space-y-3">
-                  <p className="text-sm font-semibold text-ink">{motif}</p>
-
-                  {pieceEnCause && (
-                    <p className="rounded-lg border border-red-100 bg-white px-3 py-2 text-xs text-ink/70">
-                      <span className="font-bold text-red-800">Pièce en cause : </span>
-                      {pieceEnCause}
-                    </p>
-                  )}
-
-                  <p className="text-xs text-ink/65">
-                    Vous pouvez corriger vos informations, déposer des documents à jour et soumettre
-                    à nouveau votre demande afin de finaliser votre inscription.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div variants={apparition} className="mt-8 flex flex-col items-center gap-2">
-          <Button
-            size="lg"
-            nativeButton={false}
-            render={<Link to={ROUTE_RESOUMISSION} />}
-            className="h-12 rounded-xl bg-navy px-6 font-semibold text-white hover:bg-navy/90"
-          >
-            <SquarePen className="size-4" />
-            Corriger et renvoyer mes documents
-          </Button>
-
-          <Button
-            variant="ghost"
-            nativeButton={false}
-            render={<Link to="/" replace />}
-            className="text-xs font-medium text-ink/70"
-          >
-            <House className="size-4" />
-            Retour à l'accueil SOS YOON
-          </Button>
-        </motion.div>
-      </motion.div>
-    </FondMotif>
+      <PiedFeuille texte="Vous pouvez quitter cette page : votre dossier est conservé. Reconnectez-vous avec votre e-mail pour le corriger plus tard." />
+    </FeuilleDossier>
   );
 }

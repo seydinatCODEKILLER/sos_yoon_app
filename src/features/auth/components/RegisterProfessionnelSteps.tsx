@@ -12,10 +12,10 @@ import {
 } from "@/shared/components/ui/select";
 import { toast } from "@/shared/lib/toast";
 import { METIERS } from "@/features/demandes/lib/metiers";
-import { SENEGAL_ZONES } from "../lib/senegalZones";
+import { useRegions } from "@/features/profil/hooks/useReferentielsProfil";
+import { useSpecialites } from "../hooks/useSpecialite";
 import {
   DOCUMENTS_BY_METIER,
-  SPECIALITES_BY_METIER,
   type RequiredDocument,
 } from "../lib/professionalConfig";
 import type { RegisterProfessionnelValues } from "../schema/registerProfessionnel.schema";
@@ -151,6 +151,7 @@ export function StepProfile({ form }: StepProps) {
   } = form;
   const metier = watch("metier");
   const isJuriste = metier === "JURISTE_CONSEIL";
+  const specialites = useSpecialites();
 
   return (
     <div className="space-y-5">
@@ -174,9 +175,12 @@ export function StepProfile({ form }: StepProps) {
                     aria-pressed={selected}
                     onClick={() => {
                       field.onChange(value);
-                      // la liste des spécialités dépend du métier : on repart de zéro
-                      setValue("specialites", []);
-                      clearErrors("specialites");
+                      // Les pièces demandées dépendent du métier : on repart de zéro
+                      setValue("diplome", undefined);
+                      setValue("pieceIdentite", undefined);
+                      setValue("carteProfessionnelle", undefined);
+                      setValue("declarationHonneur", false);
+                      clearErrors();
                     }}
                     className={`relative flex h-20 flex-col items-center justify-center gap-2 rounded-xl border text-xs font-medium transition-colors ${
                       selected
@@ -227,21 +231,33 @@ export function StepProfile({ form }: StepProps) {
           control={control}
           render={({ field }) => (
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-              {!metier && (
-                <p className="col-span-full text-xs text-navy/40">
-                  Choisissez d'abord un type de professionnel.
+              {specialites.isPending && (
+                <p className="col-span-full flex items-center gap-2 text-xs text-navy/40">
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                  Chargement des spécialités…
                 </p>
               )}
-              {metier &&
-                SPECIALITES_BY_METIER[metier].map((s) => (
-                  <ToggleChip
-                    key={s}
-                    selected={field.value.includes(s)}
-                    onClick={() => field.onChange(toggleInList(field.value, s))}
+              {specialites.isError && (
+                <p className="col-span-full text-xs text-red-600">
+                  Impossible de charger les spécialités.{" "}
+                  <button
+                    type="button"
+                    onClick={() => void specialites.refetch()}
+                    className="font-semibold underline"
                   >
-                    {s}
-                  </ToggleChip>
-                ))}
+                    Réessayer
+                  </button>
+                </p>
+              )}
+              {specialites.data?.map((s) => (
+                <ToggleChip
+                  key={s.id}
+                  selected={field.value.includes(s.id)}
+                  onClick={() => field.onChange(toggleInList(field.value, s.id))}
+                >
+                  {s.libelle}
+                </ToggleChip>
+              ))}
             </div>
           )}
         />
@@ -360,8 +376,8 @@ export function StepLocation({ form }: StepProps) {
   const lng = watch("longitude");
   const hasPosition = lat !== undefined && lng !== undefined;
   const [recherche, setRecherche] = useState(false);
+  const regions = useRegions();
 
-  // Pas de préfixe « use » : ce n'est pas un hook
   function utiliserMaPosition() {
     if (!navigator.geolocation) {
       toast.error("La géolocalisation n'est pas disponible sur cet appareil");
@@ -388,19 +404,36 @@ export function StepLocation({ form }: StepProps) {
 
   return (
     <div className="space-y-4">
-      <Field label="Zone d'intervention" required error={errors.region?.message}>
+      <Field
+        label="Zone d'intervention"
+        required
+        error={
+          errors.regionId?.message ??
+          (regions.isError ? "Impossible de charger les régions." : undefined)
+        }
+      >
         <Controller
-          name="region"
+          name="regionId"
           control={control}
           render={({ field }) => (
-            <Select value={field.value} onValueChange={field.onChange}>
+            <Select
+              value={field.value}
+              onValueChange={field.onChange}
+              disabled={regions.isPending}
+            >
               <SelectTrigger className={SELECT_TRIGGER_CLASS}>
-                <SelectValue placeholder="Choisissez une région" />
+                <SelectValue
+                  placeholder={
+                    regions.isPending
+                      ? "Chargement des régions…"
+                      : "Choisissez une région"
+                  }
+                />
               </SelectTrigger>
               <SelectContent>
-                {SENEGAL_ZONES.map((z) => (
-                  <SelectItem key={z} value={z}>
-                    {z}
+                {regions.data?.map((r) => (
+                  <SelectItem key={r.id} value={r.id}>
+                    {r.nom}
                   </SelectItem>
                 ))}
               </SelectContent>
