@@ -1,12 +1,14 @@
 export type TypeProfession = "AVOCAT" | "HUISSIER" | "NOTAIRE" | "JURISTE_CONSEIL";
 
+/** Spec 13.5 : les trois dossiers d'inscription les plus anciens. */
 export interface InscriptionEnAttente {
   dossierId: string;
-  professionnelId: string;
-  nomComplet: string;
-  typeProfession: TypeProfession;
+  professionnelId: string | null;
+  nomComplet: string | null;
+  typeProfession: TypeProfession | null;
+  ville?: string | null;
   /** ISO 8601 */
-  dateSoumission: string;
+  dateSoumission: string | null;
 }
 
 export interface RepartitionMetier {
@@ -23,14 +25,14 @@ export interface TableauDeBordAdmin {
     enCours: number;
     aQualifier: number;
   };
-  /** Les 3 dossiers les plus anciens */
   inscriptionsEnAttente: InscriptionEnAttente[];
-  /** Ajout proposé à 13.5 : professionnels actifs par métier */
+  /** Professionnels actifs par métier. */
   repartitionMetiers: RepartitionMetier[];
 }
 
 export type VueEvolution = "JOUR" | "SEMAINE" | "MOIS" | "METIER";
 
+/** Spec 13.42. `libelles`, `cetteAnnee` et `anneePassee` ont la même longueur. */
 export interface EvolutionDemandes {
   vue: VueEvolution;
   libelles: string[];

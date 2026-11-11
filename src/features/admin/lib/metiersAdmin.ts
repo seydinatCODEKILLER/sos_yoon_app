@@ -3,10 +3,15 @@ import type { TypeProfession } from "../types/dashboard.types";
 /** Ordre d'affichage dans la répartition */
 export const ORDRE_METIERS: TypeProfession[] = ["AVOCAT", "HUISSIER", "JURISTE_CONSEIL", "NOTAIRE"];
 
-export const METIERS_ADMIN: Record<
-  TypeProfession,
-  { libelle: string; pluriel: string; barre: string; piste: string; avatar: string }
-> = {
+interface InfoMetier {
+  libelle: string;
+  pluriel: string;
+  barre: string;
+  piste: string;
+  avatar: string;
+}
+
+export const METIERS_ADMIN: Record<TypeProfession, InfoMetier> = {
   AVOCAT: {
     libelle: "Avocat",
     pluriel: "Avocats",
@@ -37,5 +42,18 @@ export const METIERS_ADMIN: Record<
   },
 };
 
-/** Destination du bouton « Voir le dossier » : à ajuster quand l'écran Professionnels existera */
+const METIER_INCONNU: InfoMetier = {
+  libelle: "Professionnel",
+  pluriel: "Professionnels",
+  barre: "bg-ink/30",
+  piste: "bg-ink/5",
+  avatar: "bg-ink/10 text-ink",
+};
+
+/** Un dossier peut arriver sans métier renseigné : on ne casse pas l'écran pour autant. */
+export function infoMetier(type: string | null | undefined): InfoMetier {
+  return (type && METIERS_ADMIN[type as TypeProfession]) || METIER_INCONNU;
+}
+
+/** Fiche du professionnel (l'écran Professionnels l'ouvre avec le dossier d'inscription). */
 export const routeDossierPro = (professionnelId: string) => `/admin/professionnels/${professionnelId}`;
