@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { BadgeCheck, Download, Eye, FileText, Loader2 } from "lucide-react";
+import { Banknote, BadgeCheck, Download, Eye, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Sheet,
@@ -13,6 +13,7 @@ import { mediaUrl } from "@/shared/lib/mediaUrl";
 import { cn } from "@/shared/lib/utils";
 import { professionnelsAdminApi } from "../api/professionnelsAdminApi";
 import { useApprouverDossier, useDetailProfessionnel } from "../hooks/useProfessionnelsAdmin";
+import { formaterMontant } from "../lib/abonnements";
 import { messageAdmin } from "../lib/erreursAdmin";
 import {
   LIBELLE_DOCUMENT,
@@ -23,12 +24,14 @@ import {
 } from "../lib/professionnels";
 import type { CiblePro, CibleRefus, DocumentDossier } from "../types/professionnels.types";
 import { AvatarPro, BadgeStatutPro } from "./ElementsProfessionnel";
+import type { CiblePaiement } from "../types/abonnements.types";
 
 interface Props {
   id: string | undefined;
   onFermer: () => void;
   onChangerStatut: (c: CiblePro) => void;
   onRefuser: (c: CibleRefus) => void;
+  onPaiement: (c: CiblePaiement) => void;
 }
 
 function Section({ titre, droite, children }: { titre: string; droite?: string; children: ReactNode }) {
@@ -59,7 +62,7 @@ const LIBELLE_ABONNEMENT: Record<string, string> = {
   SUSPENDU: "Suspendu",
 };
 
-export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }: Props) {
+export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser, onPaiement }: Props) {
   const { data, isLoading, isError } = useDetailProfessionnel(id);
   const approuver = useApprouverDossier();
   const [confirmation, setConfirmation] = useState(false);
@@ -191,7 +194,26 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
                     {abo.joursRestants != null && (
                       <Ligne label="Jours restants">{Math.max(0, abo.joursRestants)}</Ligne>
                     )}
+                    {abo.montantMensuel != null && (
+                      <Ligne label="Mensualité">{formaterMontant(abo.montantMensuel)}</Ligne>
+                    )}
                   </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-1 w-full gap-1.5"
+                    onClick={() =>
+                      onPaiement({
+                        professionnelId: data.id,
+                        nomComplet,
+                        montantMensuel: abo.montantMensuel ?? null,
+                        echeance: abo.statut === "ESSAI" ? abo.finEssai : (abo.finPeriode ?? abo.finEssai),
+                        statutCompte: data.statutCompte,
+                      })
+                    }
+                  >
+                    <Banknote className="size-4" aria-hidden /> Enregistrer un paiement
+                  </Button>
                 </Section>
               )}
 

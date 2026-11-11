@@ -81,6 +81,8 @@ export interface AbonnementAdmin {
   finEssai: string | null;
   finPeriode: string | null;
   joursRestants: number | null;
+  /** Montant mensuel attendu en XOF. Absent sur un backend sans le correctif. */
+  montantMensuel?: number | null;
 }
 
 export interface ProfessionnelAdminDetail {

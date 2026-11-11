@@ -11,6 +11,7 @@ import { cn } from "@/shared/lib/utils";
 import { BasculeVue } from "../components/BasculeVue";
 import { CartesProfessionnels } from "../components/CartesProfessionnels";
 import { CompteursProfessionnels } from "../components/CompteursProfessionnels";
+import { DialogPaiement } from "../components/DialogPaiement";
 import { DialogRefusDossier } from "../components/DialogRefusDossier";
 import { DialogStatutPro } from "../components/DialogStatutPro";
 import { FicheProfessionnel } from "../components/FicheProfessionnel";
@@ -30,8 +31,9 @@ import type {
   FiltreStatutPro,
   TypeProfession,
 } from "../types/professionnels.types";
+import type { CiblePaiement } from "../types/abonnements.types";
 
-const TAILLE = 12;
+const TAILLE = 12; // multiple de 2 et de 3 : la grille de cartes n'a jamais de ligne bancale
 const ROUTE = "/admin/professionnels";
 
 const ITEMS_METIER = [
@@ -52,6 +54,7 @@ export default function ProfessionnelsAdminPage() {
   const [page, setPage] = useState(1); // 1-indexé côté interface
   const [cibleStatut, setCibleStatut] = useState<CiblePro | null>(null);
   const [cibleRefus, setCibleRefus] = useState<CibleRefus | null>(null);
+  const [ciblePaiement, setCiblePaiement] = useState<CiblePaiement | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -226,9 +229,11 @@ export default function ProfessionnelsAdminPage() {
         onFermer={() => navigate(ROUTE)}
         onChangerStatut={setCibleStatut}
         onRefuser={setCibleRefus}
+        onPaiement={setCiblePaiement}
       />
       <DialogStatutPro cible={cibleStatut} onFermer={() => setCibleStatut(null)} />
       <DialogRefusDossier cible={cibleRefus} onFermer={() => setCibleRefus(null)} />
+      <DialogPaiement cible={ciblePaiement} onFermer={() => setCiblePaiement(null)} />
     </motion.div>
   );
 }

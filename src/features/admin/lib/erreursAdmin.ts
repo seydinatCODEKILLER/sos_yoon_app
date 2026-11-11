@@ -6,6 +6,7 @@ const MESSAGES: Record<string, string> = {
   PROFESSIONNEL_DEJA_SUSPENDU: "Ce professionnel est déjà désactivé.",
   COMPTE_DEJA_SUSPENDU: "Ce compte est déjà désactivé. La liste a été actualisée.",
   COMPTE_NON_SUSPENDU: "Ce compte n'est pas désactivé : il n'y a rien à réactiver.",
+  PAIEMENT_DEJA_ENREGISTRE: "Un paiement avec cette référence est déjà enregistré. Les données ont été actualisées.",
   INTROUVABLE: "Élément introuvable. Il a peut-être été supprimé.",
   ACCES_REFUSE: "Vous n'avez pas le droit d'effectuer cette action.",
   TROP_DE_REQUETES: "Trop de tentatives. Réessayez dans un instant.",

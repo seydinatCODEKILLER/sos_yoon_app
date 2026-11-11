@@ -41,12 +41,14 @@ import { ReinitialiserMotDePassePage } from "@/features/auth/pages/Reinitialiser
 import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
+import AbonnementsAdminPage from "@/features/admin/pages/AdminAbonnementsPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
 import DemandesAdminPage from "@/features/admin/pages/AdminDemandesPage";
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
 import { VerifierEmailPage } from "@/features/auth/pages/VerifierEmailPage";
 import { ChatbotProPage } from "@/features/professionnel/pages/ChatBotProPage";
+import AuditAdminPage from "@/features/admin/pages/AdminAuditPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -276,6 +278,16 @@ export const router = createBrowserRouter([
           {
             path: "/admin/professionnels/:id?",
             element: <ProfessionnelsAdminPage />,
+          },
+          {
+            path: "/admin/abonnements",
+            element: <AbonnementsAdminPage />,
+            handle: { title: "Abonnements et paiements" },
+          },
+          {
+            path: "/admin/audit",
+            element: <AuditAdminPage />,
+            handle: { title: "Journal d'audit" },
           },
           {
             path: "/admin/parametres",
