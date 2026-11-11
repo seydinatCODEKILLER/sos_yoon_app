@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
-import { Download, RefreshCw, Search } from "lucide-react";
+import { Download, Loader2, RefreshCw, Search, SearchX } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
-import { cn } from "@/shared/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
+import { toast } from "@/shared/lib/toast";
+import { cn } from "@/shared/lib/utils";
+import { utilisateursAdminApi } from "../api/utilisateursAdminApi";
+import { BasculeVue } from "../components/BasculeVue";
 import { CompteursUtilisateurs } from "../components/CompteursUtilisateurs";
 import { DialogChangementStatut } from "../components/DialogChangementStatut";
+import { FicheUtilisateur } from "../components/FicheUtilisateur";
 import { PaginationAdmin } from "../components/PaginationAdmin";
 import { TableauUtilisateurs } from "../components/TableauUtilisateurs";
 import {
@@ -15,54 +21,103 @@ import {
   useCompteursUtilisateurs,
   useUtilisateursAdmin,
 } from "../hooks/useUtilisateursAdmin";
-import { formaterNombre } from "../lib/formatAdmin";
-import type { FiltreStatutUtilisateur, UtilisateurAdmin } from "../types/utilisateurs.types";
+import { useVueListe } from "../hooks/useVueList";
+import type {
+  CibleUtilisateur,
+  FiltreStatutUtilisateur,
+  UtilisateurAdmin,
+} from "../types/utilisateurs.types";
+import { CartesUtilisateurs } from "../components/CartesUtilisateurs";
 
-const TAILLE = 6;
+const TAILLE = 12; // multiple de 2 et de 3 : la grille de cartes n'a jamais de ligne bancale
+const ROUTE = "/admin/utilisateurs";
+
+const ITEMS_STATUT: { value: FiltreStatutUtilisateur; label: string }[] = [
+  { value: "TOUS", label: "Tous les comptes" },
+  { value: "ACTIF", label: "Comptes actifs" },
+  { value: "DESACTIVE", label: "Comptes désactivés" },
+];
 
 export default function UtilisateursAdminPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { id } = useParams<{ id?: string }>();
+  const [vue, setVue] = useVueListe("utilisateurs", "TABLEAU");
+
   const [recherche, setRecherche] = useState("");
   const [q, setQ] = useState("");
   const [statut, setStatut] = useState<FiltreStatutUtilisateur>("TOUS");
-  const [page, setPage] = useState(1);
-  const [cible, setCible] = useState<UtilisateurAdmin | null>(null);
+  const [page, setPage] = useState(1); // 1-indexé côté interface
+  const [cible, setCible] = useState<CibleUtilisateur | null>(null);
+  const [enExport, setExport] = useState(false);
 
   // Recherche différée : évite une requête à chaque frappe
   useEffect(() => {
     const t = setTimeout(() => {
-      setQ(recherche);
+      setQ(recherche.trim());
       setPage(1);
     }, 300);
     return () => clearTimeout(t);
   }, [recherche]);
 
   const { data: compteurs } = useCompteursUtilisateurs();
-  const { data, isFetching, isError, refetch } = useUtilisateursAdmin({ q, statut, page, taille: TAILLE });
+  const { data, isFetching, isError, refetch, dataUpdatedAt } = useUtilisateursAdmin({
+    q,
+    statut,
+    page: page - 1,
+    taille: TAILLE,
+  });
 
-  const filtres: { valeur: FiltreStatutUtilisateur; libelle: string; nombre?: number }[] = [
-    { valeur: "TOUS", libelle: "Tous", nombre: compteurs?.total },
-    { valeur: "ACTIF", libelle: "Actifs", nombre: compteurs?.actifs },
-    { valeur: "DESACTIVE", libelle: "Désactivés", nombre: compteurs?.desactives },
-  ];
+  const filtresActifs = q !== "" || statut !== "TOUS";
+
+  function reinitialiser() {
+    setRecherche("");
+    setQ("");
+    setStatut("TOUS");
+    setPage(1);
+  }
+
+  function changerStatut(f: FiltreStatutUtilisateur) {
+    setStatut(f);
+    setPage(1);
+  }
+
+  const voir = (u: UtilisateurAdmin) => navigate(`${ROUTE}/${u.id}`);
+
+  /** Télécharge le CSV des comptes qui correspondent aux filtres en cours (pas seulement la page affichée). */
+  async function exporter() {
+    setExport(true);
+    try {
+      const csv = await utilisateursAdminApi.exporter(q, statut);
+      // BOM : sans lui, Excel affiche mal les accents d'un CSV UTF-8.
+      const blob = new Blob(["﻿", csv], { type: "text/csv;charset=utf-8" });
+      const lien = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      lien.href = url;
+      lien.download = `utilisateurs-${new Date().toISOString().slice(0, 10)}.csv`;
+      lien.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      // Le corps d'erreur d'un téléchargement est un blob illisible : message fixe.
+      toast.error("L'export a échoué. Réessayez dans un instant.");
+    } finally {
+      setExport(false);
+    }
+  }
 
   return (
-   <motion.div
-  variants={conteneur}
-  initial="cache"
-  animate="visible"
-  className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8"
->
+    <motion.div
+      variants={conteneur}
+      initial="cache"
+      animate="visible"
+      className="mx-auto w-full max-w-7xl space-y-6 px-4 py-6 sm:px-6 lg:px-8"
+    >
       <motion.header variants={apparition} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold">Utilisateurs</h1>
-            <span className="rounded-full bg-signal/10 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-signal">
-              Répertoire citoyen
-            </span>
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Consultez et gérez les comptes des utilisateurs inscrits sur la plateforme SOS Yoon.
+          <h1 className="text-2xl font-semibold">Utilisateurs</h1>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Retrouvez les citoyens inscrits sur SOS Yoon, consultez leurs demandes et bloquez l'accès d'un compte en
+            cas de problème.
           </p>
         </div>
         <div className="flex gap-2">
@@ -73,79 +128,123 @@ export default function UtilisateursAdminPage() {
               refetch();
             }}
           >
-            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} /> Actualiser
+            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} aria-hidden /> Actualiser
           </Button>
-          <Button variant="outline" disabled title="Bientôt disponible">
-            <Download className="size-4" /> Exporter la liste
+          <Button
+            variant="outline"
+            disabled={enExport}
+            onClick={exporter}
+            className="border-signal/30 text-signal"
+            title={filtresActifs ? "Exporte uniquement les comptes filtrés" : "Exporte tous les comptes"}
+          >
+            {enExport ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Download className="size-4" aria-hidden />
+            )}
+            Exporter la liste
           </Button>
         </div>
       </motion.header>
 
       <motion.div variants={apparition}>
-        <CompteursUtilisateurs donnees={compteurs} />
+        <CompteursUtilisateurs donnees={compteurs} filtre={statut} onFiltre={changerStatut} />
+      </motion.div>
+
+      <motion.div variants={apparition} className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-md">
+          <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            value={recherche}
+            onChange={(e) => setRecherche(e.target.value)}
+            placeholder="Nom, téléphone, e-mail…"
+            className="pl-9"
+            aria-label="Rechercher un utilisateur"
+          />
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:ml-auto">
+          <Select
+            value={statut}
+            onValueChange={(v) => changerStatut((v ?? "TOUS") as FiltreStatutUtilisateur)}
+            items={ITEMS_STATUT}
+          >
+            <SelectTrigger className="w-full sm:w-52" aria-label="Filtrer par statut du compte">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ITEMS_STATUT.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <BasculeVue value={vue} onChange={setVue} />
+        </div>
       </motion.div>
 
       <motion.section variants={apparition} className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="relative w-full lg:max-w-sm">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={recherche}
-              onChange={(e) => setRecherche(e.target.value)}
-              placeholder="Rechercher par nom, téléphone ou e-mail"
-              className="pl-9"
-              aria-label="Rechercher un utilisateur"
-            />
-          </div>
-          <div role="tablist" className="inline-flex self-start rounded-xl bg-muted p-1">
-            {filtres.map((f) => (
-              <button
-                key={f.valeur}
-                role="tab"
-                aria-selected={statut === f.valeur}
-                onClick={() => {
-                  setStatut(f.valeur);
-                  setPage(1);
-                }}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-sm transition-colors",
-                  statut === f.valeur ? "bg-card font-medium shadow-sm" : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {f.libelle}
-                {f.nombre !== undefined && (
-                  <span className="ml-1.5 text-xs tabular-nums text-muted-foreground">{formaterNombre(f.nombre)}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
         {isError ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             Impossible de charger les utilisateurs.{" "}
-            <button onClick={() => refetch()} className="font-medium text-signal underline">Réessayer</button>
+            <button type="button" onClick={() => refetch()} className="font-medium text-signal underline">
+              Réessayer
+            </button>
           </div>
         ) : !data ? (
-          <div className="space-y-3 p-5">
-            {Array.from({ length: TAILLE }).map((_, i) => (
-              <div key={i} className="h-12 animate-pulse rounded-xl bg-muted" />
-            ))}
+          vue === "TABLEAU" ? (
+            <div className="space-y-3 p-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-56 animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          )
+        ) : data.contenu.length === 0 ? (
+          <div className="flex flex-col items-center gap-3 p-10 text-center">
+            <SearchX className="size-8 text-muted-foreground" aria-hidden />
+            <p className="text-sm text-muted-foreground">
+              {filtresActifs ? "Aucun utilisateur ne correspond à ces filtres." : "Aucun citoyen inscrit pour le moment."}
+            </p>
+            {filtresActifs && (
+              <Button variant="outline" size="sm" onClick={reinitialiser}>
+                Effacer les filtres
+              </Button>
+            )}
           </div>
-        ) : data.elements.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">Aucun utilisateur ne correspond à votre recherche.</div>
         ) : (
           <div className={cn(isFetching && "opacity-60 transition-opacity")}>
-            <TableauUtilisateurs utilisateurs={data.elements} onChangerStatut={setCible} />
+            {vue === "TABLEAU" ? (
+              <TableauUtilisateurs utilisateurs={data.contenu} onVoir={voir} onChangerStatut={setCible} />
+            ) : (
+              <CartesUtilisateurs
+                utilisateurs={data.contenu}
+                maintenant={dataUpdatedAt}
+                onVoir={voir}
+                onChangerStatut={setCible}
+              />
+            )}
           </div>
         )}
 
-        {data && data.total > 0 && (
-          <PaginationAdmin page={page} taille={TAILLE} total={data.total} onChange={setPage} />
+        {data && data.totalElements > 0 && (
+          <PaginationAdmin
+            page={page}
+            taille={TAILLE}
+            total={data.totalElements}
+            libelle="utilisateurs"
+            onChange={setPage}
+          />
         )}
       </motion.section>
 
-      <DialogChangementStatut utilisateur={cible} onFermer={() => setCible(null)} />
+      <FicheUtilisateur id={id} onFermer={() => navigate(ROUTE)} onChangerStatut={setCible} />
+      <DialogChangementStatut cible={cible} onFermer={() => setCible(null)} />
     </motion.div>
   );
 }

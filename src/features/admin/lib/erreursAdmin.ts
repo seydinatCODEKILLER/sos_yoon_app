@@ -4,6 +4,8 @@ const MESSAGES: Record<string, string> = {
   DOSSIER_DEJA_TRAITE: "Ce dossier a déjà été traité par un autre administrateur. La liste a été actualisée.",
   EMAIL_NON_VERIFIE: "L'adresse e-mail du professionnel n'est pas encore confirmée.",
   PROFESSIONNEL_DEJA_SUSPENDU: "Ce professionnel est déjà désactivé.",
+  COMPTE_DEJA_SUSPENDU: "Ce compte est déjà désactivé. La liste a été actualisée.",
+  COMPTE_NON_SUSPENDU: "Ce compte n'est pas désactivé : il n'y a rien à réactiver.",
   INTROUVABLE: "Élément introuvable. Il a peut-être été supprimé.",
   ACCES_REFUSE: "Vous n'avez pas le droit d'effectuer cette action.",
   TROP_DE_REQUETES: "Trop de tentatives. Réessayez dans un instant.",

@@ -269,7 +269,7 @@ export const router = createBrowserRouter([
             handle: { title: "Demandes" },
           },
           {
-            path: "/admin/utilisateurs",
+            path: "/admin/utilisateurs/:id?",
             element: <UtilisateursAdminPage />,
             handle: { title: "Utilisateurs" },
           },
