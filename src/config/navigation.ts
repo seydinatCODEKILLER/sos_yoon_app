@@ -1,6 +1,7 @@
 import type { ComponentType, SVGProps } from "react";
 import {
   Bell,
+  Bot,
   Briefcase,
   CalendarDays,
   FileText,
@@ -114,6 +115,13 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
           icon: CalendarDays,
           mobile: true,
           badge: { kind: "count", key: "agenda", tone: "pill", suffix: "auj." },
+        },
+        {
+          label: "Chatbot pro",
+          shortLabel: "Chatbot",
+          path: "/pro/chatbot",
+          icon: Bot,
+          badge: { kind: "label", text: "IA" },
         },
         {
           label: "Notifications",

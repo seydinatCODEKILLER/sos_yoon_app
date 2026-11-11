@@ -45,6 +45,7 @@ import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsP
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
 import { VerifierEmailPage } from "@/features/auth/pages/VerifierEmailPage";
+import { ChatbotProPage } from "@/features/professionnel/pages/ChatBotProPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -203,6 +204,11 @@ export const router = createBrowserRouter([
             handle: { title: "Agenda" },
           },
 
+          {
+            path: "/pro/chatbot",
+            element: <ChatbotProPage />,
+            handle: { title: "Chatbot pro" },
+          },
           {
             path: "/pro/notifications",
             element: <NotificationsProfessionnelPage />,
