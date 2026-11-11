@@ -109,8 +109,10 @@ export function RegisterChoicePage() {
 
         <footer className="flex flex-wrap items-center justify-between gap-2 border-t border-ink/5 pt-4 text-xs text-navy/40">
           <span>© {new Date().getFullYear()} SOS YOON. Tous droits réservés.</span>
-          {/* TODO : brancher les vraies routes */}
-          <nav className="flex gap-4">
+          {/* TODO : brancher les routes Aide, Déontologie et Contact */}
+          <nav className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link to="/cgu" className="hover:text-ink">Conditions d'utilisation</Link>
+            <Link to="/confidentialite" className="hover:text-ink">Confidentialité</Link>
             <a href="#" className="hover:text-ink">Aide</a>
             <a href="#" className="hover:text-ink">Déontologie</a>
             <a href="#" className="hover:text-ink">Contact</a>

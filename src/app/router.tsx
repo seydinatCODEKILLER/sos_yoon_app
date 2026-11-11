@@ -5,6 +5,8 @@ import { UserHomePage } from "@/features/demandes/pages/UserHomePage";
 import { NotFoundPage } from "@/shared/components/NotFoundPage";
 import { RootGate } from "@/shared/components/RootGate";
 import { PagePlaceholder } from "@/shared/components/PagePlaceholder";
+import { CguPage } from "@/features/legal/pages/CguPage";
+import { ConfidentialitePage } from "@/features/legal/pages/ConfidentialitePage";
 import { RegisterChoicePage } from "@/features/onboarding/pages/RegisterChoicePage";
 import { RegisterParticulierPage } from "@/features/auth/pages/RegisterParticulierPage";
 import { RegisterProfessionnelPage } from "@/features/auth/pages/RegisterProfessionnelPage";
@@ -42,13 +44,13 @@ import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 import AbonnementsAdminPage from "@/features/admin/pages/AdminAbonnementsPage";
+import AuditAdminPage from "@/features/admin/pages/AdminAuditPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
 import DemandesAdminPage from "@/features/admin/pages/AdminDemandesPage";
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
 import { VerifierEmailPage } from "@/features/auth/pages/VerifierEmailPage";
 import { ChatbotProPage } from "@/features/professionnel/pages/ChatBotProPage";
-import AuditAdminPage from "@/features/admin/pages/AdminAuditPage";
 
 export const router = createBrowserRouter([
   { path: "/", element: <RootGate /> },
@@ -69,14 +71,8 @@ export const router = createBrowserRouter([
   },
 
   { path: "/inscription/code-secret", element: <CodeSecretInscriptionPage /> },
-  {
-    path: "/cgu",
-    element: <PagePlaceholder title="Conditions Générales d'Utilisation" />,
-  },
-  {
-    path: "/confidentialite",
-    element: <PagePlaceholder title="Politique de Confidentialité" />,
-  },
+  { path: "/cgu", element: <CguPage /> },
+  { path: "/confidentialite", element: <ConfidentialitePage /> },
   { path: "/mot-de-passe-oublie", element: <MotDePasseOubliePage /> },
   {
     path: "/reinitialiser-mot-de-passe",
