@@ -1,34 +1,58 @@
+/**
+ * Notifications de la boîte in-app (spec §10) — communes au professionnel et au particulier.
+ *
+ * `type` reste une chaîne ouverte : le backend en émet plus que la spec
+ * (SOLLICITATION_RECUE, DOSSIER_APPROUVE, COMPTE_SUSPENDU, SYSTEME…) et en ajoutera d'autres.
+ * L'écran ne doit jamais casser sur un type inconnu.
+ */
 export type FiltreNotifications = "TOUTES" | "NON_LUES";
 
-/** Deux sources au MVP : nouvelles demandes et abonnement */
-export type CibleNotification = "SOLLICITATION" | "ABONNEMENT";
+export type CibleNotification =
+  | "SOLLICITATION"
+  | "ABONNEMENT"
+  | "DEMANDE"
+  | "CONVERSATION"
+  | "TELECHARGER_COMPTE_RENDU";
+
+export interface ActionNotification {
+  libelle: string;
+  /** Chaîne ouverte pour ne pas casser sur une cible future. */
+  cible: CibleNotification | (string & {});
+}
+
+export interface PieceJointeNotification {
+  id: string;
+  nom: string;
+  tailleOctets: number | null;
+}
 
 export interface Notification {
   id: string;
-  /** SOLLICITATION_NOUVELLE, ABONNEMENT_ESSAI_BIENTOT_FIN, ABONNEMENT_EXPIRE… */
   type: string;
   titre: string;
   message: string;
   lue: boolean;
-  /** ISO 8601 */
-  dateCreation: string;
+  /**
+   * Date sans fuseau côté serveur : toujours passer par parseDateServeur.
+   * Peut être null (anciennes lignes créées sans date) : l'écran doit le tolérer.
+   */
+  dateCreation: string | null;
+  demandeId: string | null;
   referenceDemande: string | null;
-  /** Ville / quartier de la demande (nouvelle demande seulement) */
-  lieu: string | null;
-  /** Délai de réponse restant, en minutes (nouvelle demande seulement) */
-  delaiReponseMinutes: number | null;
-  action: { libelle: string; cible: CibleNotification } | null;
-}
-
-export interface PageNotifications {
-  contenu: Notification[];
-  page: number;
-  taille: number;
-  totalElements: number;
-  totalPages: number;
+  conversationId: string | null;
+  pieceJointe: PieceJointeNotification | null;
+  action: ActionNotification | null;
 }
 
 export interface CompteursNotifications {
   toutes: number;
   nonLues: number;
+  /** Présents côté backend, absents de la spec : jamais requis. */
+  demandes?: number;
+  messages?: number;
+  systeme?: number;
+}
+
+export interface MarquerToutLuReponse {
+  marquees: number;
 }

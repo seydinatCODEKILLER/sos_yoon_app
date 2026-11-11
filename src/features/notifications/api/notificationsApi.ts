@@ -1,23 +1,40 @@
 import { apiClient } from "@/shared/lib/apiClient";
-import type { Notification } from "../types/notification.types";
+import type { Page } from "@/types/api.types";
+import type {
+  CompteursNotifications,
+  FiltreNotifications,
+  Notification,
+} from "../types/notification.types";
 
-export interface NotificationsApi {
-  lister(): Promise<Notification[]>;
-  marquerLue(id: string): Promise<void>;
-  toutMarquerLu(): Promise<void>;
-}
-
-export const notificationsApi: NotificationsApi = {
-  async lister() {
-    const { data } = await apiClient.get<Notification[]>("/notifications");
+/** Spec §10 : même contrat que côté professionnel. Le backend ne sait filtrer que TOUTES / NON_LUES. */
+export const notificationsApi = {
+  async lister(
+    filtre: FiltreNotifications,
+    page: number,
+    taille: number,
+  ): Promise<Page<Notification>> {
+    const { data } = await apiClient.get<Page<Notification>>("/notifications", {
+      params: { filtre, page, taille },
+    });
     return data;
   },
 
-  async marquerLue(id) {
-    await apiClient.post(`/notifications/${id}/lue`);
+  async compteurs(): Promise<CompteursNotifications> {
+    const { data } = await apiClient.get<CompteursNotifications>(
+      "/notifications/compteurs",
+    );
+    return data;
   },
 
-  async toutMarquerLu() {
-    await apiClient.post("/notifications/tout-lire");
+  /** 204 sans corps. */
+  async marquerLue(id: string): Promise<void> {
+    await apiClient.put(`/notifications/${id}/lue`);
+  },
+
+  async toutMarquerLu(): Promise<{ marquees: number }> {
+    const { data } = await apiClient.put<{ marquees: number }>(
+      "/notifications/tout-lire",
+    );
+    return data;
   },
 };

@@ -1,70 +1,161 @@
+import { parseDateServeur } from "@/features/demandes/lib/formatDateDemande";
 import type { Notification } from "../types/notification.types";
-import { ajouterJours, cleJour } from "./agenda";
 
-export const TAILLE_NOTIFICATIONS = 10;
+export const TAILLE_NOTIFICATIONS = 15;
 
+export type TonNotification = "action" | "alerte" | "succes" | "info";
+
+export type CategorieNotification =
+  | "SOLLICITATION"
+  | "ABONNEMENT"
+  | "DOSSIER"
+  | "COMPTE"
+  | "SYSTEME";
+
+const cibleAction = (n: Notification) => n.action?.cible ?? null;
+
+/** Rappels d'échéance et paiements : le backend les émet en type SYSTEME avec la cible ABONNEMENT. */
 export function estAbonnement(n: Notification) {
-  return n.type.startsWith("ABONNEMENT");
+  return cibleAction(n) === "ABONNEMENT" || n.type.startsWith("ABONNEMENT_");
 }
 
-/** Destination dans l'espace pro ; null = pas de navigation */
+export function estSollicitation(n: Notification) {
+  return (
+    cibleAction(n) === "SOLLICITATION" ||
+    n.type === "SOLLICITATION_NOUVELLE" ||
+    n.type === "SOLLICITATION_RECUE"
+  );
+}
+
+export function categorieDe(n: Notification): CategorieNotification {
+  if (estSollicitation(n)) return "SOLLICITATION";
+  if (estAbonnement(n)) return "ABONNEMENT";
+  if (n.type === "COMPTE_SUSPENDU") return "COMPTE";
+  if (
+    n.type === "DOSSIER_APPROUVE" ||
+    n.type === "DOSSIER_REJETE" ||
+    n.type === "DEMANDE_ACCEPTEE" ||
+    n.type === "DEMANDE_TERMINEE" ||
+    n.type === "COMPTE_RENDU_DISPONIBLE"
+  )
+    return "DOSSIER";
+  return "SYSTEME";
+}
+
+export function tonDe(n: Notification): TonNotification {
+  if (estSollicitation(n)) return "action";
+  if (
+    n.type === "ABONNEMENT_EXPIRE" ||
+    n.type === "ABONNEMENT_ESSAI_BIENTOT_FIN" ||
+    n.type === "COMPTE_SUSPENDU" ||
+    n.type === "DOSSIER_REJETE"
+  )
+    return "alerte";
+  if (
+    n.type === "DEMANDE_ACCEPTEE" ||
+    n.type === "DOSSIER_APPROUVE" ||
+    n.type === "DEMANDE_TERMINEE"
+  )
+    return "succes";
+  // Rappel d'échéance émis en SYSTEME : le titre est le seul indice fiable.
+  if (estAbonnement(n) && /bient[oô]t|arrive à échéance|expir/i.test(n.titre))
+    return "alerte";
+  return "info";
+}
+
+/**
+ * Destination d'un clic dans l'espace professionnel.
+ * - SOLLICITATION → liste des demandes entrantes
+ * - ABONNEMENT    → onglet abonnement du profil
+ * - DEMANDE       → le dossier (dans le backend, un dossier EST la demande : même identifiant)
+ */
 export function cibleDe(n: Notification): string | null {
   switch (n.action?.cible) {
     case "SOLLICITATION":
       return "/pro/demandes";
     case "ABONNEMENT":
       return "/pro/abonnement";
+    case "DEMANDE":
+      return n.demandeId ? `/pro/dossiers/${n.demandeId}` : "/pro/dossiers";
     default:
-      return null;
+      break;
   }
+  if (estSollicitation(n)) return "/pro/demandes";
+  if (estAbonnement(n)) return "/pro/abonnement";
+  return null;
 }
 
-/** "À l'instant", "Il y a 4 min", "Il y a 3 h", "Hier", puis date courte. `maintenant` en ms. */
-export function ilYaNotification(iso: string, maintenant: number) {
-  const ecart = Math.max(0, maintenant - new Date(iso).getTime());
-  const min = Math.floor(ecart / 60_000);
-  if (min < 1) return "À l'instant";
-  if (min < 60) return `Il y a ${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `Il y a ${h} h`;
-  const j = Math.floor(h / 24);
-  if (j === 1) return "Hier";
-  if (j < 7) return `Il y a ${j} jours`;
-  return new Date(iso).toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
+/** Date lisible ou null : jamais d'« Invalid Date » à l'écran, même si le serveur n'envoie rien. */
+function dateValide(iso: string | null): Date | null {
+  if (!iso) return null;
+  const d = parseDateServeur(iso);
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+const MIN = 60_000;
+const JOUR = 24 * 3600 * 1000;
+
+const debutDeJour = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+
+/** « À l'instant », « Il y a 12 min », puis l'heure ("14:32") : le jour est déjà dans l'en-tête du groupe. */
+export function heureNotification(iso: string | null, maintenant: number) {
+  const date = dateValide(iso);
+  if (!date) return "";
+  const ecart = maintenant - date.getTime();
+  if (ecart < MIN) return "À l'instant";
+  if (ecart < 60 * MIN) return `Il y a ${Math.floor(ecart / MIN)} min`;
+  return date.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+}
+
+/** Version longue pour l'attribut title / lecteurs d'écran. */
+export function dateCompleteNotification(iso: string | null) {
+  return dateValide(iso)?.toLocaleString("fr-FR", {
+    dateStyle: "full",
+    timeStyle: "short",
+  }) ?? "Date inconnue";
 }
 
 export interface GroupeNotifications {
   cle: string;
   titre: string;
-  date: string;
   notifications: Notification[];
 }
 
-/** Regroupe par jour (liste déjà triée du plus récent au plus ancien) */
-export function grouperParJour(liste: Notification[], maintenant: number): GroupeNotifications[] {
-  const auj = cleJour(new Date(maintenant));
-  const hier = cleJour(ajouterJours(new Date(maintenant), -1));
-  const groupes: GroupeNotifications[] = [];
+const TITRE_SANS_DATE = "Date inconnue";
 
-  for (const n of liste) {
-    const d = new Date(n.dateCreation);
-    const cle = cleJour(d);
-    let groupe = groupes.find((g) => g.cle === cle);
-    if (!groupe) {
-      groupe = {
+function titreDuJour(date: Date, maintenant: number) {
+  const jours = Math.round((debutDeJour(new Date(maintenant)) - debutDeJour(date)) / JOUR);
+  if (jours <= 0) return "Aujourd'hui";
+  if (jours === 1) return "Hier";
+  const texte = date.toLocaleDateString("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    ...(date.getFullYear() !== new Date(maintenant).getFullYear() && { year: "numeric" }),
+  });
+  return texte.charAt(0).toUpperCase() + texte.slice(1);
+}
+
+/** Regroupe par jour calendaire local en conservant l'ordre du serveur (récent → ancien). */
+export function grouperParJour(
+  notifications: Notification[],
+  maintenant: number,
+): GroupeNotifications[] {
+  const groupes: GroupeNotifications[] = [];
+  for (const n of notifications) {
+    const date = dateValide(n.dateCreation);
+    const cle = date ? String(debutDeJour(date)) : "sans-date";
+    const dernier = groupes[groupes.length - 1];
+    if (dernier && dernier.cle === cle) {
+      dernier.notifications.push(n);
+    } else {
+      groupes.push({
         cle,
-        titre:
-          cle === auj
-            ? "Aujourd'hui"
-            : cle === hier
-              ? "Hier"
-              : d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" }),
-        date: d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
-        notifications: [],
-      };
-      groupes.push(groupe);
+        titre: date ? titreDuJour(date, maintenant) : TITRE_SANS_DATE,
+        notifications: [n],
+      });
     }
-    groupe.notifications.push(n);
   }
   return groupes;
 }
