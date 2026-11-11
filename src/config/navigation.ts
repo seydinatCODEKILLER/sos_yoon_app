@@ -150,6 +150,12 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
           badge: { kind: "dot", color: "signal" },
         },
         {
+          label: "Demandes",
+          path: "/admin/demandes",
+          icon: FileText,
+          mobile: true,
+        },
+        {
           label: "Utilisateurs",
           path: "/admin/utilisateurs",
           icon: Users,

@@ -7,6 +7,11 @@ const MESSAGES: Record<string, string> = {
   INTROUVABLE: "Élément introuvable. Il a peut-être été supprimé.",
   ACCES_REFUSE: "Vous n'avez pas le droit d'effectuer cette action.",
   TROP_DE_REQUETES: "Trop de tentatives. Réessayez dans un instant.",
+  DEMANDE_NON_MODIFIABLE: "Cette demande est terminée ou annulée : elle ne peut plus être modifiée.",
+  DEMANDE_DEJA_ATTRIBUEE: "Cette demande est déjà attribuée à un professionnel.",
+  DEMANDE_DEJA_ANNULEE: "Cette demande est déjà annulée.",
+  DEMANDE_NON_ANNUABLE: "Une demande terminée ne peut pas être annulée.",
+  PROFESSIONNEL_INDISPONIBLE: "Ce professionnel ne peut pas recevoir de demande : son compte n'est pas actif.",
 };
 
 /**

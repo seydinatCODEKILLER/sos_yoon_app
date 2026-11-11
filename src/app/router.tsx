@@ -42,6 +42,7 @@ import { AdminLoginPage } from "@/features/auth/pages/AdminLoginPage";
 import { TableauDeBordAdminPage } from "@/features/admin/pages/AdminDashboardPage";
 import UtilisateursAdminPage from "@/features/admin/pages/AdminUsersPage";
 import ProfessionnelsAdminPage from "@/features/admin/pages/AdminProfessionnelsPage";
+import DemandesAdminPage from "@/features/admin/pages/AdminDemandesPage";
 import ParametresAdminPage from "@/features/admin/pages/ParametresAdminPage";
 import { ChangerTelephonePage } from "@/features/profil/pages/ChangerTelephonePage";
 import { VerifierEmailPage } from "@/features/auth/pages/VerifierEmailPage";
@@ -261,6 +262,11 @@ export const router = createBrowserRouter([
             path: "/admin",
             element: <TableauDeBordAdminPage />,
             handle: { title: "Tableau de bord" },
+          },
+          {
+            path: "/admin/demandes/:id?",
+            element: <DemandesAdminPage />,
+            handle: { title: "Demandes" },
           },
           {
             path: "/admin/utilisateurs",
