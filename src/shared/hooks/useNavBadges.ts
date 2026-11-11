@@ -10,28 +10,34 @@ type Badges = Partial<Record<NavBadgeKey, number>>;
 
 const MOCK: Record<Exclude<UserRole, "PRO">, Badges> = {
   PARTICULIER: { demandes: 2, notifications: 1 },
-  ADMIN: { professionnelsEnAttente: 6 },
+  ADMIN: { professionnelsEnAttente: 6, demandesAQualifier: 2 },
 };
 
 export function useNavBadges(role: UserRole): Badges {
-  // Les hooks s'appellent toujours, mais ne font de requête que pour le pro
   const pro = role === "PRO";
+  const admin = role === "ADMIN";
   const { data: tableau } = useTableauDeBord("7j", pro);
   const { data: compteurs } = useCompteursDossiers(pro);
   const { data: compteursNotifs } = useCompteursNotifications(pro);
-  const { data: tableauAdmin } = useTableauDeBordAdmin(role === "ADMIN");
+  const { data: tableauAdmin } = useTableauDeBordAdmin(admin);
 
   if (role === "PRO") {
     return {
       demandes: tableau?.sollicitationsEnAttente,
       dossiers: compteurs?.enCours,
       notifications: compteursNotifs?.nonLues || undefined,
-      professionnelsEnAttente:
-        tableauAdmin?.professionnels.enAttente || undefined,
       ...(USE_MOCK_API ? { notifications: 1 } : {}),
     };
   }
 
   if (USE_MOCK_API) return MOCK[role];
-  return {}; // TODO : requêtes réelles côté particulier et admin
+
+  if (role === "ADMIN") {
+    return {
+      professionnelsEnAttente: tableauAdmin?.professionnels.enAttente || undefined,
+      demandesAQualifier: tableauAdmin?.demandes.aQualifier || undefined,
+    };
+  }
+
+  return {};
 }

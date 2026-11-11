@@ -24,16 +24,19 @@ export function useNotifications(filtre: FiltreNotifications, page: number) {
     queryKey: [...LISTE_KEY, filtre, page],
     queryFn: () => notificationsApi.lister(filtre, page, TAILLE_NOTIFICATIONS),
     placeholderData: keepPreviousData,
-    // On cesse d'interroger le serveur tant que la requête échoue (403 d'un compte suspendu, réseau coupé…).
     refetchInterval: (q) => (q.state.status === "error" ? false : RAFRAICHISSEMENT_MS),
   });
 }
 
-/** Alimente aussi la pastille de la barre latérale. */
-export function useCompteursNotifications() {
+/**
+ * Alimente aussi la pastille de la barre latérale, qui est montée pour tous les rôles :
+ * `actif` évite d'interroger l'API du professionnel quand l'utilisateur n'en est pas un.
+ */
+export function useCompteursNotifications(actif = true) {
   return useQuery({
     queryKey: COMPTEURS_KEY,
     queryFn: notificationsApi.compteurs,
+    enabled: actif,
     retry: 1,
     refetchInterval: (q) => (q.state.status === "error" ? false : RAFRAICHISSEMENT_MS),
   });

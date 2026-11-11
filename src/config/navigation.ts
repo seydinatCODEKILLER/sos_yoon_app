@@ -21,7 +21,8 @@ export type NavBadgeKey =
   | "agenda"
   | "messages"
   | "notifications"
-  | "professionnelsEnAttente";
+  | "professionnelsEnAttente"
+  | "demandesAQualifier";
 
 export type NavBadge =
   | {
@@ -154,6 +155,7 @@ export const navigationByRole: Record<UserRole, NavSection[]> = {
           path: "/admin/demandes",
           icon: FileText,
           mobile: true,
+          badge: { kind: "count", key: "demandesAQualifier", tone: "pill" },
         },
         {
           label: "Utilisateurs",
