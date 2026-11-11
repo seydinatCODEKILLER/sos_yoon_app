@@ -1,24 +1,27 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
-import { Download, RefreshCw, Search } from "lucide-react";
+import { Download, RefreshCw, Search, SearchX } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/shared/components/ui/select";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
 import { cn } from "@/shared/lib/utils";
+import { BasculeVue } from "../components/BasculeVue";
+import { CartesProfessionnels } from "../components/CartesProfessionnels";
 import { CompteursProfessionnels } from "../components/CompteursProfessionnels";
 import { DialogRefusDossier } from "../components/DialogRefusDossier";
 import { DialogStatutPro } from "../components/DialogStatutPro";
 import { FicheProfessionnel } from "../components/FicheProfessionnel";
-import { TableauProfessionnels } from "../components/TableauProfessionnels";
 import { PaginationAdmin } from "../components/PaginationAdmin";
+import { TableauProfessionnels } from "../components/TableauProfessionnels";
 import {
   PROFESSIONNELS_ADMIN_KEY,
   useCompteursProfessionnels,
   useProfessionnelsAdmin,
 } from "../hooks/useProfessionnelsAdmin";
+import { useVueListe } from "../hooks/useVueList";
 import { METIERS_PRO } from "../lib/professionnels";
 import type {
   CiblePro,
@@ -28,11 +31,11 @@ import type {
   TypeProfession,
 } from "../types/professionnels.types";
 
-const TAILLE = 6;
+const TAILLE = 12;
 const ROUTE = "/admin/professionnels";
 
 const ITEMS_METIER = [
-  { value: "TOUS", label: "Tous les métiers (Avocats, Huissiers, Notaires, Juristes)" },
+  { value: "TOUS", label: "Toutes les professions" },
   ...(Object.keys(METIERS_PRO) as TypeProfession[]).map((t) => ({ value: t, label: METIERS_PRO[t].libelle })),
 ];
 
@@ -40,6 +43,7 @@ export default function ProfessionnelsAdminPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { id } = useParams<{ id?: string }>();
+  const [vue, setVue] = useVueListe("professionnels", "TABLEAU");
 
   const [recherche, setRecherche] = useState("");
   const [q, setQ] = useState("");
@@ -51,20 +55,30 @@ export default function ProfessionnelsAdminPage() {
 
   useEffect(() => {
     const t = setTimeout(() => {
-      setQ(recherche);
+      setQ(recherche.trim());
       setPage(1);
     }, 300);
     return () => clearTimeout(t);
   }, [recherche]);
 
   const { data: compteurs } = useCompteursProfessionnels();
-  const { data, isFetching, isError, refetch } = useProfessionnelsAdmin({
+  const { data, isFetching, isError, refetch, dataUpdatedAt } = useProfessionnelsAdmin({
     q,
     statut,
     metier,
     page: page - 1,
     taille: TAILLE,
   });
+
+  const filtresActifs = q !== "" || statut !== "TOUS" || metier !== "TOUS";
+
+  function reinitialiser() {
+    setRecherche("");
+    setQ("");
+    setStatut("TOUS");
+    setMetier("TOUS");
+    setPage(1);
+  }
 
   return (
     <motion.div
@@ -75,14 +89,9 @@ export default function ProfessionnelsAdminPage() {
     >
       <motion.header variants={apparition} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-semibold">Professionnels</h1>
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Répertoire officiel &amp; homologations
-            </span>
-          </div>
+          <h1 className="text-2xl font-semibold">Professionnels</h1>
           <p className="max-w-xl text-sm text-muted-foreground">
-            Supervisez les professionnels du droit agréés, examinez les pièces probatoires et instruisez les demandes d'inscription.
+            Examinez les pièces des professionnels du droit, instruisez les demandes d'inscription et gérez leurs comptes.
           </p>
         </div>
         <div className="flex gap-2">
@@ -93,10 +102,10 @@ export default function ProfessionnelsAdminPage() {
               refetch();
             }}
           >
-            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} /> Actualiser
+            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} aria-hidden /> Actualiser
           </Button>
           <Button variant="outline" disabled title="Bientôt disponible" className="border-signal/30 text-signal">
-            <Download className="size-4" /> Exporter la liste
+            <Download className="size-4" aria-hidden /> Exporter la liste
           </Button>
         </div>
       </motion.header>
@@ -112,59 +121,92 @@ export default function ProfessionnelsAdminPage() {
         />
       </motion.div>
 
-      <motion.div variants={apparition} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative w-full sm:max-w-md">
-          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+      <motion.div variants={apparition} className="flex flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="relative w-full lg:max-w-md">
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             value={recherche}
             onChange={(e) => setRecherche(e.target.value)}
-            placeholder="Rechercher par nom, profession, spécialité, e-mail…"
+            placeholder="Nom, téléphone, e-mail…"
             className="pl-9"
             aria-label="Rechercher un professionnel"
           />
         </div>
-        <Select
-          value={metier}
-          onValueChange={(v) => {
-            setMetier((v ?? "TOUS") as FiltreMetier);
-            setPage(1);
-          }}
-          items={ITEMS_METIER}
-        >
-          <SelectTrigger className="w-full sm:w-auto sm:min-w-72">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {ITEMS_METIER.map((m) => (
-              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center lg:ml-auto">
+          <Select
+            value={metier}
+            onValueChange={(v) => {
+              setMetier((v ?? "TOUS") as FiltreMetier);
+              setPage(1);
+            }}
+            items={ITEMS_METIER}
+          >
+            <SelectTrigger className="w-full sm:w-56" aria-label="Filtrer par profession">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ITEMS_METIER.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <BasculeVue value={vue} onChange={setVue} />
+        </div>
       </motion.div>
 
       <motion.section variants={apparition} className="overflow-hidden rounded-2xl border border-border bg-card">
         {isError ? (
           <div className="p-10 text-center text-sm text-muted-foreground">
             Impossible de charger les professionnels.{" "}
-            <button onClick={() => refetch()} className="font-medium text-signal underline">Réessayer</button>
+            <button type="button" onClick={() => refetch()} className="font-medium text-signal underline">
+              Réessayer
+            </button>
           </div>
         ) : !data ? (
-          <div className="space-y-3 p-5">
-            {Array.from({ length: TAILLE }).map((_, i) => (
-              <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />
-            ))}
-          </div>
+          vue === "TABLEAU" ? (
+            <div className="space-y-3 p-5">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-14 animate-pulse rounded-xl bg-muted" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid gap-4 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-56 animate-pulse rounded-2xl bg-muted" />
+              ))}
+            </div>
+          )
         ) : data.contenu.length === 0 ? (
-          <div className="p-10 text-center text-sm text-muted-foreground">
-            Aucun professionnel ne correspond à votre recherche.
+          <div className="flex flex-col items-center gap-3 p-10 text-center">
+            <SearchX className="size-8 text-muted-foreground" aria-hidden />
+            <p className="text-sm text-muted-foreground">
+              {filtresActifs ? "Aucun professionnel ne correspond à ces filtres." : "Aucun professionnel inscrit pour le moment."}
+            </p>
+            {filtresActifs && (
+              <Button variant="outline" size="sm" onClick={reinitialiser}>
+                Effacer les filtres
+              </Button>
+            )}
           </div>
         ) : (
           <div className={cn(isFetching && "opacity-60 transition-opacity")}>
-            <TableauProfessionnels
-              professionnels={data.contenu}
-              onVoir={(p) => navigate(`${ROUTE}/${p.id}`)}
-              onChangerStatut={setCibleStatut}
-            />
+            {vue === "TABLEAU" ? (
+              <TableauProfessionnels
+                professionnels={data.contenu}
+                maintenant={dataUpdatedAt}
+                onVoir={(p) => navigate(`${ROUTE}/${p.id}`)}
+                onChangerStatut={setCibleStatut}
+              />
+            ) : (
+              <CartesProfessionnels
+                professionnels={data.contenu}
+                maintenant={dataUpdatedAt}
+                onVoir={(p) => navigate(`${ROUTE}/${p.id}`)}
+                onChangerStatut={setCibleStatut}
+              />
+            )}
           </div>
         )}
 

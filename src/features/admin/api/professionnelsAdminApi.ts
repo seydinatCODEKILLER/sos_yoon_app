@@ -2,17 +2,21 @@ import { apiClient } from "@/shared/lib/apiClient";
 import type {
   ChangementStatutProPayload,
   CompteursProfessionnels,
+  DossierEnCours,
+  FichierSigne,
   MotifAdmin,
   PageProfessionnels,
   ParamsProfessionnels,
   ProfessionnelAdminDetail,
   RefusDossierPayload,
+  ReponseChangementStatut,
   TypeMotifPro,
 } from "../types/professionnels.types";
 
+/** Spec 13.14 à 13.23 et 13.33. */
 export const professionnelsAdminApi = {
   async lister(p: ParamsProfessionnels): Promise<PageProfessionnels> {
-    const { data } = await apiClient.get("/admin/professionnels", {
+    const { data } = await apiClient.get<PageProfessionnels>("/admin/professionnels", {
       params: {
         q: p.q || undefined,
         statut: p.statut,
@@ -23,38 +27,67 @@ export const professionnelsAdminApi = {
     });
     return data;
   },
+
   async compteurs(): Promise<CompteursProfessionnels> {
-    const { data } = await apiClient.get("/admin/professionnels/compteurs");
+    const { data } = await apiClient.get<CompteursProfessionnels>(
+      "/admin/professionnels/compteurs",
+    );
     return data;
   },
+
   async detail(id: string): Promise<ProfessionnelAdminDetail> {
-    const { data } = await apiClient.get(`/admin/professionnels/${id}`);
+    const { data } = await apiClient.get<ProfessionnelAdminDetail>(
+      `/admin/professionnels/${id}`,
+    );
     return data;
   },
-  async lienDocument(id: string, documentId: string): Promise<{ url: string }> {
-    const { data } = await apiClient.get(`/admin/professionnels/${id}/documents/${documentId}/telecharger`);
+
+  /** Lien signé, consultation tracée dans le journal d'audit : à n'appeler qu'au clic. */
+  async lienDocument(id: string, documentId: string): Promise<FichierSigne> {
+    const { data } = await apiClient.get<FichierSigne>(
+      `/admin/professionnels/${id}/documents/${documentId}/telecharger`,
+    );
     return data;
   },
+
   async motifs(type: TypeMotifPro): Promise<MotifAdmin[]> {
-    const { data } = await apiClient.get("/admin/motifs", { params: { type } });
+    const { data } = await apiClient.get<MotifAdmin[]>("/admin/motifs", { params: { type } });
     return data;
   },
-  async desactiver(id: string, payload: ChangementStatutProPayload) {
-    const { data } = await apiClient.post(`/admin/professionnels/${id}/desactiver`, payload);
-    return data as { statutCompte: string; dossiersEnCours: number };
+
+  async desactiver(id: string, payload: ChangementStatutProPayload): Promise<ReponseChangementStatut> {
+    const { data } = await apiClient.post<ReponseChangementStatut>(
+      `/admin/professionnels/${id}/desactiver`,
+      payload,
+    );
+    return data;
   },
-  async reactiver(id: string, payload: ChangementStatutProPayload) {
-    const { data } = await apiClient.post(`/admin/professionnels/${id}/reactiver`, payload);
-    return data as { statutCompte: string };
+
+  async reactiver(id: string, payload: ChangementStatutProPayload): Promise<ReponseChangementStatut> {
+    const { data } = await apiClient.post<ReponseChangementStatut>(
+      `/admin/professionnels/${id}/reactiver`,
+      payload,
+    );
+    return data;
   },
+
+  async dossiersEnCours(id: string): Promise<DossierEnCours[]> {
+    const { data } = await apiClient.get<DossierEnCours[]>(
+      `/admin/professionnels/${id}/dossiers-en-cours`,
+    );
+    return data;
+  },
+
   async approuver(dossierId: string, commentaire?: string) {
-    const { data } = await apiClient.post(`/admin/dossiers-pro/${dossierId}/approuver`, commentaire ? { commentaire } : undefined);
+    const { data } = await apiClient.post(
+      `/admin/dossiers-pro/${dossierId}/approuver`,
+      commentaire ? { commentaire } : undefined,
+    );
     return data;
   },
+
   async rejeter(dossierId: string, payload: RefusDossierPayload) {
     const { data } = await apiClient.post(`/admin/dossiers-pro/${dossierId}/rejeter`, payload);
     return data;
   },
 };
-
-export type ProfessionnelsAdminApi = typeof professionnelsAdminApi;

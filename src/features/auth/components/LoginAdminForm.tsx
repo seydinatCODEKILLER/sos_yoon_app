@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
-import type { ApiErreur } from "@/types/api.types";
+import { toApiErreur } from "@/shared/lib/apiError";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { useLoginAdmin } from "../hooks/useLoginAdmin";
@@ -9,11 +9,16 @@ import { INPUT_CLASS } from "../lib/registerFormHelpers";
 import { loginAdminSchema, type LoginAdminValues } from "../schema/loginAdmin.schema";
 import { Field, PasswordInput } from "./RegisterProFields";
 
+/** Volontairement vague sur les identifiants : on ne dit pas si c'est l'e-mail ou le mot de passe. */
 const MESSAGES: Record<string, string> = {
-  IDENTIFIANTS_INVALIDES: "Identifiants invalides.",
-  COMPTE_SUSPENDU: "Ce compte est suspendu.",
-  ACCES_REFUSE: "Accès refusé.",
+  IDENTIFIANTS_INVALIDES: "E-mail ou mot de passe incorrect.",
+  COMPTE_SUSPENDU: "Ce compte administrateur est suspendu.",
+  ACCES_REFUSE: "Ce compte n'a pas accès à l'administration.",
+  MFA_NON_DISPONIBLE: "La double authentification n'est pas encore disponible.",
+  TROP_DE_REQUETES: "Trop de tentatives. Réessayez dans un instant.",
 };
+
+const MESSAGE_PAR_DEFAUT = "Connexion impossible. Vérifiez votre connexion et réessayez.";
 
 export function LoginAdminForm() {
   const connexion = useLoginAdmin();
@@ -23,9 +28,8 @@ export function LoginAdminForm() {
   });
   const erreurs = form.formState.errors;
 
-  const code = connexion.isError ? (connexion.error as Partial<ApiErreur>).code : undefined;
   const messageErreur = connexion.isError
-    ? ((code && MESSAGES[code]) ?? "Connexion impossible. Réessayez.")
+    ? (MESSAGES[toApiErreur(connexion.error).code] ?? MESSAGE_PAR_DEFAUT)
     : null;
 
   return (
@@ -42,6 +46,7 @@ export function LoginAdminForm() {
           id="email"
           type="email"
           autoComplete="username"
+          autoFocus
           placeholder="prenom.nom@sosyoon.sn"
           className={INPUT_CLASS}
           {...form.register("email")}
@@ -57,11 +62,13 @@ export function LoginAdminForm() {
         />
       </Field>
 
-      {messageErreur && (
-        <p role="alert" className="text-sm text-red-600">
-          {messageErreur}
-        </p>
-      )}
+      <div aria-live="polite">
+        {messageErreur && (
+          <p role="alert" className="text-sm text-red-600">
+            {messageErreur}
+          </p>
+        )}
+      </div>
 
       <Button
         type="submit"

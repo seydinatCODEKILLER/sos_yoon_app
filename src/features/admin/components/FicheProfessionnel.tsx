@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import { BadgeCheck, Download, Eye, FileText } from "lucide-react";
+import { BadgeCheck, Download, Eye, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import {
   Sheet,
@@ -9,20 +9,20 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/shared/components/ui/sheet";
+import { mediaUrl } from "@/shared/lib/mediaUrl";
 import { cn } from "@/shared/lib/utils";
+import { professionnelsAdminApi } from "../api/professionnelsAdminApi";
 import { useApprouverDossier, useDetailProfessionnel } from "../hooks/useProfessionnelsAdmin";
-import { initiales } from "../lib/formatAdmin";
-import { professionnelsAdminService } from "../lib/professionnelsAdminService";
+import { messageAdmin } from "../lib/erreursAdmin";
 import {
-  COULEUR_STATUT,
   LIBELLE_DOCUMENT,
-  LIBELLE_STATUT,
   METIERS_PRO,
   formaterDate,
   formaterTaille,
   statutAffichage,
 } from "../lib/professionnels";
 import type { CiblePro, CibleRefus, DocumentDossier } from "../types/professionnels.types";
+import { AvatarPro, BadgeStatutPro } from "./ElementsProfessionnel";
 
 interface Props {
   id: string | undefined;
@@ -35,7 +35,7 @@ function Section({ titre, droite, children }: { titre: string; droite?: string; 
   return (
     <section className="space-y-2">
       <div className="flex items-baseline justify-between">
-        <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{titre}</h3>
+        <h3 className="text-sm font-semibold">{titre}</h3>
         {droite && <span className="text-xs text-muted-foreground">{droite}</span>}
       </div>
       {children}
@@ -46,62 +46,76 @@ function Section({ titre, droite, children }: { titre: string; droite?: string; 
 function Ligne({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b border-border/60 py-2.5 text-sm last:border-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-right font-medium">{children}</span>
+      <span className="shrink-0 text-muted-foreground">{label}</span>
+      <span className="min-w-0 wrap-break-word text-right font-medium">{children}</span>
     </div>
   );
 }
+
+const LIBELLE_ABONNEMENT: Record<string, string> = {
+  ESSAI: "Période d'essai",
+  ACTIF: "Abonnement actif",
+  EXPIRE: "Expiré",
+  SUSPENDU: "Suspendu",
+};
 
 export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }: Props) {
   const { data, isLoading, isError } = useDetailProfessionnel(id);
   const approuver = useApprouverDossier();
   const [confirmation, setConfirmation] = useState(false);
   const [info, setInfo] = useState<string | null>(null);
+  const [ouverture, setOuverture] = useState<string | null>(null);
 
   async function acces(doc: DocumentDossier, telecharger: boolean) {
     if (!id) return;
     setInfo(null);
+    setOuverture(doc.id);
     try {
-      const { url } = await professionnelsAdminService.lienDocument(id, doc.id);
-      if (!url) {
-        setInfo("Aperçu indisponible en mode démonstration.");
+      // Lien signé valable ~1 h, généré (et tracé dans l'audit) uniquement au clic.
+      const fichier = await professionnelsAdminApi.lienDocument(id, doc.id);
+      const lien = mediaUrl(fichier.url);
+      if (!lien) {
+        setInfo("Ce document n'est pas disponible.");
         return;
       }
       const a = document.createElement("a");
-      a.href = url;
+      a.href = lien;
       a.target = "_blank";
       a.rel = "noopener";
-      if (telecharger) a.download = doc.nomFichier;
+      if (telecharger) a.download = fichier.nom || doc.nomFichier;
       a.click();
-    } catch {
-      setInfo("Impossible d'ouvrir le document.");
+    } catch (e) {
+      setInfo(messageAdmin(e, "Impossible d'ouvrir le document."));
+    } finally {
+      setOuverture(null);
     }
   }
 
-  const nomComplet = data ? `${data.prenom} ${data.nom}` : "";
-  const dossier = data?.dossierInscription;
-  const etat = data && dossier ? statutAffichage({ statutCompte: data.statutCompte, statutDossier: dossier.statut }) : null;
-  const erreurApprobation = (approuver.error as { message?: string } | null)?.message;
+  const nomComplet = data ? [data.prenom, data.nom].filter(Boolean).join(" ") || "Professionnel" : "";
+  const dossier = data?.dossierInscription ?? null;
+  const etat = data ? statutAffichage({ statutCompte: data.statutCompte, statutDossier: dossier?.statut ?? null }) : null;
+  const documents = dossier?.documents ?? [];
+  const abo = data?.abonnement ?? null;
+
+  function fermer() {
+    setConfirmation(false);
+    setInfo(null);
+    approuver.reset();
+    onFermer();
+  }
 
   return (
-    <Sheet open={!!id} onOpenChange={(o) => !o && onFermer()}>
+    <Sheet open={!!id} onOpenChange={(o) => !o && fermer()}>
       <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-lg">
         <SheetHeader className="flex-row items-center gap-4 border-b border-border p-6 pr-12 text-left">
           {data && etat ? (
             <>
-              <span className="grid size-12 shrink-0 place-items-center rounded-full bg-navy text-sm font-semibold text-white">
-                {initiales(nomComplet)}
-              </span>
-              <div className="min-w-0 space-y-1">
-                <div className="flex flex-wrap items-center gap-2">
-                  <SheetTitle className="text-lg">{nomComplet}</SheetTitle>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium">
-                    <span className={cn("size-1.5 rounded-full", COULEUR_STATUT[etat])} />
-                    {LIBELLE_STATUT[etat]}
-                  </span>
-                </div>
-                <SheetDescription className="text-xs font-semibold uppercase tracking-wider">
+              <AvatarPro nomComplet={nomComplet} etat={etat} photoUrl={data.photoUrl} className="size-14 text-base" />
+              <div className="min-w-0 space-y-1.5">
+                <SheetTitle className="truncate text-lg">{nomComplet}</SheetTitle>
+                <SheetDescription className="flex flex-wrap items-center gap-2 text-sm">
                   {METIERS_PRO[data.typeProfession].libelle}
+                  <BadgeStatutPro etat={etat} />
                 </SheetDescription>
               </div>
             </>
@@ -118,38 +132,47 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
           {isLoading && <div className="h-40 animate-pulse rounded-xl bg-muted" />}
           {isError && <p className="text-sm text-destructive">Impossible de charger la fiche.</p>}
 
-          {data && dossier && (
+          {data && (
             <>
-              <Section titre="Informations personnelles & vérification">
+              <Section titre="Coordonnées et vérification">
                 <div>
-                  <Ligne label="Numéro mobile Sénégal">{data.telephone}</Ligne>
-                  <Ligne label="Adresse courriel">
-                    <span className="inline-flex items-center gap-1.5">
+                  <Ligne label="Téléphone">{data.telephone}</Ligne>
+                  <Ligne label="E-mail">
+                    <span className="inline-flex flex-wrap items-center justify-end gap-1.5">
                       {data.email ?? "—"}
-                      {data.emailVerifie ? (
-                        <BadgeCheck className="size-4 text-emerald-500" aria-label="E-mail vérifié" />
-                      ) : (
-                        <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
-                          Non vérifié
-                        </span>
-                      )}
+                      {data.email &&
+                        (data.emailVerifie ? (
+                          <BadgeCheck className="size-4 text-emerald-500" aria-label="E-mail vérifié" />
+                        ) : (
+                          <span className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                            Non vérifié
+                          </span>
+                        ))}
                     </span>
                   </Ligne>
                   {data.matricule && <Ligne label="Matricule">{data.matricule}</Ligne>}
-                  <Ligne label="Date de soumission">{formaterDate(dossier.dateSoumission)}</Ligne>
-                  <Ligne label="Référence du dossier">{dossier.reference}</Ligne>
-                  {dossier.nombreSoumissions > 1 && (
-                    <Ligne label="Soumissions">{dossier.nombreSoumissions}</Ligne>
+                  {data.organisme && <Ligne label="Organisme">{data.organisme}</Ligne>}
+                  {dossier && (
+                    <>
+                      <Ligne label="Dossier soumis le">{formaterDate(dossier.dateSoumission)}</Ligne>
+                      <Ligne label="Référence du dossier">{dossier.reference}</Ligne>
+                      {(dossier.nombreSoumissions ?? 0) > 1 && (
+                        <Ligne label="Nombre de soumissions">{dossier.nombreSoumissions}</Ligne>
+                      )}
+                    </>
                   )}
                 </div>
               </Section>
 
-              <Section titre="Informations professionnelles">
+              <Section titre="Activité professionnelle">
                 <div>
-                  <Ligne label="Corps de métier">{METIERS_PRO[data.typeProfession].libelle}</Ligne>
-                  <Ligne label="Spécialités">{data.specialites.map((s) => s.libelle).join(", ") || "—"}</Ligne>
-                  <Ligne label="Zone d'intervention">{data.zone}</Ligne>
-                  {data.typeProfession === "JURISTE_CONSEIL" && (
+                  <Ligne label="Profession">{METIERS_PRO[data.typeProfession].libelle}</Ligne>
+                  {data.nomCabinet && <Ligne label="Cabinet">{data.nomCabinet}</Ligne>}
+                  <Ligne label="Spécialités">
+                    {data.specialites.length > 0 ? data.specialites.map((s) => s.libelle).join(", ") : "—"}
+                  </Ligne>
+                  <Ligne label="Zone d'intervention">{data.zone ?? "—"}</Ligne>
+                  {data.typeProfession === "JURISTE_CONSEIL" && dossier && (
                     <Ligne label="Déclaration sur l'honneur">
                       {dossier.declarationHonneurAcceptee
                         ? `Acceptée${dossier.dateDeclarationHonneur ? ` le ${formaterDate(dossier.dateDeclarationHonneur)}` : ""}`
@@ -159,55 +182,98 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
                 </div>
               </Section>
 
-              <Section titre="Pièces fournies" droite={`${dossier.documents.length} fichier${dossier.documents.length > 1 ? "s" : ""}`}>
-                <ul className="space-y-2">
-                  {dossier.documents.map((d) => (
-                    <li key={d.id} className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
-                      <FileText className="size-5 shrink-0 text-muted-foreground" />
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium">{LIBELLE_DOCUMENT[d.type]}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {d.nomFichier} · {formaterTaille(d.tailleOctets)}
-                          {d.statut === "REJETE" && <span className="text-rose-600"> · Refusée</span>}
-                        </p>
-                      </div>
-                      <button
-                        aria-label={`Voir ${LIBELLE_DOCUMENT[d.type]}`}
-                        onClick={() => acces(d, false)}
-                        className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-card"
-                      >
-                        <Eye className="size-4" />
-                      </button>
-                      <button
-                        aria-label={`Télécharger ${LIBELLE_DOCUMENT[d.type]}`}
-                        onClick={() => acces(d, true)}
-                        className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-card"
-                      >
-                        <Download className="size-4" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {info && <p className="text-xs text-muted-foreground">{info}</p>}
+              {abo && (
+                <Section titre="Abonnement">
+                  <div>
+                    <Ligne label="Statut">{LIBELLE_ABONNEMENT[abo.statut] ?? abo.statut}</Ligne>
+                    {abo.finEssai && <Ligne label="Fin de l'essai">{formaterDate(abo.finEssai)}</Ligne>}
+                    {abo.finPeriode && <Ligne label="Fin de la période">{formaterDate(abo.finPeriode)}</Ligne>}
+                    {abo.joursRestants != null && (
+                      <Ligne label="Jours restants">{Math.max(0, abo.joursRestants)}</Ligne>
+                    )}
+                  </div>
+                </Section>
+              )}
+
+              <Section
+                titre="Pièces fournies"
+                droite={`${documents.length} fichier${documents.length > 1 ? "s" : ""}`}
+              >
+                {!dossier ? (
+                  <p className="rounded-xl bg-muted/60 p-3 text-sm text-muted-foreground">
+                    Ce professionnel n'a pas encore soumis de dossier d'inscription.
+                  </p>
+                ) : documents.length === 0 ? (
+                  <p className="rounded-xl bg-muted/60 p-3 text-sm text-muted-foreground">Aucune pièce jointe.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {documents.map((d) => {
+                      const enCours = ouverture === d.id;
+                      return (
+                        <li key={d.id} className="flex items-center gap-3 rounded-xl bg-muted/60 p-3">
+                          <FileText className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{LIBELLE_DOCUMENT[d.type] ?? d.type}</p>
+                            <p className="truncate text-xs text-muted-foreground">
+                              {d.nomFichier} · {formaterTaille(d.tailleOctets)}
+                              {d.statut === "REJETE" && <span className="text-rose-600"> · Refusée</span>}
+                            </p>
+                          </div>
+                          {enCours ? (
+                            <Loader2 className="mx-2 size-4 animate-spin text-muted-foreground" aria-label="Ouverture…" />
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                aria-label={`Voir ${LIBELLE_DOCUMENT[d.type] ?? d.type}`}
+                                onClick={() => acces(d, false)}
+                                className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-card focus-visible:ring-2 focus-visible:ring-signal/50"
+                              >
+                                <Eye className="size-4" aria-hidden />
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Télécharger ${LIBELLE_DOCUMENT[d.type] ?? d.type}`}
+                                onClick={() => acces(d, true)}
+                                className="grid size-8 place-items-center rounded-lg text-muted-foreground hover:bg-card focus-visible:ring-2 focus-visible:ring-signal/50"
+                              >
+                                <Download className="size-4" aria-hidden />
+                              </button>
+                            </>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                {info && (
+                  <p role="alert" className="text-xs text-destructive">
+                    {info}
+                  </p>
+                )}
               </Section>
             </>
           )}
         </div>
 
-        {data && dossier && etat && (
+        {data && etat && (
           <SheetFooter className="m-0 flex-col items-stretch gap-2 border-t border-border bg-muted/40 px-6 py-4">
-            {erreurApprobation && (
-              <p role="alert" className="text-sm text-destructive">{erreurApprobation}</p>
+            {approuver.error && (
+              <p role="alert" className="text-sm text-destructive">
+                {messageAdmin(approuver.error, "Impossible d'approuver ce dossier.")}
+              </p>
             )}
 
-            {etat === "EN_ATTENTE" && !confirmation && (
+            {etat === "EN_ATTENTE" && dossier && !confirmation && (
               <div className="flex flex-wrap items-center justify-end gap-2">
                 {!data.emailVerifie && (
-                  <span className="mr-auto text-xs text-amber-700">E-mail non vérifié : approbation impossible.</span>
+                  <span className="mr-auto text-xs text-amber-700 dark:text-amber-400">
+                    E-mail non confirmé : l'approbation est impossible.
+                  </span>
                 )}
                 <Button
                   variant="outline"
-                  onClick={() => onRefuser({ dossierId: dossier.id, nomComplet, documents: dossier.documents })}
+                  onClick={() => onRefuser({ dossierId: dossier.id, nomComplet, documents })}
                 >
                   Refuser
                 </Button>
@@ -217,7 +283,7 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
               </div>
             )}
 
-            {etat === "EN_ATTENTE" && confirmation && (
+            {etat === "EN_ATTENTE" && dossier && confirmation && (
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <span className="mr-auto text-sm">Valider ce dossier et démarrer l'essai gratuit ?</span>
                 <Button variant="ghost" disabled={approuver.isPending} onClick={() => setConfirmation(false)}>
@@ -225,7 +291,13 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
                 </Button>
                 <Button
                   disabled={approuver.isPending}
-                  onClick={() => approuver.mutate(dossier.id, { onSuccess: () => setConfirmation(false) })}
+                  onClick={() =>
+                    approuver.mutate(dossier.id, {
+                      onSuccess: () => setConfirmation(false),
+                      // Erreur affichée ci-dessus : on revient au choix pour pouvoir réessayer.
+                      onError: () => setConfirmation(false),
+                    })
+                  }
                 >
                   {approuver.isPending ? "En cours…" : "Confirmer"}
                 </Button>
@@ -249,6 +321,11 @@ export function FicheProfessionnel({ id, onFermer, onChangerStatut, onRefuser }:
             {etat === "REFUSE" && (
               <p className="text-right text-xs text-muted-foreground">
                 Dossier refusé : en attente d'une nouvelle soumission du professionnel.
+              </p>
+            )}
+            {etat === "INCOMPLET" && (
+              <p className="text-right text-xs text-muted-foreground">
+                Inscription non terminée : aucune action possible tant que le dossier n'est pas soumis.
               </p>
             )}
           </SheetFooter>
