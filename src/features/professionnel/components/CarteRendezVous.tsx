@@ -21,7 +21,7 @@ export function CarteRendezVous({ rdv, maintenant, onOuvrir }: CarteRendezVousPr
       <button
         type="button"
         onClick={() => onOuvrir(rdv)}
-        className={`w-full space-y-1.5 rounded-lg border p-3 text-left shadow-sm outline-none hover:shadow focus-visible:ring-2 focus-visible:ring-signal ${cfg.carte} ${
+        className={`w-full space-y-1.5 rounded-lg border border-ink/10 p-3 text-left shadow-sm outline-none hover:shadow focus-visible:ring-2 focus-visible:ring-signal ${cfg.bloc} ${
           termine ? "opacity-60" : ""
         }`}
       >

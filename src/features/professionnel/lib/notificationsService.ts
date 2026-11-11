@@ -1,7 +1,3 @@
-import { USE_MOCK_API } from "@/shared/lib/featureFlags";
-import { notificationsApi, type NotificationsApi } from "../api/notificationsApi";
-import { mockNotificationsApi } from "./mockNotifications";
+import { notificationsApi } from "../api/notificationsApi";
 
-export const notificationsService: NotificationsApi = USE_MOCK_API
-  ? mockNotificationsApi
-  : notificationsApi;
+export const notificationsService = notificationsApi;

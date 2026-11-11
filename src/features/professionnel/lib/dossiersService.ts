@@ -1,5 +1,3 @@
-import { USE_MOCK_API } from "@/shared/lib/featureFlags";
-import { dossiersApi, type DossiersApi } from "../api/dossiersApi";
-import { mockDossiersApi } from "./mockDossiers";
+import { dossiersApi } from "../api/dossiersApi";
 
-export const dossiersService: DossiersApi = USE_MOCK_API ? mockDossiersApi : dossiersApi;
+export const dossiersService = dossiersApi;
