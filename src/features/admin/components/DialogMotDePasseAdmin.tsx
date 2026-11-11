@@ -13,6 +13,8 @@ import {
 } from "@/shared/components/ui/dialog";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
+import { toApiErreur } from "@/shared/lib/apiError";
+import { messageAdmin } from "../lib/erreursAdmin";
 import { useChangerMotDePasseAdmin } from "../hooks/useParametresAdmin";
 import { motDePasseAdminSchema, type MotDePasseAdminValeurs } from "../schema/parametresAdmin.schema";
 
@@ -51,10 +53,14 @@ function Formulaire({ onFermer, onSucces }: Pick<Props, "onFermer" | "onSucces">
           onFermer();
         },
         onError: (e) => {
-          const code = (e as { code?: string }).code;
-          if (code === "ANCIEN_MOT_DE_PASSE_INCORRECT")
+          const code = toApiErreur(e).code;
+          if (code === "ANCIEN_MOT_DE_PASSE_INCORRECT") {
             setError("ancien", { message: "Le mot de passe actuel est incorrect." });
-          else setError("root", { message: (e as { message?: string }).message ?? "Une erreur est survenue." });
+          } else if (code === "MOT_DE_PASSE_FAIBLE") {
+            setError("nouveau", { message: "Mot de passe trop faible : 8 caractères, un chiffre et un symbole." });
+          } else {
+            setError("root", { message: messageAdmin(e, "Impossible de modifier le mot de passe. Réessayez.") });
+          }
         },
       },
     );

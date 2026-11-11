@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import { RefreshCw, SearchX } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -17,7 +18,11 @@ const TAILLE = 20;
 export default function AuditAdminPage() {
   const qc = useQueryClient();
   const [action, setAction] = useState("TOUTES");
-  const [typeCible, setTypeCible] = useState("TOUS");
+  const [recherche] = useSearchParams();
+  const typeDemande = recherche.get("typeCible");
+  const [typeCible, setTypeCible] = useState(
+    TYPES_CIBLE.some((t) => t.value === typeDemande) ? (typeDemande as string) : "TOUS",
+  );
   const [du, setDu] = useState("");
   const [au, setAu] = useState("");
   const [page, setPage] = useState(1); // 1-indexé côté interface

@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+/** Numéro sénégalais sans l'indicatif : 70, 75, 76, 77 ou 78 + 7 chiffres (espaces tolérés). */
 export const profilAdminSchema = z.object({
-  prenom: z.string().trim().min(2, "Le prénom est obligatoire."),
-  nom: z.string().trim().min(2, "Le nom est obligatoire."),
-  // 9 chiffres, sans l'indicatif +221
-  telephone: z.string().regex(/^7[05678]( ?\d){7}$/, "Numéro invalide (ex. 77 123 45 67)."),
+  prenom: z.string().trim().min(1, "Le prénom est obligatoire.").max(60, "60 caractères maximum."),
+  nom: z.string().trim().min(1, "Le nom est obligatoire.").max(60, "60 caractères maximum."),
+  telephone: z
+    .string()
+    .trim()
+    .regex(/^7[05678]( ?\d){7}$/, "Numéro invalide (ex. 77 123 45 67)."),
 });
 export type ProfilAdminValeurs = z.infer<typeof profilAdminSchema>;
 
@@ -18,12 +21,12 @@ export const motDePasseAdminSchema = z
       .regex(/[^A-Za-z0-9]/, "Au moins un symbole."),
     confirmation: z.string().min(1, "Confirmez le nouveau mot de passe."),
   })
-  .refine((d) => d.nouveau === d.confirmation, {
+  .refine((v) => v.nouveau === v.confirmation, {
     path: ["confirmation"],
-    message: "Les mots de passe ne correspondent pas.",
+    message: "Les deux mots de passe ne correspondent pas.",
   })
-  .refine((d) => d.nouveau !== d.ancien, {
+  .refine((v) => v.nouveau !== v.ancien, {
     path: ["nouveau"],
-    message: "Le nouveau mot de passe doit être différent de l'ancien.",
+    message: "Le nouveau mot de passe doit être différent de l'actuel.",
   });
 export type MotDePasseAdminValeurs = z.infer<typeof motDePasseAdminSchema>;

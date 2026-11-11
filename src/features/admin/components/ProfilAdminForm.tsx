@@ -4,10 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Check } from "lucide-react";
 import { Input } from "@/shared/components/ui/input";
 import { Label } from "@/shared/components/ui/label";
-import { cn } from "@/shared/lib/utils";
-import { useModifierProfilAdmin } from "../hooks/useParametresAdmin";
-import { LIBELLE_NIVEAU, PRIVILEGES_PAR_NIVEAU, sansIndicatif } from "../lib/parametres";
+import { toApiErreur } from "@/shared/lib/apiError";
+import { messageAdmin } from "../lib/erreursAdmin";
+import { formaterJour } from "../lib/abonnements";
 import { initiales } from "../lib/formatAdmin";
+import { ACCES_ADMIN, libelleNiveau, sansIndicatif } from "../lib/parametres";
+import { useModifierProfilAdmin } from "../hooks/useParametresAdmin";
 import { profilAdminSchema, type ProfilAdminValeurs } from "../schema/parametresAdmin.schema";
 import type { ProfilAdmin } from "../types/parametres.types";
 
@@ -19,17 +21,18 @@ interface Props {
 }
 
 const valeursDe = (p: ProfilAdmin): ProfilAdminValeurs => ({
-  prenom: p.prenom,
-  nom: p.nom,
+  prenom: p.prenom ?? "",
+  nom: p.nom ?? "",
   telephone: sansIndicatif(p.telephone),
 });
 
 export function ProfilAdminForm({ profil, onEtat }: Props) {
-  const { mutate, isPending, isSuccess, error } = useModifierProfilAdmin();
+  const { mutate, isPending, isSuccess, error, reset: resetMutation } = useModifierProfilAdmin();
   const {
     register,
     handleSubmit,
     reset,
+    setError,
     formState: { errors, isDirty },
   } = useForm<ProfilAdminValeurs>({
     resolver: zodResolver(profilAdminSchema),
@@ -38,18 +41,29 @@ export function ProfilAdminForm({ profil, onEtat }: Props) {
 
   useEffect(() => onEtat({ modifie: isDirty, enCours: isPending }), [isDirty, isPending, onEtat]);
 
-  const nomComplet = `${profil.prenom} ${profil.nom}`;
+  const nomComplet = `${profil.prenom ?? ""} ${profil.nom ?? ""}`.trim();
+  const depuisLe = formaterJour(profil.dateAffectation);
 
   function envoyer(v: ProfilAdminValeurs) {
+    resetMutation();
     mutate(
       {
         prenom: v.prenom.trim(),
         nom: v.nom.trim(),
         telephone: `+221${v.telephone.replace(/\s/g, "")}`,
       },
-      { onSuccess: (p) => reset(valeursDe(p)) },
+      {
+        onSuccess: (p) => reset(valeursDe(p)),
+        onError: (e) => {
+          if (toApiErreur(e).code === "TELEPHONE_DEJA_UTILISE") {
+            setError("telephone", { message: messageAdmin(e) });
+          }
+        },
+      },
     );
   }
+
+  const erreurGlobale = error && toApiErreur(error).code !== "TELEPHONE_DEJA_UTILISE" ? messageAdmin(error, "Impossible d'enregistrer le profil.") : null;
 
   return (
     <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
@@ -67,20 +81,23 @@ export function ProfilAdminForm({ profil, onEtat }: Props) {
 
       <div className="mt-6 flex flex-col gap-4 rounded-2xl bg-muted/50 p-5 sm:flex-row sm:items-center">
         <span className="grid size-20 shrink-0 place-items-center rounded-full bg-navy text-2xl font-semibold text-white">
-          {initiales(nomComplet)}
+          {initiales(nomComplet || profil.email)}
         </span>
         <div className="min-w-0 space-y-2">
           <div>
-            <p className="text-lg font-semibold">{nomComplet}</p>
-            <p className="text-sm text-muted-foreground">{LIBELLE_NIVEAU[profil.niveau]}</p>
+            <p className="truncate text-lg font-semibold">{nomComplet || profil.email}</p>
+            <p className="text-sm text-muted-foreground">
+              {libelleNiveau(profil.niveau)}
+              {depuisLe && ` · depuis le ${depuisLe}`}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 border-t border-border pt-2">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Privilèges accordés :
+              Accès :
             </span>
-            {PRIVILEGES_PAR_NIVEAU[profil.niveau].map((p) => (
-              <span key={p} className="rounded-md border border-border bg-card px-2 py-0.5 text-xs">
-                {p}
+            {ACCES_ADMIN.map((a) => (
+              <span key={a} className="rounded-md border border-border bg-card px-2 py-0.5 text-xs">
+                {a}
               </span>
             ))}
           </div>
@@ -121,13 +138,13 @@ export function ProfilAdminForm({ profil, onEtat }: Props) {
         </Champ>
 
         <div className="sm:col-span-2" aria-live="polite">
-          {error && (
+          {erreurGlobale && (
             <p role="alert" className="text-sm text-destructive">
-              {(error as { message?: string }).message ?? "Impossible d'enregistrer le profil."}
+              {erreurGlobale}
             </p>
           )}
           {isSuccess && !isDirty && (
-            <p className={cn("inline-flex items-center gap-1.5 text-sm text-emerald-600")}>
+            <p className="inline-flex items-center gap-1.5 text-sm text-emerald-600">
               <Check className="size-4" /> Modifications enregistrées.
             </p>
           )}

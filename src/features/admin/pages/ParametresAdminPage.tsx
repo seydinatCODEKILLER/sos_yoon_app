@@ -1,23 +1,27 @@
 import { useCallback, useState } from "react";
 import { motion } from "motion/react";
-import { Bell, Check, History, Shield, User, type LucideIcon } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, History, MonitorSmartphone, Shield, SlidersHorizontal, User, type LucideIcon } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { apparition, conteneur } from "@/shared/lib/animationsPage";
 import { cn } from "@/shared/lib/utils";
 import { ID_FORMULAIRE_PROFIL_ADMIN, ProfilAdminForm } from "../components/ProfilAdminForm";
+import { ParametresPlateformeAdmin } from "../components/ParametresPlateformAdmin";
 import { SecuriteAdmin } from "../components/SecuriteAdmin";
 import { SessionsAdmin } from "../components/SessionsAdmin";
 import { useProfilAdmin } from "../hooks/useParametresAdmin";
 
-type Onglet = "general" | "securite" | "sessions";
+type Onglet = "general" | "plateforme" | "securite" | "sessions";
 
 const ONGLETS: { id: Onglet; libelle: string; icone: LucideIcon }[] = [
   { id: "general", libelle: "Général & Profil", icone: User },
+  { id: "plateforme", libelle: "Plateforme", icone: SlidersHorizontal },
   { id: "securite", libelle: "Sécurité & Accès", icone: Shield },
-  { id: "sessions", libelle: "Sessions & Appareils", icone: Bell },
+  { id: "sessions", libelle: "Sessions & Appareils", icone: MonitorSmartphone },
 ];
 
 export default function ParametresAdminPage() {
+  const navigate = useNavigate();
   const [onglet, setOnglet] = useState<Onglet>("general");
   const [etat, setEtat] = useState({ modifie: false, enCours: false });
   const onEtat = useCallback((e: { modifie: boolean; enCours: boolean }) => setEtat(e), []);
@@ -39,13 +43,13 @@ export default function ParametresAdminPage() {
             </span>
           </div>
           <p className="max-w-xl text-sm text-muted-foreground">
-            Gérez les informations de votre compte administrateur et la sécurité d'accès.
+            Gérez votre compte administrateur, les réglages de la plateforme et la sécurité d'accès.
           </p>
         </div>
 
         <div className="flex gap-2">
           {onglet !== "general" && (
-            <Button variant="outline" disabled title="Bientôt disponible">
+            <Button variant="outline" onClick={() => navigate("/admin/audit")}>
               <History className="size-4" /> Journal d'audit
             </Button>
           )}
@@ -96,7 +100,8 @@ export default function ParametresAdminPage() {
             <ProfilAdminForm profil={profil} onEtat={onEtat} />
           )}
         </div>
-        {onglet === "securite" && <SecuriteAdmin />}
+        {onglet === "plateforme" && <ParametresPlateformeAdmin />}
+        {onglet === "securite" && <SecuriteAdmin onVoirSessions={() => setOnglet("sessions")} />}
         {onglet === "sessions" && <SessionsAdmin />}
       </motion.div>
     </motion.div>

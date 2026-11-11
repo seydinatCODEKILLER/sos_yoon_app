@@ -1,46 +1,83 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { parametresAdminService } from "../lib/parametresAdminService";
-import type { ProfilAdminPayload } from "../types/parametres.types";
+import { parametresAdminApi } from "../api/parametresAdminApi";
+import type { ParametreAdmin } from "../types/parametres.types";
 
 export const PARAMETRES_ADMIN_KEY = ["admin", "parametres"] as const;
-const PROFIL_KEY = [...PARAMETRES_ADMIN_KEY, "profil"] as const;
-const SESSIONS_KEY = [...PARAMETRES_ADMIN_KEY, "sessions"] as const;
+export const PROFIL_KEY = [...PARAMETRES_ADMIN_KEY, "profil"] as const;
+export const SESSIONS_KEY = [...PARAMETRES_ADMIN_KEY, "sessions"] as const;
+export const PLATEFORME_KEY = [...PARAMETRES_ADMIN_KEY, "plateforme"] as const;
 
 export function useProfilAdmin() {
-  return useQuery({ queryKey: PROFIL_KEY, queryFn: () => parametresAdminService.profil() });
+  return useQuery({ queryKey: PROFIL_KEY, queryFn: parametresAdminApi.profil });
 }
 
 export function useModifierProfilAdmin() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (p: ProfilAdminPayload) => parametresAdminService.modifierProfil(p),
+    mutationFn: parametresAdminApi.modifierProfil,
     onSuccess: (profil) => qc.setQueryData(PROFIL_KEY, profil),
   });
 }
 
+export function useChangerMotDePasseAdmin() {
+  return useMutation({ mutationFn: parametresAdminApi.changerMotDePasse });
+}
+
+/**
+ * Les identifiants de session changent à chaque renouvellement du jeton (rotation) : on recharge
+ * donc la liste en revenant sur l'onglet, et après chaque action, même en cas d'échec.
+ */
 export function useSessionsAdmin() {
-  return useQuery({ queryKey: SESSIONS_KEY, queryFn: () => parametresAdminService.sessions() });
+  return useQuery({
+    queryKey: SESSIONS_KEY,
+    queryFn: parametresAdminApi.sessions,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
 }
 
 export function useDeconnecterSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => parametresAdminService.deconnecterSession(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: SESSIONS_KEY }),
+    mutationFn: parametresAdminApi.deconnecterSession,
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: SESSIONS_KEY });
+      qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+    },
   });
 }
 
 export function useDeconnecterAutresSessions() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: () => parametresAdminService.deconnecterAutresSessions(),
-    onSuccess: () => qc.invalidateQueries({ queryKey: SESSIONS_KEY }),
+    mutationFn: parametresAdminApi.deconnecterAutresSessions,
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: SESSIONS_KEY });
+      qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+    },
   });
 }
 
-export function useChangerMotDePasseAdmin() {
+export function useParametresPlateforme() {
+  return useQuery({ queryKey: PLATEFORME_KEY, queryFn: parametresAdminApi.parametres });
+}
+
+/**
+ * Un montant ou une durée modifiés se retrouvent dans les abonnements et la fiche des
+ * professionnels (mensualité), et l'opération est inscrite au journal d'audit.
+ */
+export function useModifierParametre() {
+  const qc = useQueryClient();
   return useMutation({
-    mutationFn: (p: { ancienMotDePasse: string; nouveauMotDePasse: string }) =>
-      parametresAdminService.changerMotDePasse(p),
+    mutationFn: ({ cle, valeur }: { cle: string; valeur: string }) => parametresAdminApi.modifierParametre(cle, valeur),
+    onSuccess: (modifie) => {
+      qc.setQueryData<ParametreAdmin[]>(PLATEFORME_KEY, (liste) =>
+        liste?.map((p) => (p.cle === modifie.cle ? { ...p, valeur: modifie.valeur } : p)),
+      );
+      qc.invalidateQueries({ queryKey: ["admin", "abonnements"] });
+      qc.invalidateQueries({ queryKey: ["admin", "professionnels"] });
+      qc.invalidateQueries({ queryKey: ["admin", "audit"] });
+    },
+    onError: () => qc.invalidateQueries({ queryKey: PLATEFORME_KEY }),
   });
 }

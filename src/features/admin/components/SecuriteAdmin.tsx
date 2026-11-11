@@ -1,47 +1,68 @@
 import { useState } from "react";
-import { Check, Lock, ShieldCheck } from "lucide-react";
+import { KeyRound, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
+import { toast } from "@/shared/lib/toast";
 import { DialogMotDePasseAdmin } from "./DialogMotDePasseAdmin";
 
-export function SecuriteAdmin() {
+interface Props {
+  /** Ouvre l'onglet « Sessions & Appareils » (un mot de passe changé ne déconnecte pas les autres appareils). */
+  onVoirSessions: () => void;
+}
+
+export function SecuriteAdmin({ onVoirSessions }: Props) {
   const [dialogue, setDialogue] = useState(false);
-  const [modifie, setModifie] = useState(false);
 
   return (
-    <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
-      <div className="flex items-center gap-4 border-b border-border pb-5">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-signal/10 text-signal">
-          <ShieldCheck className="size-5" />
-        </span>
-        <div>
-          <h2 className="text-lg font-semibold">Sécurité &amp; accès au compte</h2>
-          <p className="text-sm text-muted-foreground">Paramètres d'authentification et gestion des accès.</p>
+    <div className="space-y-6">
+      <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
+        <div className="border-b border-border pb-5">
+          <h2 className="text-lg font-semibold">Mot de passe</h2>
+          <p className="text-sm text-muted-foreground">
+            Protège l'accès à l'espace d'administration. Changez-le régulièrement et ne le réutilisez pas ailleurs.
+          </p>
         </div>
-      </div>
 
-      <div className="mt-6 flex flex-col gap-4 rounded-2xl border border-border p-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-start gap-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-muted text-muted-foreground">
-            <Lock className="size-4" />
-          </span>
-          <div className="space-y-1">
-            <p className="font-medium">Mot de passe de connexion</p>
-            <p className="text-sm text-muted-foreground">
-              Choisissez un mot de passe robuste que vous n'utilisez nulle part ailleurs.
-            </p>
-            {modifie && (
-              <p className="inline-flex items-center gap-1.5 text-xs text-emerald-600">
-                <Check className="size-3.5" /> Mot de passe mis à jour.
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-4">
+            <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-signal/10 text-signal">
+              <KeyRound className="size-5" />
+            </span>
+            <div>
+              <p className="text-sm font-medium">Mot de passe de connexion</p>
+              <p className="text-xs text-muted-foreground">
+                8 caractères minimum, avec au moins un chiffre et un symbole.
               </p>
-            )}
+            </div>
+          </div>
+          <Button variant="outline" onClick={() => setDialogue(true)} className="shrink-0">
+            Modifier le mot de passe
+          </Button>
+        </div>
+      </section>
+
+      <section className="flex flex-col gap-3 rounded-3xl border border-border bg-muted/40 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex items-start gap-4">
+          <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-border bg-card text-muted-foreground">
+            <ShieldCheck className="size-5" />
+          </span>
+          <div>
+            <p className="text-sm font-medium">Un autre appareil a-t-il accès à votre compte ?</p>
+            <p className="text-xs text-muted-foreground">
+              Changer de mot de passe ne ferme pas les sessions déjà ouvertes. Vérifiez-les et déconnectez celles que
+              vous ne reconnaissez pas.
+            </p>
           </div>
         </div>
-        <Button variant="outline" className="shrink-0" onClick={() => setDialogue(true)}>
-          Mettre à jour le mot de passe
+        <Button variant="ghost" onClick={onVoirSessions} className="shrink-0">
+          <MonitorSmartphone className="size-4" /> Voir les appareils connectés
         </Button>
-      </div>
+      </section>
 
-      <DialogMotDePasseAdmin ouvert={dialogue} onFermer={() => setDialogue(false)} onSucces={() => setModifie(true)} />
-    </section>
+      <DialogMotDePasseAdmin
+        ouvert={dialogue}
+        onFermer={() => setDialogue(false)}
+        onSucces={() => toast.success("Mot de passe mis à jour")}
+      />
+    </div>
   );
 }
