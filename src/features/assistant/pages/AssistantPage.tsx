@@ -30,7 +30,7 @@ const TEXTES: Record<EcranAssistant, Texte> = {
     onde: "aucune",
   },
   pret: { titre: "", onde: "aucune" },
-  // Provisoires : pas encore de maquette pour ces deux états
+  // Provisoires : pas encore de maquette pour ces trois états
   ecoute: { titre: "Je vous écoute", onde: "active" },
   reflexion: { titre: "Soxna réfléchit…", onde: "repos" },
   reponse: { titre: "Soxna vous répond", onde: "active" },
@@ -70,11 +70,9 @@ function BoutonMicro({ ecran, occupe, onClick }: BoutonMicroProps) {
     );
   }
 
-  // Pendant la réflexion et la réponse : l'espace reste réservé (pas de décalage)
-  if (ecran === "reflexion" || ecran === "reponse") {
-    return <div aria-hidden className="size-20" />;
-  }
-
+  // Conversation en direct : le bouton reste là pendant toute la conversation,
+  // pour pouvoir la terminer à tout moment (écoute, réflexion ou réponse)
+  const enCours = ecran !== "pret";
   const ecoute = ecran === "ecoute";
 
   return (
@@ -89,13 +87,13 @@ function BoutonMicro({ ecran, occupe, onClick }: BoutonMicroProps) {
         type="button"
         onClick={onClick}
         disabled={occupe}
-        aria-label={ecoute ? "Terminer ma question" : "Parler à Soxna Yoon"}
+        aria-label={enCours ? "Terminer la conversation" : "Parler à Soxna Yoon"}
         whileTap={reduce ? undefined : { scale: 0.94 }}
         className="relative grid size-20 place-items-center rounded-full bg-signal text-paper shadow-[0_0_40px_rgba(249,97,13,0.55)] outline-none focus-visible:ring-4 focus-visible:ring-signal/40 disabled:opacity-70"
       >
         {occupe ? (
           <Loader2 className="size-8 animate-spin" aria-hidden />
-        ) : ecoute ? (
+        ) : enCours ? (
           <Square className="size-6 fill-current" aria-hidden />
         ) : (
           <Mic className="size-8" aria-hidden />
@@ -128,7 +126,8 @@ export function AssistantPage() {
   }
 
   async function surMicro() {
-    if (ecran === "ecoute") {
+    // Conversation en cours : le bouton la termine
+    if (ecran !== "pret") {
       terminer();
       return;
     }
@@ -146,7 +145,13 @@ export function AssistantPage() {
         return;
       }
     }
-    await parler();
+    // Connexion à Soxna : le bouton affiche un chargement jusqu'à ce qu'elle réponde
+    setOccupe(true);
+    try {
+      await parler();
+    } finally {
+      setOccupe(false);
+    }
   }
 
   return (
@@ -178,7 +183,6 @@ export function AssistantPage() {
           </div>
         </header>
 
-        {/* Invisible tant que l'état réel du micro n'est pas connu : aucun clignotement */}
         {/* Invisible tant que l'état réel du micro n'est pas connu : aucun clignotement */}
         <div
           className={`flex flex-1 flex-col ${microVerifie ? "" : "invisible"}`}
