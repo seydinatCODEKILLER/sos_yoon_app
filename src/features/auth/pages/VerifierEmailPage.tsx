@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Check, CircleAlert, Loader2, Send } from "lucide-react";
+import { Illustration, type Scene } from "@/features/professionnel/components/Illustration";
+import { ArrowRight, Loader2, Send } from "lucide-react";
 import { Button } from "@/shared/components/ui/button";
 import { Input } from "@/shared/components/ui/input";
 import { toApiErreur } from "@/shared/lib/apiError";
@@ -10,7 +11,16 @@ import { useAuthStore } from "../store/auth.store";
 import { authErrorMessage } from "../lib/authErrors";
 import { useVerifierEmail } from "../hooks/useVerifierEmail";
 import { useRenvoyerEmailVerification } from "@/features/professionnel/hooks/useDossierPro";
-import { FeuilleDossier } from "@/features/professionnel/components/FeuilleDossier";
+
+/** Même fond bleu nuit que le bandeau des pages de connexion */
+const FOND_PANNEAU: CSSProperties = {
+  backgroundColor: "#171630",
+  backgroundImage: [
+    "radial-gradient(90% 70% at 100% 0%, rgba(255,255,255,0.07) 0%, transparent 60%)",
+    "radial-gradient(70% 60% at 0% 100%, rgba(249,97,13,0.16) 0%, transparent 65%)",
+    "linear-gradient(180deg, #1c1b3d 0%, #171630 60%, #12112a 100%)",
+  ].join(", "),
+};
 
 /** Ici « JETON_INVALIDE » parle d'un lien, pas d'une session : message dédié */
 function messageLien(error: unknown): string {
@@ -21,6 +31,10 @@ function messageLien(error: unknown): string {
     return "Ce lien a expiré. Demandez un nouvel e-mail de confirmation.";
   return authErrorMessage(error);
 }
+
+/** Bouton plein, angles droits : même forme pour tous les appels à l'action */
+const ACTION =
+  "inline-flex h-12 w-full items-center justify-center gap-3 rounded-none bg-navy px-6 text-sm font-semibold text-paper transition-colors hover:bg-signal sm:w-auto disabled:opacity-60";
 
 function Renvoi() {
   const user = useAuthStore((s) => s.user);
@@ -35,25 +49,27 @@ function Renvoi() {
         e.preventDefault();
         if (valide) renvoyer.mutate(email.trim());
       }}
-      className="mt-6 text-left"
+      className="mt-10 border-t border-ink/15 pt-6 text-left"
     >
-      <label htmlFor="email-renvoi" className="text-[13px] font-medium text-ink">
+      <label htmlFor="email-renvoi" className="text-sm font-medium text-ink">
         Recevoir un nouveau lien
       </label>
-      <div className="mt-1.5 flex gap-2">
+      <div className="mt-3 flex items-end gap-4">
         <Input
           id="email-renvoi"
           type="email"
           autoComplete="email"
           placeholder="nom.prenom@exemple.com"
           value={email}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
-          className="h-10 rounded-lg border-ink/10 bg-white px-3 text-sm shadow-none focus-visible:border-signal focus-visible:ring-signal/20"
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+            setEmail(e.target.value)
+          }
+          className="h-11 min-w-0 flex-1 rounded-none border-0 border-b border-ink/30 bg-transparent px-0 text-base shadow-none focus-visible:border-signal focus-visible:ring-0"
         />
         <Button
           type="submit"
           disabled={!valide || renvoyer.isPending}
-          className="h-10 shrink-0 gap-1.5 rounded-lg bg-signal px-4 text-sm font-semibold text-white hover:bg-signal/90 disabled:opacity-60"
+          className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-none bg-signal px-5 text-sm font-semibold text-white hover:bg-signal/90 disabled:opacity-50"
         >
           {renvoyer.isPending ? (
             <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -96,78 +112,78 @@ export function VerifierEmailPage() {
   const isError = etat.statut === "erreur";
   const error = etat.statut === "erreur" ? etat.error : undefined;
 
+  const scene: Scene = isSuccess ? "mail-ok" : isError || lienManquant ? "mail-erreur" : "mail-cours";
+
   return (
-    <FeuilleDossier teinte={isSuccess ? "succes" : isError || lienManquant ? "alerte" : "signal"}>
-      <div className="text-center" aria-live="polite">
+    <div className="grid min-h-dvh grid-rows-[auto_1fr] bg-paper lg:grid-cols-2 lg:grid-rows-1">
+      {/* Panneau : le symbole de l'état, en grand */}
+      <div
+        className="flex min-w-0 flex-col justify-between px-6 py-6 text-paper sm:px-10 sm:py-8 lg:sticky lg:top-0 lg:h-dvh lg:px-14 lg:py-10"
+        style={FOND_PANNEAU}
+      >
+        <img src="/images/logo-blanc.svg" alt="SOS Yoon" className="h-4 w-auto self-start" />
+
+        <div className="flex flex-1 items-center py-8 lg:justify-center">
+          <Illustration scene={scene} className="w-44 sm:w-60 lg:w-[min(100%,28rem)]" />
+        </div>
+
+        <p className="text-sm text-paper/70">Vérification de l'adresse e-mail</p>
+      </div>
+
+      {/* Contenu : aligné à gauche, sans encadré */}
+      <main className="flex min-w-0 flex-col justify-center px-6 py-12 sm:px-10 lg:px-16 xl:px-24">
+        <div className="w-full max-w-md" aria-live="polite">
           {enCours && (
             <>
-              <Loader2
-                className="mx-auto size-10 animate-spin text-signal"
-                aria-hidden
-              />
-              <h1 className="font-display mt-5 text-2xl font-bold text-ink">
+              <h1 className="font-display text-balance text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
                 Confirmation en cours…
               </h1>
-              <p className="mt-2 text-sm text-navy/60">
-                Un instant, nous vérifions votre adresse e-mail.
+              <p className="mt-5 text-base leading-relaxed text-ink/65">
+                Un instant, nous vérifions votre adresse{" "}
+                <span className="whitespace-nowrap">e-mail</span>.
               </p>
             </>
           )}
 
           {isSuccess && (
             <>
-              <span
-                aria-hidden
-                className="mx-auto grid size-14 place-items-center rounded-full bg-emerald-50"
-              >
-                <span className="grid size-9 place-items-center rounded-full bg-emerald-500 text-white">
-                  <Check className="size-5" strokeWidth={3} />
-                </span>
-              </span>
-              <h1 className="font-display mt-5 text-2xl font-bold text-ink">
-                Adresse e-mail confirmée
+              <h1 className="font-display text-balance text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
+                Adresse <span className="whitespace-nowrap">e-mail</span> confirmée
               </h1>
-              <p className="mt-2 text-sm leading-relaxed text-navy/60">
+              <p className="mt-5 text-base leading-relaxed text-ink/65">
                 Merci. Votre dossier peut maintenant être examiné par notre équipe.
               </p>
-              {connecte ? (
-                <Button
-                  type="button"
-                  onClick={() => void retourner()}
-                  disabled={ouverture}
-                  className="mt-6 h-11 w-full gap-2 rounded-lg bg-navy text-sm font-semibold text-paper hover:bg-navy/90 disabled:opacity-60"
-                >
-                  {ouverture ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                  ) : (
+              <div className="mt-10">
+                {connecte ? (
+                  <Button
+                    type="button"
+                    onClick={() => void retourner()}
+                    disabled={ouverture}
+                    className={ACTION}
+                  >
+                    Retourner à mon espace
+                    {ouverture ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : (
+                      <ArrowRight className="size-4" aria-hidden />
+                    )}
+                  </Button>
+                ) : (
+                  <Link to="/login/professionnel" className={ACTION}>
+                    Me connecter
                     <ArrowRight className="size-4" aria-hidden />
-                  )}
-                  Retourner à mon espace
-                </Button>
-              ) : (
-                <Link
-                  to="/login/professionnel"
-                  className="mt-6 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-navy text-sm font-semibold text-paper transition-colors hover:bg-navy/90"
-                >
-                  Me connecter
-                  <ArrowRight className="size-4" aria-hidden />
-                </Link>
-              )}
+                  </Link>
+                )}
+              </div>
             </>
           )}
 
           {(isError || lienManquant) && (
             <>
-              <span
-                aria-hidden
-                className="mx-auto grid size-14 place-items-center rounded-full bg-red-50 text-red-600"
-              >
-                <CircleAlert className="size-7" />
-              </span>
-              <h1 className="font-display mt-5 text-2xl font-bold text-ink">
+              <h1 className="font-display text-balance text-4xl font-bold leading-[1.05] tracking-tight text-ink sm:text-5xl">
                 Lien impossible à utiliser
               </h1>
-              <p role="alert" className="mt-2 text-sm leading-relaxed text-navy/60">
+              <p role="alert" className="mt-5 text-base leading-relaxed text-ink/65">
                 {lienManquant
                   ? "Ce lien est incomplet. Ouvrez-le depuis l'e-mail reçu, ou demandez-en un nouveau."
                   : messageLien(error)}
@@ -175,13 +191,14 @@ export function VerifierEmailPage() {
               <Renvoi />
               <Link
                 to={connecte ? "/" : "/login/professionnel"}
-                className="mt-5 inline-block text-xs font-semibold text-navy/60 hover:underline"
+                className="mt-8 inline-block text-sm font-medium text-ink/60 underline underline-offset-4 hover:text-ink"
               >
                 {connecte ? "Retour à l'application" : "Retour à la connexion"}
               </Link>
             </>
           )}
-      </div>
-    </FeuilleDossier>
+        </div>
+      </main>
+    </div>
   );
 }

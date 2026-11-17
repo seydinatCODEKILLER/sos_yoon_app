@@ -3,11 +3,8 @@ import { useStatutDossierPro } from "../hooks/useDossierPro";
 import { formatDateComplete } from "@/features/demandes/lib/formatDateDemande";
 import { BandeauEmail } from "../components/BandeauEmail";
 import { CorrectionDossier } from "../components/CorrectionDossier";
-import {
-  DossierIndisponible,
-  FeuilleDossier,
-  PiedFeuille,
-} from "../components/FeuilleDossier";
+import { DossierIndisponible } from "../components/FeuilleDossier";
+import { EcranDossier, PiedPage, Section, Titre } from "../components/EcranDossier";
 import { RailDossier } from "../components/RailDossier";
 
 const ROUTE_ATTENTE = "/pro/validation";
@@ -26,39 +23,36 @@ export function DemandeRefuseePage() {
   const { rejet } = data;
 
   return (
-    <FeuilleDossier teinte="alerte">
-      <h1 className="font-display text-3xl leading-tight font-bold text-ink">
-        Votre dossier n'a pas été approuvé
-      </h1>
-      <p className="mt-2 text-sm text-navy/60">
+    <EcranDossier scene="refus" legende="Dossier d'inscription">
+      <Titre>Votre dossier n'a pas été approuvé</Titre>
+      <p className="mt-5 text-base leading-relaxed text-ink/65">
         Dossier {data.reference}
         {data.dateTraitement
           ? `, examiné le ${formatDateComplete(data.dateTraitement)}`
           : ""}
       </p>
 
-      <div className="mt-6">
+      <div className="mt-10">
         <RailDossier etapes={data.etapes} statut={data.statut} />
       </div>
 
-      <div
-        role="alert"
-        className="mt-6 rounded-r-xl border-l-4 border-red-500 bg-red-50/70 py-3 pr-4 pl-4"
-      >
-        <p className="text-sm font-semibold text-ink">
-          {rejet?.motif ?? "Nos équipes n'ont pas pu valider votre dossier."}
-        </p>
-        {rejet?.commentaire && (
-          <p className="mt-1 text-sm leading-relaxed text-navy/70">
-            {rejet.commentaire}
-          </p>
-        )}
-      </div>
+      <Section>
+        <div role="alert">
+          <h2 className="text-lg font-semibold text-ink">
+            {rejet?.motif ?? "Nos équipes n'ont pas pu valider votre dossier."}
+          </h2>
+          {rejet?.commentaire && (
+            <p className="mt-1 text-base leading-relaxed text-ink/65">
+              {rejet.commentaire}
+            </p>
+          )}
+        </div>
+      </Section>
 
       {data.resoumissionPossible ? (
         <CorrectionDossier pieceEnCause={rejet?.pieceEnCause ?? null} />
       ) : (
-        <p className="mt-6 text-sm text-navy/70">
+        <p className="mt-10 border-t border-ink/15 pt-6 text-base leading-relaxed text-ink/65">
           Ce dossier ne peut plus être renvoyé depuis l'application. Contactez
           l'équipe SOS Yoon pour connaître la suite.
         </p>
@@ -66,7 +60,7 @@ export function DemandeRefuseePage() {
 
       <BandeauEmail />
 
-      <PiedFeuille texte="Vous pouvez quitter cette page : votre dossier est conservé. Reconnectez-vous avec votre e-mail pour le corriger plus tard." />
-    </FeuilleDossier>
+      <PiedPage texte="Vous pouvez quitter cette page : votre dossier est conservé. Reconnectez-vous avec votre e-mail pour le corriger plus tard." />
+    </EcranDossier>
   );
 }
