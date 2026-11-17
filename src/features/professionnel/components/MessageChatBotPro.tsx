@@ -9,7 +9,7 @@ import { analyserReponse, segmenterGras } from "../lib/reponsechatbot";
 import type {
   MessageChatbot,
   SourceJuridique,
-} from "../types/chatbotpro.types";
+} from "../types/chatBotPro.types";
 
 function TexteGras({ texte }: { texte: string }) {
   return segmenterGras(texte).map((s, i) =>
