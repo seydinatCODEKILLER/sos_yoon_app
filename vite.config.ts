@@ -11,14 +11,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
+      includeAssets: ["favicon.svg", "favicon-32.png", "apple-touch-icon.png"],
       manifest: {
         id: "/",
         name: "SOS Yoon",
         short_name: "SOS Yoon",
         description:
           "Urgence juridique : mise en relation immédiate avec un professionnel du droit.",
-        theme_color: "#0f172a",
+        theme_color: "#E8600C",
         background_color: "#ffffff",
         display: "standalone",
         orientation: "portrait",
@@ -48,21 +48,6 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.sosyoon\.com\/.*/i,
-            handler: "NetworkFirst",
-            options: {
-              cacheName: "api-cache",
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5,
-              },
-              networkTimeoutSeconds: 5,
-              cacheableResponse: {
-                statuses: [0, 200],
-              },
-            },
-          },
-          {
             urlPattern: /\.(?:png|jpg|jpeg|svg|webp)$/,
             handler: "CacheFirst",
             options: {
@@ -76,7 +61,7 @@ export default defineConfig({
         ],
       },
       devOptions: {
-        enabled: true,
+        enabled: false,
       },
     }),
   ],
