@@ -12,7 +12,7 @@ import { useLocalisationPartagee } from "../hooks/useLocalisationPartagee";
 import { useEnvoyerDemande } from "../hooks/useEnvoyerDemande";
 import { useDemandeVisiteur } from "../hooks/useDemandeVisiteur";
 
-const BARS = [10, 18, 28, 20, 12, 22, 8];
+const BARS = [10, 16, 24, 32, 22, 28, 14, 26, 18, 12, 8];
 
 function Waveform({ active }: { active: boolean }) {
   const reduce = useReducedMotion();
@@ -21,7 +21,9 @@ function Waveform({ active }: { active: boolean }) {
       {BARS.map((height, i) => (
         <motion.span
           key={i}
-          className="w-1 rounded-full bg-signal"
+          className={`w-1 rounded-full transition-colors duration-300 ${
+            active ? "bg-signal" : "bg-ink/15"
+          }`}
           style={{ height }}
           animate={
             active && !reduce
@@ -52,31 +54,81 @@ function PulseRing({ delay }: { delay: number }) {
   );
 }
 
+/** Anneau qui se remplit pendant l'enregistrement ; rouge sur la fin */
+function ProgressRing({
+  ratio,
+  animate,
+}: {
+  ratio: number;
+  animate: boolean;
+}) {
+  const proche = ratio >= 0.85;
+  return (
+    <svg
+      aria-hidden
+      viewBox="0 0 192 192"
+      className="absolute inset-12 -rotate-90"
+    >
+      <circle
+        cx="96"
+        cy="96"
+        r="92"
+        fill="none"
+        strokeWidth="4"
+        className="stroke-signal/15"
+      />
+      <circle
+        cx="96"
+        cy="96"
+        r="92"
+        fill="none"
+        strokeWidth="4"
+        strokeLinecap="round"
+        pathLength={100}
+        strokeDasharray={100}
+        strokeDashoffset={100 * (1 - ratio)}
+        className={`${proche ? "stroke-red-500" : "stroke-signal"} ${
+          animate ? "transition-[stroke-dashoffset] duration-1000 ease-linear" : ""
+        }`}
+      />
+    </svg>
+  );
+}
+
 function BoutonEcrire({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="group flex h-16 w-full items-center gap-3 rounded-xl border border-ink/10 bg-white px-4 text-left shadow-sm outline-none transition hover:border-signal/40 hover:shadow-md focus-visible:ring-2 focus-visible:ring-signal/40 active:scale-[0.99]"
+      className="group relative flex w-full items-center gap-3.5 overflow-hidden rounded-xl bg-navy p-3.5 pr-4 text-left text-paper shadow-[0_10px_30px_-12px_rgba(23,22,48,0.6)] outline-none transition focus-visible:ring-2 focus-visible:ring-signal/60 focus-visible:ring-offset-2 active:scale-[0.99]"
     >
       <span
         aria-hidden
-        className="grid size-10 shrink-0 place-items-center rounded-full bg-signal/10 text-signal"
+        className="pointer-events-none absolute -right-8 -top-10 size-32 rounded-full bg-signal/20 blur-2xl"
+      />
+
+      <span
+        aria-hidden
+        className="relative grid size-12 shrink-0 place-items-center rounded-full bg-white/10 ring-2 ring-signal/70 ring-offset-2 ring-offset-navy"
       >
         <SquarePen className="size-5" />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold text-navy">
+
+      <span className="relative min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold leading-tight">
           Écrire mon message
         </span>
-        <span className="block text-xs text-ink/55">
+        <span className="mt-1 block text-xs leading-snug text-paper/65">
           Si vous ne pouvez pas parler
         </span>
       </span>
-      <ChevronRight
+
+      <span
         aria-hidden
-        className="size-5 shrink-0 text-ink/30 transition group-hover:translate-x-0.5 group-hover:text-signal"
-      />
+        className="relative grid size-10 shrink-0 place-items-center rounded-full bg-signal text-paper shadow-[0_6px_16px_rgba(249,97,13,0.45)] transition-transform group-hover:scale-105"
+      >
+        <ChevronRight className="size-5 transition-transform group-hover:translate-x-0.5" />
+      </span>
     </button>
   );
 }
@@ -104,6 +156,7 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
 
   const recording = status === "recording";
   const requesting = status === "requesting";
+  const progression = Math.min(1, elapsed / DUREE_MAX_SECONDES);
 
   const handleSend = async () => {
     if (!audio || !localisation.localisation) return;
@@ -162,9 +215,15 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
     <div className="flex flex-1 flex-col">
       <div className="flex flex-1 flex-col items-center justify-center py-4">
         <div className="relative grid size-72 place-items-center">
-          <span
+          <motion.span
             aria-hidden
             className="absolute inset-0 rounded-full bg-[radial-gradient(circle,rgba(249,97,13,0.22),transparent_65%)] blur-xl"
+            animate={
+              !recording && !reduceMotion
+                ? { opacity: [0.6, 1, 0.6], scale: [1, 1.05, 1] }
+                : { opacity: 1, scale: 1 }
+            }
+            transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
           />
           <span
             aria-hidden
@@ -174,6 +233,9 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
             aria-hidden
             className="absolute inset-10 rounded-full border border-dashed border-signal/25"
           />
+          {recording && (
+            <ProgressRing ratio={progression} animate={!reduceMotion} />
+          )}
           {recording && !reduceMotion && (
             <>
               <PulseRing delay={0} />
@@ -196,7 +258,7 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
             {recording ? (
               <>
                 <Square className="size-5 fill-current" />
-                <span className="text-lg font-semibold tabular-nums">
+                <span className="text-2xl font-semibold tabular-nums">
                   {formatDuree(elapsed)}
                 </span>
                 <span className="text-[11px] opacity-90">
@@ -205,14 +267,14 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
               </>
             ) : (
               <>
-                <span className="flex size-12 items-center justify-center rounded-full bg-white/20">
+                <span className="flex size-14 items-center justify-center rounded-full bg-white/20">
                   {requesting ? (
-                    <Loader2 className="size-5 animate-spin" />
+                    <Loader2 className="size-6 animate-spin" />
                   ) : (
-                    <Mic className="size-5" />
+                    <Mic className="size-6" />
                   )}
                 </span>
-                <span className="text-xs font-semibold">
+                <span className="text-[13px] font-semibold">
                   {requesting ? "Autorisation…" : "Appuyer pour parler"}
                 </span>
               </>
@@ -224,37 +286,41 @@ export function MessageVocalPanel({ active, onWrite }: MessageVocalPanelProps) {
           <Waveform active={recording} />
         </div>
 
-        <p
-          aria-live="polite"
-          role={error ? "alert" : undefined}
-          className={`mt-4 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs shadow-sm ${
-            error
-              ? "border-red-200 bg-red-50 text-red-700"
-              : "border-ink/10 bg-white text-ink/70"
-          }`}
-        >
-          {error ? (
-            error
-          ) : recording ? (
-            <>
-              <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
-              <strong className="font-semibold text-ink">
-                Enregistrement en cours
-              </strong>
-              <span aria-hidden>•</span>
-              {formatDuree(elapsed)} / {formatDuree(DUREE_MAX_SECONDES)}
-            </>
-          ) : requesting ? (
-            "Autorisez le micro dans votre navigateur…"
-          ) : (
-            <>
-              <span className="size-2 rounded-full bg-emerald-500" />
-              <strong className="font-semibold text-navy">
-                Cliquez pour démarrer l'enregistrement
-              </strong>
-            </>
+        <div className="mt-4 flex min-h-12 items-center justify-center">
+          <div aria-live="polite">
+            {(error || recording || requesting) && (
+              <p
+                role={error ? "alert" : undefined}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs shadow-sm ${
+                  error
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-ink/10 bg-white text-ink/70"
+                }`}
+              >
+                {error ? (
+                  error
+                ) : recording ? (
+                  <>
+                    <span className="size-1.5 animate-pulse rounded-full bg-red-500" />
+                    <strong className="font-semibold text-ink">
+                      Enregistrement en cours
+                    </strong>
+                    <span aria-hidden>•</span>
+                    maximum {formatDuree(DUREE_MAX_SECONDES)}
+                  </>
+                ) : (
+                  "Autorisez le micro dans votre navigateur…"
+                )}
+              </p>
+            )}
+          </div>
+          {!(error || recording || requesting) && (
+            <p className="max-w-xs text-pretty text-center text-[13px] leading-snug text-ink/55">
+              Dites ce qui s'est passé, quand et où. Vous pourrez réécouter
+              votre message avant de l'envoyer.
+            </p>
           )}
-        </p>
+        </div>
       </div>
 
       {/* Basculer vers l'écrit : l'espace reste réservé pendant l'enregistrement */}

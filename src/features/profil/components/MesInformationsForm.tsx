@@ -25,15 +25,13 @@ import { profilRoutes } from "../lib/profilRoutes";
 import type { ProfilParticulier } from "../types/profil.types";
 import { ZoneAutocomplete } from "./ZoneAutocomplete";
 
-// Même gabarit pour tous les champs (Input et SelectTrigger)
 const CHAMP =
-  "h-13 w-full rounded-xl border-ink/10 bg-white px-4 text-[15px] text-ink shadow-sm focus-visible:border-signal/60 focus-visible:ring-2 focus-visible:ring-signal/20 aria-invalid:border-red-400";
+  "h-13 w-full rounded-xl border-ink/10 bg-white px-4 text-[15px] text-ink shadow-sm focus-visible:border-signal/60 focus-visible:ring-2 focus-visible:ring-signal/20 aria-invalid:border-red-400 placeholder:text-ink/35";
 
 interface ChampProps {
   id: string;
   label: string;
   facultatif?: boolean;
-  /** Message d'aide, remplacé par l'erreur quand il y en a une */
   aide?: string;
   erreur?: string;
   children: React.ReactNode;
@@ -160,6 +158,7 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
           <Input
             id={`${idBase}-prenom`}
             autoComplete="given-name"
+            placeholder="Votre prénom"
             aria-invalid={!!errors.prenom}
             disabled={isPending}
             className={`${CHAMP} pr-12`}
@@ -176,6 +175,7 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
           <Input
             id={`${idBase}-nom`}
             autoComplete="family-name"
+            placeholder="Votre nom"
             aria-invalid={!!errors.nom}
             disabled={isPending}
             className={`${CHAMP} pr-12`}
@@ -200,6 +200,7 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
             type="email"
             inputMode="email"
             autoComplete="email"
+            placeholder="vous@exemple.com"
             aria-invalid={!!errors.email}
             disabled={isPending}
             className={`${CHAMP} pr-12`}
@@ -276,8 +277,8 @@ export function MesInformationsForm({ profil }: { profil: ProfilParticulier }) {
 
       <Button
         type="submit"
-        disabled={isPending}
-        className="mt-2 h-14 w-full rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] hover:bg-signal/90"
+        disabled={isPending || !isDirty}
+        className="mt-2 h-14 w-full rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] hover:bg-signal/90 disabled:opacity-50 disabled:shadow-none"
       >
         {isPending ? (
           <>

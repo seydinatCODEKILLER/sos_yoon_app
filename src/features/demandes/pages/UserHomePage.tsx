@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/features/auth/store/auth.store";
 import { AssistantCard } from "@/shared/components/AssistantCard";
-import { Reassurance } from "../components/Reassurance";
 import { SosHero } from "../components/SosHero";
 
 export function UserHomePage() {
@@ -26,7 +25,7 @@ export function UserHomePage() {
       <AssistantCard />
 
       {/* Réassurance (desktop) */}
-      <Reassurance className="mt-6 hidden md:flex" />
+      {/* <Reassurance className="mt-6 hidden md:flex" /> */}
     </div>
   );
 }

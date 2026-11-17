@@ -53,7 +53,7 @@ export function SosHero({
             SOS
           </span>
           <span className="mt-1 max-w-[11ch] text-balance text-[13px] leading-snug text-paper/90">
-            Trouver un professionnel du droit
+            Urgence juridique
           </span>
         </motion.button>
       </div>

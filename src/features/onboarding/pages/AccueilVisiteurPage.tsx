@@ -27,14 +27,11 @@ export function AccueilVisiteurPage() {
           <AssistantCard />
         </div>
 
-        {/* Mobile : le lien de connexion est ici (sur desktop, il est dans l'en-tête) */}
         {/* Compte : inscription et connexion (mobile ; sur web, ils sont dans l'en-tête) */}
         <div className="mt-6 grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 md:hidden">
           <LienInscription variant="bloc" />
           <LienConnexion variant="bloc" />
         </div>
-
-        {/* <Reassurance className="mt-6 hidden md:flex" /> */}
       </main>
     </>
   );

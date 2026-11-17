@@ -9,7 +9,6 @@ import { useModifierPreferences } from "../hooks/usePreferencesNotifications";
 import { profilRoutes } from "../lib/profilRoutes";
 import type { PreferencesNotifications } from "../types/preferences.types";
 
-// Passe à true quand l'API d'envoi de SMS existe
 const SMS_DISPONIBLE = false;
 
 interface LigneReglageProps {
@@ -71,6 +70,7 @@ export function PreferencesNotificationsForm({
   const navigate = useNavigate();
   const { mutateAsync: modifier, isPending } = useModifierPreferences();
   const [push, setPush] = useState(preferences.notificationsPush);
+  const inchange = push === preferences.notificationsPush;
 
   // Activer les alertes demande d'abord l'autorisation du navigateur
   async function basculerPush(valeur: boolean) {
@@ -137,8 +137,8 @@ export function PreferencesNotificationsForm({
       <Button
         type="button"
         onClick={enregistrer}
-        disabled={isPending}
-        className="mt-6 h-14 w-full rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] hover:bg-signal/90"
+        disabled={isPending || inchange}
+        className="mt-6 h-14 w-full rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] hover:bg-signal/90 disabled:opacity-50 disabled:shadow-none"
       >
         {isPending ? (
           <>

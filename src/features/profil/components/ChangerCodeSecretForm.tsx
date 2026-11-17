@@ -1,5 +1,5 @@
 import { useId, useMemo, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
@@ -13,6 +13,8 @@ import {
 import { useChangerCodeSecret } from "../hooks/useChangerCodeSecret";
 import { codeSecretErrorMessage } from "../lib/codeSecretErrors";
 import { profilRoutes } from "../lib/profilRoutes";
+
+const LONGUEUR_CODE = 4;
 
 interface ChampCodeProps {
   label: string;
@@ -92,6 +94,13 @@ export function ChangerCodeSecretForm({ codeSecretDefini }: Props) {
   });
   const { errors } = form.formState;
 
+  // Le bouton reste désactivé tant que tous les codes ne sont pas saisis en entier
+  const valeurs = useWatch({ control: form.control });
+  const complet =
+    (!codeSecretDefini || (valeurs.codeActuel ?? "").length === LONGUEUR_CODE) &&
+    (valeurs.nouveauCode ?? "").length === LONGUEUR_CODE &&
+    (valeurs.confirmation ?? "").length === LONGUEUR_CODE;
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       await changer({
@@ -164,8 +173,8 @@ export function ChangerCodeSecretForm({ codeSecretDefini }: Props) {
 
       <button
         type="submit"
-        disabled={isPending}
-        className="mt-3 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] transition hover:brightness-105 disabled:opacity-60"
+        disabled={isPending || !complet}
+        className="mt-3 inline-flex h-14 w-full items-center justify-center gap-2 rounded-xl bg-signal px-6 text-[15px] font-semibold text-paper shadow-[0_8px_22px_rgba(249,97,13,0.32)] transition enabled:hover:brightness-105 disabled:opacity-50 disabled:shadow-none"
       >
         {isPending ? (
           <>
