@@ -119,7 +119,7 @@ export function AuthShell({
           ) : (
             <div className="h-9" />
           )}
-          <p className="mt-10 font-display text-xl text-paper">SOS Yoon</p>
+          <img src="/images/logo-blanc.svg" alt="SOS Yoon" className="mt-10 h-4 w-auto" />
           {(tagline ?? panelTitle) && (
             <p className="mt-1 max-w-72 text-sm leading-snug text-paper/75">
               {tagline ?? panelTitle}

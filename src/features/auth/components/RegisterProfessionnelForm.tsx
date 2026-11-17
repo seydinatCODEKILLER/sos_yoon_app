@@ -38,11 +38,13 @@ const lienCgu = (
 const NOTES: ReactNode[] = [
   null,
   <>
-    En continuant, vous confirmez l'exactitude des informations ordinales et acceptez les {lienCgu} de SOS Yoon.
+    En continuant, vous confirmez l'exactitude des informations ordinales et
+    acceptez les {lienCgu} de SOS Yoon.
   </>,
   <>
-    En continuant, vous certifiez sur l'honneur l'exactitude et l'authenticité des pièces justificatives téléversées
-    conformément aux {lienCgu} de SOS Yoon.
+    En continuant, vous certifiez sur l'honneur l'exactitude et l'authenticité
+    des pièces justificatives téléversées conformément aux {lienCgu} de SOS
+    Yoon.
   </>,
   "En envoyant votre demande, vous attestez être habilité à exercer dans ce ressort juridique. Votre dossier fera l'objet d'une vérification de conformité auprès de l'ordre professionnel sous un délai de 24 à 48 heures.",
 ];
@@ -195,11 +197,21 @@ export function RegisterProfessionnelForm() {
               />
               <span className="text-sm leading-relaxed text-ink/80">
                 J'ai lu et j'accepte les{" "}
-                <Link to="/cgu" target="_blank" rel="noopener" className={LIEN_LEGAL}>
+                <Link
+                  to="/cgu"
+                  target="_blank"
+                  rel="noopener"
+                  className={LIEN_LEGAL}
+                >
                   Conditions générales d'utilisation
                 </Link>{" "}
                 et la{" "}
-                <Link to="/confidentialite" target="_blank" rel="noopener" className={LIEN_LEGAL}>
+                <Link
+                  to="/confidentialite"
+                  target="_blank"
+                  rel="noopener"
+                  className={LIEN_LEGAL}
+                >
                   Politique de confidentialité
                 </Link>
                 .
@@ -245,9 +257,9 @@ export function RegisterProfessionnelForm() {
           </Button>
         </div>
 
-        <p className="mt-4 text-center text-xs leading-relaxed text-navy/40">
+        <div className="mt-4 text-center text-xs leading-relaxed text-navy/40">
           {NOTES[step] ?? <MentionLegale />}
-        </p>
+        </div>
       </form>
     </div>
   );
