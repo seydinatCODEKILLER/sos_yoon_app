@@ -23,7 +23,7 @@ export function PhoneField({
         invalid ? "border-red-400" : "border-ink/15",
       )}
     >
-      <span className="flex items-center gap-2 border-r border-ink/10 pr-3 text-sm font-semibold text-ink">
+      <span className="flex shrink-0 items-center gap-2 border-r border-ink/10 pr-3 text-sm font-semibold text-ink">
         <SenegalFlag /> +221
       </span>
       <input
@@ -32,10 +32,10 @@ export function PhoneField({
         autoComplete="tel-national"
         placeholder="77 123 45 67"
         aria-invalid={invalid}
-        className={cn("min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink/30", className)}
+        className={cn("w-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink/30", className)}
         {...props}
       />
-      <Smartphone className="size-5 text-ink/40" aria-hidden />
+      <Smartphone className="size-5 shrink-0 text-ink/40" aria-hidden />
     </div>
   );
 }

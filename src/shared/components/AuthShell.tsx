@@ -96,7 +96,7 @@ export function AuthShell({
         )}
       </div>
 
-      <div className="flex min-h-dvh flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-col">
         {/* Haut bleu nuit (mobile uniquement) */}
         <div className="px-6 pb-16 pt-6 text-paper md:hidden" style={HERO_BG}>
           {onBack ? (
