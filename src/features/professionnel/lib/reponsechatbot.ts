@@ -2,7 +2,7 @@ import type {
   BlocReponse,
   ReponseAnalysee,
   SegmentTexte,
-} from "../types/chatbotpro.types";
+} from "../types/chatBotPro.types";
 
 /**
  * Le serveur ajoute lui-même, en fin de réponse, deux blocs fixes (voir

@@ -4,7 +4,7 @@ import type {
   EtatChatbot,
   MessageChatbot,
   SourceJuridique,
-} from "../types/chatbotpro.types";
+} from "../types/chatBotPro.types";
 
 let compteur = 0;
 const nouvelId = () => `chatbot-${++compteur}`;

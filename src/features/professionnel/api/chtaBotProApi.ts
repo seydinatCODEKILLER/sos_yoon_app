@@ -1,10 +1,10 @@
 import { refreshAccessToken } from "@/shared/lib/refreshToken";
 import { tokenManager } from "@/shared/lib/tokenManager";
-import { lireFluxSse } from "../lib/fluxsse";
+import { lireFluxSse } from "../lib/fluxSse";
 import type {
   CodeErreurChatbot,
   SourceJuridique,
-} from "../types/chatbotpro.types";
+} from "../types/chatBotPro.types";
 
 /**
  * Seule frontière avec le chatbot pro (service IA, FastAPI, réponses en SSE).
