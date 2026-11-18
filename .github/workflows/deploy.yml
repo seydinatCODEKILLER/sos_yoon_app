@@ -32,21 +32,25 @@ jobs:
 
       - uses: actions/checkout@v4
 
+      # La version de pnpm est lue dans le champ "packageManager" de package.json
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
 
-      - run: npm ci
+      # --frozen-lockfile : échoue si pnpm-lock.yaml n'est pas à jour, au lieu de le modifier
+      - run: pnpm install --frozen-lockfile
 
       # Un test qui échoue arrête tout : rien n'est envoyé
-      - run: npm test --if-present
+      - run: pnpm run --if-present test
 
       # Adresses publiques des autres services, fixées au moment du build.
       # Elles se définissent dans GitHub : Settings > Secrets and variables > Actions > Variables.
       # Changer l'une d'elles demande de reconstruire : poser une nouvelle étiquette de version.
       - name: Construire
-        run: npm run build
+        run: pnpm run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
           VITE_SOXNA_WS_URL: ${{ vars.VITE_SOXNA_WS_URL }}
