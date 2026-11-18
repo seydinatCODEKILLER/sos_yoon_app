@@ -43,14 +43,15 @@ jobs:
       - run: npm test --if-present
 
       # Adresses publiques des autres services, fixées au moment du build.
-      # À renommer selon les variables VITE_* réellement lues par le code ;
-      # elles se définissent dans GitHub : Settings > Secrets and variables > Actions > Variables.
+      # Elles se définissent dans GitHub : Settings > Secrets and variables > Actions > Variables.
+      # Changer l'une d'elles demande de reconstruire : poser une nouvelle étiquette de version.
       - name: Construire
         run: npm run build
         env:
           VITE_API_URL: ${{ vars.VITE_API_URL }}
-          VITE_CHATBOT_PRO_URL: ${{ vars.VITE_CHATBOT_PRO_URL }}
           VITE_SOXNA_WS_URL: ${{ vars.VITE_SOXNA_WS_URL }}
+          VITE_CHATBOT_PRO_URL: ${{ vars.VITE_CHATBOT_PRO_URL }}
+          VITE_CHATBOT_PRO_CABINET: ${{ vars.VITE_CHATBOT_PRO_CABINET }}
 
       - uses: aws-actions/configure-aws-credentials@v4
         with:
