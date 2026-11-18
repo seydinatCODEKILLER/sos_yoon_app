@@ -17,6 +17,9 @@ data "aws_iam_openid_connect_provider" "github" {
 
 locals {
   oidc_provider_arn = var.create_github_oidc_provider ? aws_iam_openid_connect_provider.github[0].arn : data.aws_iam_openid_connect_provider.github[0].arn
+
+  # Les dépôts récents écrivent leur identité avec des numéros fixes : owner@id/depot@id
+  repo_claim = coalesce(var.github_oidc_repo_claim, var.github_repo)
 }
 
 # Seul ce dépôt, et seulement pour une étiquette de version (v1.0.0, v1.0.1…), peut prendre ce rôle
@@ -38,7 +41,7 @@ data "aws_iam_policy_document" "confiance_github" {
     condition {
       test     = "StringLike"
       variable = "token.actions.githubusercontent.com:sub"
-      values   = ["repo:${var.github_repo}:ref:refs/tags/v*"]
+      values   = ["repo:${local.repo_claim}:ref:refs/tags/v*"]
     }
   }
 }

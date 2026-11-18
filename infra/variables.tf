@@ -19,6 +19,12 @@ variable "github_repo" {
   }
 }
 
+variable "github_oidc_repo_claim" {
+  description = "Identité du dépôt telle que GitHub l'écrit dans son jeton, entre « repo: » et « :ref: ». Pour un dépôt récent, elle contient les numéros du propriétaire et du dépôt (ex. mon-equipe@123/mon-depot@456). Laissez vide pour utiliser github_repo."
+  type        = string
+  default     = null
+}
+
 variable "create_github_oidc_provider" {
   description = "false si le compte AWS a déjà un fournisseur OIDC pour GitHub (un seul est permis par compte)"
   type        = bool
