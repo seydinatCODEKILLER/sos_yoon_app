@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 
 .env
+
+infra/.terraform/
+infra/terraform.tfvars
+infra/backend.hcl

@@ -1,0 +1,103 @@
+name: Déploiement en production
+
+# Mise en ligne : on pose une étiquette de version (git tag v1.0.0 && git push origin v1.0.0).
+# Retour arrière : Actions > Déploiement en production > Run workflow, en choisissant
+# l'étiquette précédente dans la liste « Use workflow from ».
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+# Le rôle AWS n'est délivré qu'à ce workflow, sans clé stockée dans GitHub
+permissions:
+  id-token: write
+  contents: read
+
+# Un seul déploiement à la fois ; on n'en interrompt jamais un en cours d'envoi
+concurrency:
+  group: deploiement-production
+  cancel-in-progress: false
+
+jobs:
+  deployer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Refuser un lancement hors étiquette de version
+        run: |
+          if [[ "$GITHUB_REF" != refs/tags/v* ]]; then
+            echo "::error::Lancez ce workflow sur une étiquette v*, pas sur une branche ($GITHUB_REF)."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Un test qui échoue arrête tout : rien n'est envoyé
+      - run: npm test --if-present
+
+      # Adresses publiques des autres services, fixées au moment du build.
+      # À renommer selon les variables VITE_* réellement lues par le code ;
+      # elles se définissent dans GitHub : Settings > Secrets and variables > Actions > Variables.
+      - name: Construire
+        run: npm run build
+        env:
+          VITE_API_URL: ${{ vars.VITE_API_URL }}
+          VITE_CHATBOT_PRO_URL: ${{ vars.VITE_CHATBOT_PRO_URL }}
+          VITE_SOXNA_WS_URL: ${{ vars.VITE_SOXNA_WS_URL }}
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      # Ordre d'envoi : fichiers à empreinte d'abord, puis ceux qui les désignent.
+      # Aucune suppression : un onglet resté sur l'ancienne version retrouve ses fichiers.
+      - name: Envoyer les fichiers à empreinte (cache d'un an)
+        run: |
+          aws s3 sync dist/assets "s3://${{ vars.S3_BUCKET }}/assets" \
+            --cache-control "public,max-age=31536000,immutable"
+
+      - name: Envoyer les autres fichiers (icônes, polices… cache d'un jour)
+        run: |
+          aws s3 sync dist "s3://${{ vars.S3_BUCKET }}" \
+            --exclude "assets/*" \
+            --exclude "index.html" \
+            --exclude "sw.js" \
+            --exclude "registerSW.js" \
+            --exclude "manifest.webmanifest" \
+            --cache-control "public,max-age=86400"
+
+      - name: Envoyer le service worker et le manifeste (toujours revérifiés)
+        run: |
+          for f in sw.js registerSW.js; do
+            if [ -f "dist/$f" ]; then
+              aws s3 cp "dist/$f" "s3://${{ vars.S3_BUCKET }}/$f" \
+                --cache-control "no-cache" \
+                --content-type "text/javascript; charset=utf-8"
+            fi
+          done
+          if [ -f dist/manifest.webmanifest ]; then
+            aws s3 cp dist/manifest.webmanifest "s3://${{ vars.S3_BUCKET }}/manifest.webmanifest" \
+              --cache-control "no-cache" \
+              --content-type "application/manifest+json"
+          fi
+
+      # index.html en dernier : à cet instant, tous les fichiers qu'il désigne sont déjà en ligne
+      - name: Envoyer index.html
+        run: |
+          aws s3 cp dist/index.html "s3://${{ vars.S3_BUCKET }}/index.html" \
+            --cache-control "no-cache" \
+            --content-type "text/html; charset=utf-8"
+
+      - name: Vider le cache de CloudFront pour les fichiers revérifiés
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ vars.CLOUDFRONT_DISTRIBUTION_ID }}" \
+            --paths "/index.html" "/sw.js" "/registerSW.js" "/manifest.webmanifest"

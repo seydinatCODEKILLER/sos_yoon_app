@@ -1,0 +1,21 @@
+# Copiez ce fichier en terraform.tfvars et remplacez les valeurs.
+# terraform.tfvars ne contient aucun secret, mais il n'a pas besoin d'être versionné.
+
+# Région du bucket : celle choisie avec les autres équipes
+aws_region = "eu-west-3"
+
+# Dépôt GitHub du front, au format propriétaire/dépôt
+github_repo = "mon-organisation/sos-yoon-front"
+
+# false si l'administrateur AWS a déjà créé un fournisseur OIDC GitHub dans ce compte
+create_github_oidc_provider = true
+
+# Adresses que le front appelle. Vide au premier apply ; à remplir dès que les équipes les donnent.
+# connect_src = [
+#   "https://api.exemple.com",
+#   "https://chatbot.exemple.com",
+#   "wss://soxna.exemple.com",
+# ]
+
+# false : la politique de contenu signale seulement. true : elle bloque. À passer à true après vérification.
+csp_enforce = false
