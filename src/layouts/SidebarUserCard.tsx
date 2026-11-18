@@ -23,7 +23,6 @@ function Subtitle({ role, verified }: { role: UserRole; verified: boolean }) {
       <span className="text-xs opacity-60">Compte non vérifié</span>
     );
   }
-  // TODO : afficher le métier (Avocat, Notaire…) quand le profil pro sera chargé
   return (
     <span className="text-xs opacity-60">
       {role === "ADMIN" ? "Admin" : "Professionnel"}
